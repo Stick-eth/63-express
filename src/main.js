@@ -1,9 +1,11 @@
 import './style.css'
 import { Game } from './game.js'
+import { t, setLanguage, initLanguage, getLanguage } from './i18n.js'
 
 const game = new Game();
 
 // DOM Elements
+const langSelect = document.getElementById('lang-select');
 const moneyDisplay = document.getElementById('money-display');
 const rebirthDisplay = document.getElementById('rebirth-display');
 const messageText = document.getElementById('message-text');
@@ -23,6 +25,17 @@ function updateStats() {
   rebirthDisplay.textContent = game.rebirths;
 }
 
+function updateStaticTexts() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    el.placeholder = t(key);
+  });
+}
+
 // Update History Wheel
 function updateHistory() {
   historyWheel.innerHTML = '';
@@ -40,8 +53,10 @@ function updateHistory() {
     const reverseIndex = game.history.length - 1 - index;
     
     // Adjusted for better visibility of older items
-    let opacity = Math.max(0.4, 1 - (reverseIndex * 0.15));
+    let opacity = Math.max(0, 1 - (reverseIndex * 0.2));
     let scale = Math.max(0.85, 1 - (reverseIndex * 0.05));
+    
+    if (opacity <= 0) return; // Don't render invisible items
     
     // Determine hint
     let hint = '';
@@ -49,13 +64,13 @@ function updateHistory() {
     
     if (game.mysteryNumber !== null) {
         if (guess < game.mysteryNumber) {
-            hint = '↑ C\'est plus';
+            hint = t('hint_higher');
             hintClass = 'text-emerald-500/70';
         } else if (guess > game.mysteryNumber) {
-            hint = '↓ C\'est moins';
+            hint = t('hint_lower');
             hintClass = 'text-red-500/70';
         } else {
-            hint = '= Gagné';
+            hint = t('hint_won');
             hintClass = 'text-emerald-400 font-bold';
         }
     }
@@ -127,7 +142,6 @@ function updateMultipliers() {
         }
 
         el.innerHTML = `
-            <span class="text-[0.6rem] uppercase tracking-wider mb-0.5 opacity-70">Essai ${index + 1}</span>
             <span class="text-lg font-mono leading-none">x${mult}</span>
         `;
         multipliersArea.appendChild(el);
@@ -181,7 +195,7 @@ function handleGuess() {
   if (game.gameState !== 'PLAYING') {
     gameInput.classList.add('hidden');
     startArea.classList.remove('hidden');
-    startBtn.textContent = game.gameState === 'WON' ? 'Rejouer' : 'Réessayer';
+    startBtn.textContent = game.gameState === 'WON' ? t('play_again') : t('play_again');
   } else {
     guessInput.value = '';
     guessInput.focus();
@@ -196,15 +210,29 @@ guessInput.addEventListener('keypress', (e) => {
 // General UI Update
 function updateUI() {
   updateStats();
-  messageText.textContent = game.message;
   
-  // Colorize message based on content
-  if (game.message.includes('gagn�')) {
-    messageText.className = 'text-lg font-bold text-emerald-400';
-  } else if (game.message.includes('Perdu')) {
-    messageText.className = 'text-lg font-bold text-red-400';
+  // Handle message object
+  if (game.message && typeof game.message === 'object') {
+    // Only show message if NOT playing or if it's the start
+    if (game.gameState !== 'PLAYING' || game.history.length === 0) {
+        messageText.textContent = t(game.message.key, game.message.params);
+        messageText.style.opacity = '1';
+    } else {
+        // Hide message during play to avoid overlap/redundancy with history
+        messageText.textContent = ''; 
+        messageText.style.opacity = '0';
+    }
+    
+    // Colorize message based on content key
+    if (game.message.key === 'won') {
+      messageText.className = 'text-lg font-bold text-emerald-400';
+    } else if (game.message.key === 'lost') {
+      messageText.className = 'text-lg font-bold text-red-400';
+    } else {
+      messageText.className = 'text-lg font-medium text-zinc-300';
+    }
   } else {
-    messageText.className = 'text-lg font-medium text-zinc-300';
+    messageText.textContent = '';
   }
   
   updateAttempts();
@@ -212,5 +240,21 @@ function updateUI() {
   updateHistory();
 }
 
+// Language Switcher
+langSelect.addEventListener('change', (e) => {
+  setLanguage(e.target.value);
+  updateStaticTexts();
+  updateUI();
+  // Update button text if game is over
+  if (game.gameState !== 'PLAYING' && game.gameState !== 'IDLE') {
+     startBtn.textContent = t('play_again');
+  } else if (game.gameState === 'IDLE') {
+     startBtn.textContent = t('start_game');
+  }
+});
+
 // Initial Load
+const currentLang = initLanguage();
+langSelect.value = currentLang;
+updateStaticTexts();
 updateUI();

@@ -6,7 +6,7 @@ export class Game {
     this.mysteryNumber = null;
     this.attempts = 0;
     this.maxAttempts = 6;
-    this.message = '';
+    this.message = { key: 'ready_to_play' };
     this.history = [];
     this.currentBet = 0;
     this.multipliers = [10, 5, 3, 2, 1.2, 1];
@@ -49,17 +49,17 @@ export class Game {
     betAmount = parseInt(betAmount);
 
     if (isNaN(betAmount) || betAmount <= 0) {
-        this.message = 'Mise invalide.';
+        this.message = { key: 'invalid_bet' };
         return false;
     }
 
     if (this.checkBankruptcy()) {
-        this.message = 'Banqueroute ! Vous renaissez avec 100 jetons.';
+        this.message = { key: 'bankruptcy' };
         return false;
     }
 
     if (this.money < betAmount) {
-        this.message = 'Fonds insuffisants.';
+        this.message = { key: 'insufficient_funds' };
         return false;
     }
 
@@ -70,7 +70,7 @@ export class Game {
     this.mysteryNumber = Math.floor(Math.random() * 100);
     this.attempts = 0;
     this.gameState = 'PLAYING';
-    this.message = `Jeu lancé. Mise: ${this.currentBet} €. Trouvez le nombre (0-99).`;
+    this.message = { key: 'game_started', params: { bet: this.currentBet } };
     this.history = [];
     return true;
   }
@@ -80,7 +80,7 @@ export class Game {
 
     guess = parseInt(guess);
     if (isNaN(guess) || guess < 0 || guess > 99) {
-      this.message = 'Entrez un nombre entre 0 et 99.';
+      this.message = { key: 'invalid_guess' };
       return;
     }
 
@@ -95,16 +95,16 @@ export class Game {
       
       this.money += winnings;
       this.saveMoney();
-      this.message = `C'est gagné ! x${multiplier} -> +${winnings} €`;
+      this.message = { key: 'won', params: { multiplier, winnings } };
     } else if (this.attempts >= this.maxAttempts) {
       this.gameState = 'LOST';
-      this.message = `Perdu ! Le nombre était ${this.mysteryNumber}.`;
+      this.message = { key: 'lost', params: { number: this.mysteryNumber } };
       // Check bankruptcy immediately after loss
       this.checkBankruptcy();
     } else if (guess < this.mysteryNumber) {
-      this.message = "C'est plus";
+      this.message = { key: 'higher' };
     } else {
-      this.message = "C'est moins";
+      this.message = { key: 'lower' };
     }
   }
 }
