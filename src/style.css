@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-in-slide {
+  animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes rainbow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.text-rainbow {
+  background: linear-gradient(to right, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7, #ec4899);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-size: 200% auto;
+  animation: rainbow 3s linear infinite;
+}
+
+@keyframes flame {
+  0%, 100% { text-shadow: 0 -2px 4px #f97316, 0 -4px 8px #ef4444; }
+  50% { text-shadow: 0 -4px 8px #f97316, 0 -8px 16px #ef4444; }
+}
+
+.text-flame {
+  color: #fb923c;
+  animation: flame 2s ease-in-out infinite;
+}

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="fr" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>63 Express</title>
+  </head>
+  <body class="bg-zinc-950 text-zinc-100 font-sans antialiased min-h-screen flex items-center justify-center selection:bg-emerald-500 selection:text-white">
+    <div id="app" class="w-full max-w-2xl p-6">
+      <!-- Header -->
+      <header class="mb-8 text-center">
+        <h1 class="text-4xl font-bold tracking-tighter mb-2 bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">63 Express</h1>
+        <p class="text-zinc-500 text-sm uppercase tracking-widest">High Stakes Guessing</p>
+      </header>
+
+      <!-- Stats Bar -->
+      <div class="grid grid-cols-2 gap-4 mb-8 max-w-md mx-auto">
+        <div class="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 flex flex-col items-center backdrop-blur-sm">
+          <span class="text-xs text-zinc-500 uppercase tracking-wider mb-1">Solde</span>
+          <span id="money-display" class="text-2xl font-mono font-bold text-emerald-400">100 €</span>
+        </div>
+        <div class="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 flex flex-col items-center backdrop-blur-sm">
+          <span class="text-xs text-zinc-500 uppercase tracking-wider mb-1">Rebirths</span>
+          <span id="rebirth-display" class="text-2xl font-mono font-bold text-purple-400">0</span>
+        </div>
+      </div>
+
+      <div class="flex gap-6 justify-center items-start">
+          <!-- Multipliers Container (Separate) -->
+          <div id="multipliers-area" class="flex flex-col justify-between items-center py-4 bg-zinc-900/50 border border-zinc-800 rounded-2xl p-4 h-[400px] w-24 backdrop-blur-sm hidden">
+              <!-- Populated by JS -->
+          </div>
+
+          <!-- Game Area -->
+          <main class="flex-1 max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-2xl shadow-black/50 relative overflow-hidden h-[400px] flex flex-col">
+            
+            <!-- Status Message -->
+            <div id="message-area" class="text-center mb-6 min-h-[3rem] flex items-center justify-center flex-col">
+              <p id="message-text" class="text-lg font-medium text-zinc-300">Prêt à jouer ?</p>
+            </div>
+
+            <!-- History Wheel -->
+            <div id="history-wheel" class="flex flex-col justify-end items-center mb-6 space-y-2 min-h-[8rem] flex-1">
+                <!-- History items will be injected here -->
+            </div>
+
+            <!-- Controls -->
+            <div id="controls-area" class="space-y-4 mt-auto">
+                <!-- Bet Input & Start Button -->
+                <div id="start-area" class="space-y-4">
+                    <div class="flex gap-2">
+                        <div class="relative flex-1">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 font-bold">€</span>
+                            <input type="number" id="bet-input" value="10" min="1" step="1" 
+                                class="w-full bg-zinc-950 border border-zinc-700 rounded-xl py-4 pl-10 pr-4 text-center text-xl font-mono focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors placeholder-zinc-700"
+                            >
+                        </div>
+                        <button id="start-btn" class="flex-[2] py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all transform active:scale-95 shadow-lg shadow-emerald-900/20 cursor-pointer">
+                            Miser & Jouer
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Input Area (Hidden by default) -->
+                <div id="game-input" class="hidden space-y-4">
+                    <input type="number" id="guess-input" placeholder="0-99" min="0" max="99" 
+                        class="w-full bg-zinc-950 border border-zinc-700 rounded-xl py-4 px-4 text-center text-2xl font-mono focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors placeholder-zinc-700"
+                    >
+                    <button id="guess-btn" class="w-full py-4 bg-zinc-100 hover:bg-white text-zinc-900 font-bold rounded-xl transition-all transform active:scale-95 cursor-pointer">
+                        Valider
+                    </button>
+                </div>
+            </div>
+
+            <!-- Attempts Indicator -->
+            <div id="attempts-area" class="mt-6 flex justify-center gap-2 hidden">
+                <!-- Will be populated by JS -->
+            </div>
+
+          </main>
+      </div>
+
+      <!-- Rules / Footer -->
+      <footer class="mt-8 text-center text-xs text-zinc-600">
+        <p>Trouvez le nombre entre 0 et 99.</p>
+        <p>6 essais max. Gain: 15 €.</p>
+      </footer>
+    </div>
+      
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
