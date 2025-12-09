@@ -47,6 +47,49 @@ export class Game {
       this.message = { key: 'run_start', params: { rent: this.rent, maxAttempts: this.maxAttempts } };
   }
 
+  triggerJokers(triggerName, initialValue = null) {
+      let currentValue = initialValue;
+      
+      this.jokers.forEach(joker => {
+          // Check primary trigger
+          if (joker.trigger === triggerName) {
+              const result = joker.execute(this, currentValue);
+              if (triggerName === 'calculateGain' || triggerName === 'rng_validation') {
+                  currentValue = result;
+              } else if (result && result.message) {
+                   this.message = { key: 'script_effect', params: { text: result.message } };
+                   if (this.roundLogs) this.roundLogs.push(result.message);
+              }
+          }
+          
+          // Check hooks
+          if (joker.hooks && joker.hooks[triggerName]) {
+              const result = joker.hooks[triggerName](this, currentValue);
+              if (triggerName === 'calculateGain' || triggerName === 'rng_validation') {
+                  currentValue = result;
+              } else if (result && result.message) {
+                   this.message = { key: 'script_effect', params: { text: result.message } };
+                   if (this.roundLogs) this.roundLogs.push(result.message);
+              }
+          }
+      });
+      
+      return currentValue;
+  }
+
+  checkJokerConstraints(triggerName, value) {
+      return this.jokers.every(joker => {
+          let valid = true;
+          if (joker.trigger === triggerName) {
+              valid = valid && joker.execute(this, value);
+          }
+          if (joker.hooks && joker.hooks[triggerName]) {
+              valid = valid && joker.hooks[triggerName](this, value);
+          }
+          return valid;
+      });
+  }
+
   startRound() {
       this.gameState = 'PLAYING';
       
@@ -59,33 +102,15 @@ export class Game {
       let candidate = 0;
       let valid = false;
       
-      const forceEven = this.jokers.some(j => j.id === 'even_flow');
-      const lazyDev = this.jokers.some(j => j.id === 'lazy_dev');
-      const mirrorServer = this.jokers.some(j => j.id === 'mirror_server');
-
       while (!valid) {
         candidate = Math.floor(Math.random() * 100);
-        
-        if (forceEven && candidate % 2 !== 0) continue;
-        if (lazyDev && candidate % 10 !== 0) continue;
-        
-        valid = true;
+        valid = this.checkJokerConstraints('rng_validation', candidate);
       }
       this.mysteryNumber = candidate;
-
-      // Mirror Server: If round 2, reuse round 1 number (Simple "once per level" logic)
-      if (mirrorServer && this.round === 2 && this.previousMysteryNumber !== undefined) {
-          this.mysteryNumber = this.previousMysteryNumber;
-      }
 
       this.attempts = 0;
       this.maxAttempts = 7; // Reset to base
       
-      // Memory Leak Logic
-      if (this.jokers.some(j => j.id === 'memory_leak')) {
-          this.maxAttempts = Math.max(3, this.maxAttempts - (this.memoryLeakStacks || 0));
-      }
-
       this.min = 0;
       this.max = 99;
       this.history = [];
@@ -103,16 +128,7 @@ export class Game {
       }
 
       // Apply Joker Hooks: onRoundStart
-      this.jokers.forEach(joker => {
-          if (joker.trigger === 'onRoundStart') {
-              const res = joker.execute(this);
-              if (res && res.message) {
-                  // We use a special key to append messages or just show the last one
-                  this.message = { key: 'script_effect', params: { text: res.message } };
-                  this.roundLogs.push(res.message);
-              }
-          }
-      });
+      this.triggerJokers('onRoundStart');
   }
 
   makeGuess(guess) {
@@ -147,24 +163,10 @@ export class Game {
       }
       
       // Apply Joker Hooks: calculateGain
-      this.jokers.forEach(joker => {
-          if (joker.trigger === 'calculateGain') {
-              gain = joker.execute(this, gain);
-          }
-      });
+      gain = this.triggerJokers('calculateGain', gain);
 
       // Apply Joker Hooks: onWin
-      this.jokers.forEach(joker => {
-          if (joker.trigger === 'onWin') {
-              const res = joker.execute(this);
-              if (res && res.message) this.log(res.message);
-          }
-      });
-
-      // Memory Leak Stacking
-      if (this.jokers.some(j => j.id === 'memory_leak')) {
-          this.memoryLeakStacks = (this.memoryLeakStacks || 0) + 1;
-      }
+      this.triggerJokers('onWin');
 
       this.cash += gain;
       this.message = { key: 'won_round', params: { gain, cash: this.cash } };
