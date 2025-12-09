@@ -39,3 +39,14 @@
   color: #fb923c;
   animation: flame 2s ease-in-out infinite;
 }
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+#history-wheel::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+#history-wheel {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}

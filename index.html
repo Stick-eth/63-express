@@ -1,49 +1,72 @@
 <!doctype html>
-<html lang="fr" class="dark">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>63 Express</title>
+    <title>Binary Hustle</title>
   </head>
   <body class="bg-zinc-950 text-zinc-100 font-sans antialiased min-h-screen flex items-center justify-center selection:bg-emerald-500 selection:text-white">
-    <div id="app" class="w-full max-w-2xl p-6">
-      <!-- Header -->
-      <header class="mb-8 text-center relative">
-        <div class="absolute top-0 right-0">
-            <select id="lang-select" class="bg-zinc-900 border border-zinc-700 text-zinc-300 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5">
-                <option value="en">🇬🇧 EN</option>
-                <option value="fr">🇫🇷 FR</option>
-            </select>
-        </div>
-        <h1 class="text-4xl font-bold tracking-tighter mb-2 bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent" data-i18n="title">63 Express</h1>
-        <p class="text-zinc-500 text-sm uppercase tracking-widest" data-i18n="subtitle">High Stakes Guessing</p>
-      </header>
+    <div id="app" class="w-full max-w-4xl p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- LEFT COLUMN: STATS & INVENTORY -->
+      <div class="lg:col-span-1 flex flex-col gap-4">
+          <!-- Header -->
+          <header class="text-center lg:text-left mb-4">
+            <h1 class="text-3xl font-bold tracking-tighter mb-1 bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">Binary Hustle</h1>
+            <p class="text-zinc-500 text-xs uppercase tracking-widest">Roguelike Guessing</p>
+          </header>
 
-      <!-- Stats Bar -->
-      <div class="grid grid-cols-2 gap-4 mb-8 max-w-md mx-auto">
-        <div class="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 flex flex-col items-center backdrop-blur-sm">
-          <span class="text-xs text-zinc-500 uppercase tracking-wider mb-1" data-i18n="balance">Solde</span>
-          <span id="money-display" class="text-2xl font-mono font-bold text-emerald-400">100 €</span>
-        </div>
-        <div class="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 flex flex-col items-center backdrop-blur-sm">
-          <span class="text-xs text-zinc-500 uppercase tracking-wider mb-1" data-i18n="rebirths">Rebirths</span>
-          <span id="rebirth-display" class="text-2xl font-mono font-bold text-purple-400">0</span>
-        </div>
-      </div>
-
-      <div class="flex gap-6 justify-center items-start">
-          <!-- Multipliers Container (Separate) -->
-          <div id="multipliers-area" class="flex flex-col justify-between items-center py-4 bg-zinc-900/50 border border-zinc-800 rounded-2xl p-4 h-[400px] w-24 backdrop-blur-sm hidden">
-              <!-- Populated by JS -->
+          <!-- Stats Panel -->
+          <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 grid grid-cols-2 gap-4">
+            <div class="flex flex-col">
+                <span class="text-xs text-zinc-500 uppercase tracking-wider">Cash</span>
+                <span id="cash-display" class="text-2xl font-mono font-bold text-emerald-400">$100</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-xs text-zinc-500 uppercase tracking-wider">Rent Due</span>
+                <span id="rent-display" class="text-2xl font-mono font-bold text-red-400">$50</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-xs text-zinc-500 uppercase tracking-wider">Level</span>
+                <span id="level-display" class="text-xl font-mono text-zinc-300">1</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-xs text-zinc-500 uppercase tracking-wider">Round</span>
+                <span id="round-display" class="text-xl font-mono text-zinc-300">1/3</span>
+            </div>
           </div>
 
-          <!-- Game Area -->
-          <main class="flex-1 max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-2xl shadow-black/50 relative overflow-hidden min-h-[450px] flex flex-col">
+          <!-- Inventory: Jokers -->
+          <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex-1">
+              <h3 class="text-xs text-zinc-500 uppercase tracking-wider mb-3">Jokers (Passive)</h3>
+              <div id="jokers-list" class="space-y-2">
+                  <!-- Populated by JS -->
+                  <div class="text-zinc-600 text-sm italic">No active jokers</div>
+              </div>
+          </div>
+
+          <!-- Inventory: Scripts -->
+          <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+              <h3 class="text-xs text-zinc-500 uppercase tracking-wider mb-3">Scripts (Active)</h3>
+              <div id="scripts-list" class="grid grid-cols-2 gap-2">
+                  <!-- Populated by JS -->
+                  <div class="col-span-2 text-zinc-600 text-sm italic">No scripts loaded</div>
+              </div>
+          </div>
+      </div>
+
+      <!-- CENTER/RIGHT COLUMN: GAME AREA -->
+      <div class="lg:col-span-2 flex flex-col gap-4">
+          
+          <!-- MAIN GAME SCREEN -->
+          <main id="game-screen" class="flex-1 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-2xl shadow-black/50 relative overflow-hidden min-h-[500px] flex flex-col">
             
-            <!-- Help Icon -->
-            <div id="help-icon" class="absolute top-2 right-2 p-3 text-zinc-500 hover:text-emerald-400 hover:bg-zinc-800/50 rounded-full cursor-help transition-all z-40 hidden touch-manipulation">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            <!-- Help / Grid Toggle -->
+            <div class="absolute top-4 right-4 flex gap-2 z-40">
+                <button id="help-btn" class="p-2 text-zinc-500 hover:text-emerald-400 hover:bg-zinc-800 rounded-lg transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+                </button>
             </div>
 
             <!-- Grid Overlay -->
@@ -53,55 +76,57 @@
                 </div>
             </div>
 
-            <!-- Status Message -->
-            <div id="message-area" class="text-center mb-6 mt-8 min-h-[3rem] flex items-center justify-center flex-col transition-opacity duration-300 px-8">
-              <p id="message-text" class="text-lg font-medium text-zinc-300">Prêt à jouer ?</p>
+            <!-- Message Area -->
+            <div id="message-area" class="text-center mt-8 mb-4 min-h-[4rem] flex items-center justify-center flex-col px-8">
+              <p id="message-text" class="text-xl font-medium text-zinc-300">System Initialized.</p>
             </div>
 
-            <!-- History Wheel -->
-            <div id="history-wheel" class="flex flex-col justify-end items-center mb-6 space-y-2 min-h-[8rem] flex-1">
-                <!-- History items will be injected here -->
+            <!-- History / Visualization -->
+            <div id="history-wheel" class="flex flex-col justify-end items-center mb-6 space-y-2 flex-1 overflow-y-auto max-h-[300px] w-full">
+                <!-- History items -->
             </div>
 
-                        <!-- Controls -->
-            <div id="controls-area" class="space-y-4 mt-auto">
-                <!-- Bet Input & Start Button -->
-                <div id="start-area" class="flex flex-col gap-3">
-                    <input type="number" id="bet-input" placeholder="Mise" class="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-4 py-3 text-center text-xl font-mono focus:outline-none focus:border-emerald-500 transition-colors" data-i18n-placeholder="bet_placeholder">
-                    <button id="start-btn" class="w-full bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold py-3 rounded-lg transition-all transform active:scale-95 uppercase tracking-wider" data-i18n="start_game">
-                        Lancer le jeu
+            <!-- Controls -->
+            <div id="controls-area" class="mt-auto w-full max-w-md mx-auto">
+                <!-- Start Button -->
+                <button id="start-btn" class="w-full bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold py-4 rounded-xl transition-all transform active:scale-95 uppercase tracking-wider shadow-lg shadow-emerald-500/20">
+                    Start Run
+                </button>
+
+                <!-- Guess Input -->
+                <div id="game-input" class="hidden flex gap-2">
+                    <input type="number" id="guess-input" placeholder="0-99" class="flex-1 bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-3 text-center text-2xl font-mono focus:outline-none focus:border-emerald-500 transition-colors">
+                    <button id="guess-btn" class="bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-bold px-8 rounded-xl transition-all transform active:scale-95 uppercase tracking-wider">
+                        ENTER
                     </button>
                 </div>
-
-                <!-- Game Input (Hidden initially) -->
-                <div id="game-input" class="hidden flex flex-col gap-3">
-                    <input type="number" id="guess-input" placeholder="Devinez (0-99)" class="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-4 py-3 text-center text-xl font-mono focus:outline-none focus:border-emerald-500 transition-colors" data-i18n-placeholder="guess_placeholder">
-                    <div class="flex gap-2">
-                        <button id="guess-btn" class="flex-1 bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-bold py-3 rounded-lg transition-all transform active:scale-95 uppercase tracking-wider" data-i18n="guess_button">
-                            Deviner
-                        </button>
-                        <button id="joker-btn" class="flex-1 bg-purple-500 hover:bg-purple-400 text-zinc-950 font-bold py-3 rounded-lg transition-all transform active:scale-95 uppercase tracking-wider text-xs" data-i18n="joker_btn">
-                            JOKER
-                        </button>
-                    </div>
-                </div>
+                
+                <!-- Next Action Button (Next Round / Shop) -->
+                <button id="next-btn" class="hidden w-full bg-purple-500 hover:bg-purple-400 text-zinc-950 font-bold py-4 rounded-xl transition-all transform active:scale-95 uppercase tracking-wider shadow-lg shadow-purple-500/20">
+                    Continue
+                </button>
             </div>
-
-            <!-- Attempts Indicator -->
-            <div id="attempts-area" class="mt-6 mb-4 flex justify-center gap-2 hidden">
-                <!-- Will be populated by JS -->
-            </div>
-
           </main>
-      </div>
 
-      <!-- Rules / Footer -->
-      <footer class="mt-8 text-center text-xs text-zinc-600">
-        <p>Trouvez le nombre entre 0 et 99.</p>
-        <p>6 essais max. Gain: 15 €.</p>
-      </footer>
-    </div>
-      
+          <!-- SHOP SCREEN (Overlay or Replacement) -->
+          <div id="shop-screen" class="hidden flex-1 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-2xl shadow-black/50 min-h-[500px] flex flex-col">
+              <header class="flex justify-between items-center mb-6">
+                  <h2 class="text-2xl font-bold text-purple-400">Dark Web Market</h2>
+                  <button id="reroll-btn" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-sm font-mono border border-zinc-700 transition-colors">
+                      Reroll ($<span id="reroll-cost">5</span>)
+                  </button>
+              </header>
+              
+              <div id="shop-items" class="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1 content-start">
+                  <!-- Shop Items -->
+              </div>
+
+              <button id="leave-shop-btn" class="mt-6 w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-4 rounded-xl transition-all uppercase tracking-wider border border-zinc-700">
+                  Next Round
+              </button>
+          </div>
+
+      </div>
     </div>
     <script type="module" src="/src/main.js"></script>
   </body>
