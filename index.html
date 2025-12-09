@@ -41,8 +41,20 @@
           <!-- Game Area -->
           <main class="flex-1 max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-2xl shadow-black/50 relative overflow-hidden min-h-[450px] flex flex-col">
             
+            <!-- Help Icon -->
+            <div id="help-icon" class="absolute top-2 right-2 p-3 text-zinc-500 hover:text-emerald-400 hover:bg-zinc-800/50 rounded-full cursor-help transition-all z-40 hidden touch-manipulation">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </div>
+
+            <!-- Grid Overlay -->
+            <div id="grid-overlay" class="absolute inset-0 bg-zinc-950/95 z-30 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 backdrop-blur-sm">
+                <div id="number-grid" class="grid grid-cols-10 gap-1 p-4 w-full max-w-sm">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
             <!-- Status Message -->
-            <div id="message-area" class="text-center mb-6 min-h-[3rem] flex items-center justify-center flex-col transition-opacity duration-300">
+            <div id="message-area" class="text-center mb-6 mt-8 min-h-[3rem] flex items-center justify-center flex-col transition-opacity duration-300 px-8">
               <p id="message-text" class="text-lg font-medium text-zinc-300">Prêt à jouer ?</p>
             </div>
 
@@ -64,9 +76,14 @@
                 <!-- Game Input (Hidden initially) -->
                 <div id="game-input" class="hidden flex flex-col gap-3">
                     <input type="number" id="guess-input" placeholder="Devinez (0-99)" class="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-4 py-3 text-center text-xl font-mono focus:outline-none focus:border-emerald-500 transition-colors" data-i18n-placeholder="guess_placeholder">
-                    <button id="guess-btn" class="w-full bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-bold py-3 rounded-lg transition-all transform active:scale-95 uppercase tracking-wider" data-i18n="guess_button">
-                        Deviner
-                    </button>
+                    <div class="flex gap-2">
+                        <button id="guess-btn" class="flex-1 bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-bold py-3 rounded-lg transition-all transform active:scale-95 uppercase tracking-wider" data-i18n="guess_button">
+                            Deviner
+                        </button>
+                        <button id="joker-btn" class="flex-1 bg-purple-500 hover:bg-purple-400 text-zinc-950 font-bold py-3 rounded-lg transition-all transform active:scale-95 uppercase tracking-wider text-xs" data-i18n="joker_btn">
+                            JOKER
+                        </button>
+                    </div>
                 </div>
             </div>
 

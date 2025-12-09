@@ -15,9 +15,13 @@ const betInput = document.getElementById('bet-input');
 const gameInput = document.getElementById('game-input');
 const guessInput = document.getElementById('guess-input');
 const guessBtn = document.getElementById('guess-btn');
+const jokerBtn = document.getElementById('joker-btn');
 const attemptsArea = document.getElementById('attempts-area');
 const multipliersArea = document.getElementById('multipliers-area');
 const historyWheel = document.getElementById('history-wheel');
+const helpIcon = document.getElementById('help-icon');
+const gridOverlay = document.getElementById('grid-overlay');
+const numberGrid = document.getElementById('number-grid');
 
 // Update Stats UI
 function updateStats() {
@@ -35,6 +39,65 @@ function updateStaticTexts() {
     el.placeholder = t(key);
   });
 }
+
+// Update Grid
+function updateGrid() {
+  numberGrid.innerHTML = '';
+  
+  const mysteryParity = game.mysteryNumber !== null ? game.mysteryNumber % 2 : null;
+
+  for (let i = 0; i < 100; i++) {
+      const el = document.createElement('div');
+      el.textContent = i;
+      el.className = 'text-[0.6rem] font-mono flex items-center justify-center h-6 rounded transition-colors ';
+      
+      let isValid = true;
+      
+      // Check bounds
+      if (i < game.min || i > game.max) {
+          isValid = false;
+      }
+      
+      // Check Joker parity
+      if (game.jokerUsed && mysteryParity !== null) {
+          if (i % 2 !== mysteryParity) {
+              isValid = false;
+          }
+      }
+
+      if (isValid) {
+          el.classList.add('text-emerald-400', 'bg-emerald-900/20', 'font-bold', 'border', 'border-emerald-500/30');
+      } else {
+          el.classList.add('text-zinc-700', 'opacity-30');
+      }
+      
+      numberGrid.appendChild(el);
+  }
+}
+
+// Help Icon Events
+function showGrid() {
+    gridOverlay.classList.remove('opacity-0', 'pointer-events-none');
+}
+
+function hideGrid() {
+    gridOverlay.classList.add('opacity-0', 'pointer-events-none');
+}
+
+// Desktop (Hover)
+helpIcon.addEventListener('mouseenter', showGrid);
+helpIcon.addEventListener('mouseleave', hideGrid);
+
+// Mobile (Touch)
+helpIcon.addEventListener('touchstart', (e) => {
+    e.preventDefault(); // Prevent mouse emulation
+    showGrid();
+});
+
+helpIcon.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    hideGrid();
+});
 
 // Update History Wheel
 function updateHistory() {
@@ -115,8 +178,8 @@ function updateMultipliers() {
                 // x10: Rainbow
                 classes += 'text-rainbow animate-pulse drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] scale-125';
             } else if (index === 1) {
-                // x5: Flame/Orange
-                classes += 'text-flame scale-115 drop-shadow-[0_0_5px_rgba(249,115,22,0.5)]';
+                // x5: Orange (Classic)
+                classes += 'text-orange-400 scale-110';
             } else if (index === 2) {
                 // x3: Yellow/Gold
                 classes += 'text-yellow-400 scale-110 drop-shadow-[0_0_5px_rgba(234,179,8,0.5)]';
@@ -203,6 +266,15 @@ function handleGuess() {
 }
 
 guessBtn.addEventListener('click', handleGuess);
+jokerBtn.addEventListener('click', () => {
+    game.useJoker();
+    updateUI();
+    if (game.gameState !== 'PLAYING') {
+        gameInput.classList.add('hidden');
+        startArea.classList.remove('hidden');
+        startBtn.textContent = t('play_again');
+    }
+});
 guessInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') handleGuess();
 });
@@ -213,21 +285,23 @@ function updateUI() {
   
   // Handle message object
   if (game.message && typeof game.message === 'object') {
-    // Only show message if NOT playing or if it's the start
-    if (game.gameState !== 'PLAYING' || game.history.length === 0) {
-        messageText.textContent = t(game.message.key, game.message.params);
-        messageText.style.opacity = '1';
-    } else {
-        // Hide message during play to avoid overlap/redundancy with history
-        messageText.textContent = ''; 
-        messageText.style.opacity = '0';
+    // Translate params if needed (specifically parity)
+    let params = { ...game.message.params };
+    if (params.parity) {
+        params.parity = t(params.parity);
     }
+
+    // Always show message now, as it contains Croupier info
+    messageText.textContent = t(game.message.key, params);
+    messageText.style.opacity = '1';
     
     // Colorize message based on content key
     if (game.message.key === 'won') {
       messageText.className = 'text-lg font-bold text-emerald-400';
-    } else if (game.message.key === 'lost') {
+    } else if (game.message.key === 'lost' || game.message.key === 'lost_joker') {
       messageText.className = 'text-lg font-bold text-red-400';
+    } else if (game.message.key.includes('burning')) {
+      messageText.className = 'text-lg font-bold text-orange-500 animate-pulse';
     } else {
       messageText.className = 'text-lg font-medium text-zinc-300';
     }
@@ -235,9 +309,24 @@ function updateUI() {
     messageText.textContent = '';
   }
   
+  // Joker Button State
+  if (game.gameState === 'PLAYING') {
+      helpIcon.classList.remove('hidden');
+      if (game.jokerUsed) {
+          jokerBtn.disabled = true;
+          jokerBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      } else {
+          jokerBtn.disabled = false;
+          jokerBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+  } else {
+      helpIcon.classList.add('hidden');
+  }
+
   updateAttempts();
   updateMultipliers();
   updateHistory();
+  updateGrid();
 }
 
 // Language Switcher
