@@ -25,7 +25,7 @@ export const JOKERS = [
             const unused = game.maxAttempts - game.attempts;
             const bonus = unused * 5;
             game.cash += bonus;
-            return { message: `Mining... +${bonus}$` };
+            return { message: `Mining... +${bonus}$`, logOnly: true };
         }
     }),
     createJoker({
@@ -54,7 +54,7 @@ export const JOKERS = [
         execute: (game) => {
             if (game.attempts === 4) {
                 game.cash += 200;
-                return { message: 'HEADSHOT! +200$' };
+                return { message: 'HEADSHOT! +200$', logOnly: true };
             }
         }
     }),
@@ -95,7 +95,7 @@ export const JOKERS = [
         price: 8,
         trigger: 'onRoundStart',
         execute: (game) => {
-             return { message: `PARITY: ${game.mysteryNumber % 2 === 0 ? 'EVEN' : 'ODD'}` };
+             return { message: `PARITY: ${game.mysteryNumber % 2 === 0 ? 'EVEN' : 'ODD'}`, logOnly: true };
         }
     }),
     createJoker({
@@ -107,7 +107,7 @@ export const JOKERS = [
         rarity: 'rare',
         trigger: 'onRoundStart',
         execute: (game) => {
-             return { message: `MODULO: Ends with ${game.mysteryNumber % 10}` };
+             return { message: `MODULO: Ends with ${game.mysteryNumber % 10}`, logOnly: true };
         }
     }),
     createJoker({
@@ -125,7 +125,7 @@ export const JOKERS = [
             } else {
                 game.min = mid + 1;
             }
-            return { message: `ROOT: Zone restreinte à [${game.min}-${game.max}]` };
+            return { message: `ROOT: Zone restreinte à [${game.min}-${game.max}]`, logOnly: true };
         }
     }),
     createJoker({
@@ -137,7 +137,7 @@ export const JOKERS = [
         trigger: 'onRoundStart',
         execute: (game) => {
             if (game.mysteryNumber.toString().includes('7')) {
-                return { message: 'GLITCH: Number contains "7"' };
+                return { message: 'GLITCH: Number contains "7"', logOnly: true };
             }
         }
     }),
@@ -175,7 +175,7 @@ export const JOKERS = [
         trigger: 'onWin',
         execute: (game) => {
             game.cash += 100;
-            return { message: 'SPAGHETTI: +100$' };
+            return { message: 'SPAGHETTI: +100$', logOnly: true };
         }
     }),
     createJoker({
@@ -221,7 +221,7 @@ export const JOKERS = [
         hooks: {
             onRoundStart: (game) => {
                 const tens = Math.floor(game.mysteryNumber / 10);
-                return { message: `QUANTUM: Starts with ${tens}X` };
+                return { message: `QUANTUM: Starts with ${tens}X`, logOnly: true };
             },
             onGuess: (game) => {
                 if (!game.quantumChanged && Math.random() < 0.25) {
@@ -270,7 +270,7 @@ export const JOKERS = [
                 const reverseTarget = parseInt(targetStr.split('').reverse().join(''));
                 if (guess === reverseTarget && guess !== game.mysteryNumber) {
                     game.reverseGuessed = true;
-                    return { message: "MIRROR: Reverse pattern matched!" };
+                    return { message: "MIRROR: Reverse pattern matched!", logOnly: true };
                 }
             },
             calculateGain: (game, baseGain) => {
@@ -303,7 +303,7 @@ export const JOKERS = [
             const interest = Math.floor(game.cash * 0.10);
             if (interest > 0) {
                 game.cash += interest;
-                return { message: `Yield: +$${interest}` };
+                return { message: `Yield: +$${interest}`, logOnly: true };
             }
         }
     }),
@@ -341,7 +341,7 @@ export const JOKERS = [
                 } else {
                     game.max = Math.max(game.min, game.max - shrink);
                 }
-                return { message: `Scanner: Range tightened by ${shrink}` };
+                return { message: `Scanner: Range tightened by ${shrink}`, logOnly: true };
             }
         }
     }),
@@ -437,7 +437,7 @@ export const JOKERS = [
             if (game.attempts === 7 && guess === 67) {
                 if (game.history[5] === 67) {
                     game.cash += 13;
-                    return { message: 'Troll: +$13 (6+7)' };
+                    return { message: 'Troll: +$13 (6+7)', logOnly: true };
                 }
             }
         }
@@ -489,7 +489,7 @@ export const JOKERS = [
         execute: (game) => {
             const bonus = game.jokers.length * 5;
             game.cash += bonus;
-            return { message: `Batman: +$${bonus}` };
+            return { message: `Batman: +$${bonus}`, logOnly: true };
         }
     })
 ];

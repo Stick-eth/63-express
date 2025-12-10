@@ -330,7 +330,7 @@ function performBotnetEffect() {
     // 2. Status Text (Terminal logs)
     if (Math.random() < 0.1 * currentIntensity) {
         const log = document.createElement('div');
-        log.className = 'absolute text-xs font-mono text-cyan-500/70 pointer-events-none';
+        log.className = 'absolute text-xs text-cyan-500/70 pointer-events-none';
         log.style.left = `${Math.random() * 80 + 10}%`;
         log.style.top = `${Math.random() * 80 + 10}%`;
         
@@ -374,7 +374,7 @@ function performRansomwareEffect() {
     // 2. Scary Text
     if (Math.random() < 0.1 * currentIntensity) {
         const msg = document.createElement('div');
-        msg.className = 'absolute text-red-500 font-mono font-bold bg-black/80 px-2 py-1 border border-red-500';
+        msg.className = 'absolute text-red-500 font-bold bg-black/80 px-2 py-1 border border-red-500';
         msg.style.left = `${Math.random() * 70 + 15}%`;
         msg.style.top = `${Math.random() * 70 + 15}%`;
         msg.style.fontSize = `${Math.random() * 1.5 + 0.8}rem`;

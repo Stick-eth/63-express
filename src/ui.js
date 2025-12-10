@@ -18,6 +18,7 @@ export function updateStaticTexts(currentLang, currentTheme, themes) {
     if (elements.lblLang) elements.lblLang.textContent = t.lang;
     if (elements.lblTheme) elements.lblTheme.textContent = t.theme;
     if (elements.lblGridKey) elements.lblGridKey.textContent = t.gridKey;
+    if (elements.lblNumpadKey) elements.lblNumpadKey.textContent = "NUMPAD SHORTCUT"; // TODO: Add to localization
     if (elements.settingsBackBtn) elements.settingsBackBtn.textContent = t.return;
 
     if (elements.settingLangBtn) elements.settingLangBtn.textContent = currentLang.toUpperCase();
@@ -74,7 +75,7 @@ function renderAttempts(game) {
 
     attemptsContainer.innerHTML = `
         <div class="text-[10px] text-green-800 uppercase tracking-[0.3em] mb-1">SYSTEM INTEGRITY</div>
-        <div class="text-5xl font-bold ${colorClass} font-mono tracking-tighter drop-shadow-[0_0_5px_rgba(0,255,0,0.2)]">
+        <div class="text-5xl font-bold ${colorClass} tracking-tighter drop-shadow-[0_0_5px_rgba(0,255,0,0.2)]">
             ${remaining}<span class="text-xl text-green-900">/${game.maxAttempts}</span>
         </div>
     `;
@@ -85,7 +86,7 @@ function renderLogs(game) {
     if (!logsDiv) {
         logsDiv = document.createElement('div');
         logsDiv.id = 'system-logs';
-        logsDiv.className = 'mt-2 w-full max-w-md mx-auto bg-black border border-green-900 p-2 font-mono text-xs text-green-600 max-h-32 overflow-y-auto hidden';
+        logsDiv.className = 'mt-2 w-full max-w-md mx-auto bg-black border border-green-900 p-2 text-xs text-green-600 max-h-32 overflow-y-auto hidden';
         
         // Insert after message area
         const messageArea = elements.messageArea || document.getElementById('message-area'); // Fallback if not in dom.js yet
@@ -145,7 +146,7 @@ export function updateMessage(game, currentLang) {
     else if (key.includes('lost') || key.includes('game_over')) elements.messageText.classList.add('text-red-500');
     else if (key.includes('burning')) elements.messageText.classList.add('text-orange-500', 'font-bold', 'animate-pulse');
     else if (key.includes('boss')) elements.messageText.classList.add('text-purple-500', 'font-bold');
-    else if (key === 'script_effect') elements.messageText.classList.add('text-cyan-400', 'font-mono');
+    else if (key === 'script_effect') elements.messageText.classList.add('text-cyan-400');
     else elements.messageText.classList.add('text-green-400');
 }
 
@@ -169,7 +170,7 @@ function showTooltip(e, title, desc, rarity, price) {
             ${rarity ? `<span class="text-[10px] uppercase text-green-600 border border-green-900 px-1">${rarity}</span>` : ''}
         </div>
         <div class="text-green-300 mb-1">${desc}</div>
-        ${price ? `<div class="text-yellow-500 font-mono text-right text-[10px]">Value: $${price}</div>` : ''}
+        ${price ? `<div class="text-yellow-500 text-right text-[10px]">Value: $${price}</div>` : ''}
     `;
     tooltip.classList.remove('hidden');
     moveTooltip(e);
@@ -292,7 +293,7 @@ export function renderShop(game, handlers, currentLang) {
                 <h4 class="font-bold ${typeColor}">${getLoc(item.name, currentLang)}</h4>
                 <span class="text-xs bg-purple-900/20 px-2 py-1 border border-purple-800 text-purple-400">$${item.price}</span>
             </div>
-            <p class="text-sm text-purple-300/70 flex-1 font-mono">${getLoc(item.description, currentLang)}</p>
+            <p class="text-sm text-purple-300/70 flex-1">${getLoc(item.description, currentLang)}</p>
             <button class="w-full py-2 font-bold text-sm transition-colors border ${isAffordable ? 'bg-purple-900/20 hover:bg-purple-500 hover:text-black text-purple-400 border-purple-500' : 'bg-black text-green-900 border-green-900 cursor-not-allowed'}">
                 [ BUY ]
             </button>
@@ -327,7 +328,7 @@ export function updateHistory(game) {
             }
         }
 
-        el.className = `flex justify-between items-center border-b border-green-900/30 p-2 w-full font-mono`;
+        el.className = `flex justify-between items-center border-b border-green-900/30 p-2 w-full`;
         el.style.opacity = opacity;
         
         el.innerHTML = `
@@ -347,7 +348,7 @@ export function updateGrid(game) {
     for (let i = start; i <= end; i++) {
         const el = document.createElement('div');
         el.textContent = i;
-        el.className = 'text-[0.6rem] font-mono flex items-center justify-center h-6 transition-colors ';
+        el.className = 'text-[0.6rem] flex items-center justify-center h-6 transition-colors ';
         
         let isValid = true;
         if (i < game.min || i > game.max) isValid = false;
@@ -358,6 +359,35 @@ export function updateGrid(game) {
             el.classList.add('text-green-900', 'opacity-20');
         }
         elements.numberGrid.appendChild(el);
+    }
+}
+
+export function setupNumpadListeners(elements) {
+    const keys = document.querySelectorAll('.numpad-key');
+    keys.forEach(key => {
+        key.addEventListener('click', () => {
+            const value = key.getAttribute('data-key');
+            if (value === 'Enter') {
+                // Trigger Enter key press on input or just submit
+                // We can simulate a click on guessBtn or dispatch an event
+                if (elements.guessBtn) elements.guessBtn.click();
+                elements.numpadOverlay.classList.add('hidden');
+            } else if (value === 'Backspace') {
+                elements.guessInput.value = elements.guessInput.value.slice(0, -1);
+            } else {
+                elements.guessInput.value += value;
+            }
+            elements.guessInput.focus();
+        });
+    });
+    
+    // Close numpad when clicking outside the box
+    if (elements.numpadOverlay) {
+        elements.numpadOverlay.addEventListener('click', (e) => {
+            if (e.target === elements.numpadOverlay) {
+                elements.numpadOverlay.classList.add('hidden');
+            }
+        });
     }
 }
 

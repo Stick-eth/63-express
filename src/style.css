@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+body {
+  font-family: 'SF Mono', 'Segoe UI Mono', 'Roboto Mono', Menlo, monospace;
+}
+
 @keyframes slideIn {
   from {
     opacity: 0;

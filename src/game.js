@@ -106,7 +106,9 @@ export class Game {
               if (['calculateGain', 'rng_validation', 'getMaxRange'].includes(triggerName)) {
                   currentValue = result;
               } else if (result && result.message) {
-                   this.message = { key: 'script_effect', params: { text: result.message } };
+                   if (!result.logOnly) {
+                       this.message = { key: 'script_effect', params: { text: result.message } };
+                   }
                    if (this.roundLogs) this.roundLogs.push(result.message);
               }
           }
@@ -117,7 +119,9 @@ export class Game {
               if (['calculateGain', 'rng_validation', 'getMaxRange'].includes(triggerName)) {
                   currentValue = result;
               } else if (result && result.message) {
-                   this.message = { key: 'script_effect', params: { text: result.message } };
+                   if (!result.logOnly) {
+                       this.message = { key: 'script_effect', params: { text: result.message } };
+                   }
                    if (this.roundLogs) this.roundLogs.push(result.message);
               }
           }

@@ -10,7 +10,9 @@ const game = new Game();
 let currentLang = 'en';
 let currentTheme = 'green';
 let gridKey = 'p';
+let numpadKey = 'o';
 let isListeningForKey = false;
+let isListeningForNumpadKey = false;
 
 const themes = {
     'green': { filter: 'none', label: 'GREEN' },
@@ -20,6 +22,9 @@ const themes = {
 };
 const themeKeys = Object.keys(themes);
 
+// Initialize Numpad Listeners
+UI.setupNumpadListeners(elements);
+
 // --- SETTINGS LOGIC ---
 function loadSettings() {
     const saved = localStorage.getItem('binary_hustle_settings');
@@ -28,6 +33,7 @@ function loadSettings() {
         currentLang = data.lang || 'en';
         currentTheme = data.theme || 'green';
         gridKey = data.gridKey || 'p';
+        numpadKey = data.numpadKey || 'o';
     }
     applySettings();
 }
@@ -36,7 +42,8 @@ function saveSettings() {
     const data = {
         lang: currentLang,
         theme: currentTheme,
-        gridKey: gridKey
+        gridKey: gridKey,
+        numpadKey: numpadKey
     };
     localStorage.setItem('binary_hustle_settings', JSON.stringify(data));
 }
@@ -50,6 +57,7 @@ function applySettings() {
     UI.updateStaticTexts(currentLang, currentTheme, themes);
     // Update Key Button Text
     if (elements.settingKeyBtn) elements.settingKeyBtn.textContent = gridKey.toUpperCase();
+    if (elements.settingNumpadKeyBtn) elements.settingNumpadKeyBtn.textContent = numpadKey.toUpperCase();
 }
 
 // --- RENDER ---
@@ -317,15 +325,47 @@ document.addEventListener('keydown', (e) => {
         return;
     }
 
+    if (isListeningForNumpadKey) {
+        e.preventDefault();
+        numpadKey = e.key.toLowerCase();
+        isListeningForNumpadKey = false;
+        elements.settingNumpadKeyBtn.classList.remove('animate-pulse', 'bg-green-900');
+        saveSettings();
+        applySettings();
+        return;
+    }
+
+    // Pause Menu (Escape)
+    if (e.key === 'Escape') {
+        if (!elements.pauseOverlay.classList.contains('hidden')) {
+            elements.pauseOverlay.classList.add('hidden');
+        } else if (game.gameState === 'PLAYING') {
+            elements.pauseOverlay.classList.remove('hidden');
+        }
+        return;
+    }
+
     if (game.gameState === 'PLAYING') {
         // Grid Shortcut
         if (e.key.toLowerCase() === gridKey.toLowerCase()) {
             elements.gridOverlay.classList.remove('opacity-0', 'pointer-events-none');
         }
 
+        // Numpad Shortcut
+        if (e.key.toLowerCase() === numpadKey.toLowerCase()) {
+            elements.numpadOverlay.classList.remove('hidden');
+        }
+
         // Global Enter
         if (e.key === 'Enter') {
-            handleGuess();
+            if (!elements.numpadOverlay.classList.contains('hidden')) {
+                // If numpad is open, Enter validates the guess and closes it?
+                // Or just validates. Let's say it validates.
+                handleGuess();
+                elements.numpadOverlay.classList.add('hidden');
+            } else {
+                handleGuess();
+            }
             return;
         }
 
@@ -339,8 +379,13 @@ document.addEventListener('keydown', (e) => {
 });
 
 document.addEventListener('keyup', (e) => {
-    if (game.gameState === 'PLAYING' && e.key.toLowerCase() === gridKey.toLowerCase()) {
-        elements.gridOverlay.classList.add('opacity-0', 'pointer-events-none');
+    if (game.gameState === 'PLAYING') {
+        if (e.key.toLowerCase() === gridKey.toLowerCase()) {
+            elements.gridOverlay.classList.add('opacity-0', 'pointer-events-none');
+        }
+        if (e.key.toLowerCase() === numpadKey.toLowerCase()) {
+            elements.numpadOverlay.classList.add('hidden');
+        }
     }
 });
 
@@ -380,8 +425,18 @@ if (elements.settingThemeBtn) {
 if (elements.settingKeyBtn) {
     elements.settingKeyBtn.onclick = () => {
         isListeningForKey = true;
+        isListeningForNumpadKey = false;
         elements.settingKeyBtn.textContent = '...';
         elements.settingKeyBtn.classList.add('animate-pulse', 'bg-green-900');
+    };
+}
+
+if (elements.settingNumpadKeyBtn) {
+    elements.settingNumpadKeyBtn.onclick = () => {
+        isListeningForNumpadKey = true;
+        isListeningForKey = false;
+        elements.settingNumpadKeyBtn.textContent = '...';
+        elements.settingNumpadKeyBtn.classList.add('animate-pulse', 'bg-green-900');
     };
 }
 
@@ -405,9 +460,9 @@ if (elements.homeStartBtn) {
     };
 }
 
-if (elements.pauseBtn) {
-    elements.pauseBtn.onclick = () => {
-        elements.pauseOverlay.classList.remove('hidden');
+if (elements.numpadBtn) {
+    elements.numpadBtn.onclick = () => {
+        elements.numpadOverlay.classList.toggle('hidden');
     };
 }
 
