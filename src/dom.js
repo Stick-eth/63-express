@@ -51,6 +51,8 @@ export const elements = {
     devControls: document.getElementById('dev-controls'),
     devRevealBtn: document.getElementById('dev-reveal-btn'),
     devAttemptBtn: document.getElementById('dev-attempt-btn'),
+    devAutoGuessBtn: document.getElementById('dev-auto-guess-btn'),
+    devCashBtn: document.getElementById('dev-cash-btn'),
     settingsBackBtn: document.getElementById('settings-back-btn'),
     lblLang: document.getElementById('lbl-lang'),
     lblTheme: document.getElementById('lbl-theme'),

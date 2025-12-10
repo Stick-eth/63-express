@@ -553,6 +553,23 @@ if (elements.devAttemptBtn) {
     };
 }
 
+if (elements.devAutoGuessBtn) {
+    elements.devAutoGuessBtn.onclick = () => {
+        if (game.gameState === 'PLAYING') {
+            const optimal = Math.floor((game.min + game.max) / 2);
+            game.makeGuess(optimal);
+            render();
+        }
+    };
+}
+
+if (elements.devCashBtn) {
+    elements.devCashBtn.onclick = () => {
+        game.cash += 100;
+        render();
+    };
+}
+
 // Start Boot on Load
 window.addEventListener('load', () => {
     loadSettings(); // Load settings first

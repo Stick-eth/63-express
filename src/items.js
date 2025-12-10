@@ -491,6 +491,149 @@ export const JOKERS = [
             game.cash += bonus;
             return { message: `Batman: +$${bonus}`, logOnly: true };
         }
+    }),
+    // --- NEW COMMON JOKERS ---
+    createJoker({
+        id: 'bug_bounty',
+        name: { en: 'Bug Bounty', fr: 'Bug Bounty' },
+        icon: '🐛',
+        description: { en: 'Gain 2% of Rent on win (Min $5).', fr: 'Gagnez 2% du Loyer par victoire (Min 5$).' },
+        price: 4,
+        rarity: 'common',
+        trigger: 'onWin',
+        execute: (game) => {
+            const amount = Math.max(5, Math.floor(game.rent * 0.02));
+            game.cash += amount;
+            return { message: `Bounty: +$${amount}`, logOnly: true };
+        }
+    }),
+    createJoker({
+        id: 'junior_dev',
+        name: { en: 'Junior Dev', fr: 'Junior Dev' },
+        icon: '👶',
+        description: { en: 'Gain 1% of Rent on buy (Min $2).', fr: 'Gagnez 1% du Loyer à l\'achat (Min 2$).' },
+        price: 5,
+        rarity: 'common',
+        trigger: 'onBuy',
+        execute: (game) => {
+            const amount = Math.max(2, Math.floor(game.rent * 0.01));
+            game.cash += amount;
+            return { message: `Junior: +$${amount}`, logOnly: true };
+        }
+    }),
+    createJoker({
+        id: 'clean_code',
+        name: { en: 'Clean Code', fr: 'Clean Code' },
+        icon: '🧹',
+        description: { en: 'Gain 1% of Rent at round start (Min $2).', fr: 'Gagnez 1% du Loyer au début du round (Min 2$).' },
+        price: 6,
+        rarity: 'common',
+        trigger: 'onRoundStart',
+        execute: (game) => {
+            const amount = Math.max(2, Math.floor(game.rent * 0.01));
+            game.cash += amount;
+            return { message: `Clean: +$${amount}`, logOnly: true };
+        }
+    }),
+    createJoker({
+        id: 'patch_tuesday',
+        name: { en: 'Patch Tuesday', fr: 'Patch Tuesday' },
+        icon: '📅',
+        description: { en: 'Max Range reduced by Level.', fr: 'Borne Max réduite du Niveau actuel.' },
+        price: 4,
+        rarity: 'common',
+        trigger: 'getMaxRange',
+        execute: (game, currentRange) => {
+            return currentRange - Math.max(1, game.level);
+        }
+    }),
+    createJoker({
+        id: 'legacy_support',
+        name: { en: 'Legacy Support', fr: 'Legacy Support' },
+        icon: '🏛️',
+        description: { en: 'Min Range increased by Level.', fr: 'Borne Min augmentée du Niveau actuel.' },
+        price: 4,
+        rarity: 'common',
+        trigger: 'getMinRange',
+        execute: (game, currentMin) => {
+            return currentMin + Math.max(1, game.level);
+        }
+    }),
+    createJoker({
+        id: 'unit_test',
+        name: { en: 'Unit Test', fr: 'Unit Test' },
+        icon: '✅',
+        description: { en: 'Gain 0.5% of Rent on ODD guess (Min $1).', fr: 'Gagnez 0.5% du Loyer sur IMPAIR (Min 1$).' },
+        price: 5,
+        rarity: 'common',
+        trigger: 'onGuess',
+        execute: (game, guess) => {
+            if (guess % 2 !== 0) {
+                const amount = Math.max(1, Math.floor(game.rent * 0.005));
+                game.cash += amount;
+                return { message: `Unit Test: +$${amount}`, logOnly: true };
+            }
+        }
+    }),
+    createJoker({
+        id: 'code_review',
+        name: { en: 'Code Review', fr: 'Code Review' },
+        icon: '👓',
+        description: { en: 'Gain 0.5% of Rent on EVEN guess (Min $1).', fr: 'Gagnez 0.5% du Loyer sur PAIR (Min 1$).' },
+        price: 5,
+        rarity: 'common',
+        trigger: 'onGuess',
+        execute: (game, guess) => {
+            if (guess % 2 === 0) {
+                const amount = Math.max(1, Math.floor(game.rent * 0.005));
+                game.cash += amount;
+                return { message: `Review: +$${amount}`, logOnly: true };
+            }
+        }
+    }),
+    createJoker({
+        id: 'refactoring',
+        name: { en: 'Refactoring', fr: 'Refactoring' },
+        icon: '♻️',
+        description: { en: 'Gain 1% of Rent on sell (Min $2).', fr: 'Gagnez 1% du Loyer à la vente (Min 2$).' },
+        price: 5,
+        rarity: 'common',
+        trigger: 'onSell',
+        execute: (game) => {
+            const amount = Math.max(2, Math.floor(game.rent * 0.01));
+            game.cash += amount;
+            return { message: `Refactor: +$${amount}`, logOnly: true };
+        }
+    }),
+    createJoker({
+        id: 'open_source',
+        name: { en: 'Open Source', fr: 'Open Source' },
+        icon: '🐧',
+        description: { en: 'Shop prices -0.5% of Rent (Min $1).', fr: 'Prix du shop -0.5% du Loyer (Min 1$).' },
+        price: 8,
+        rarity: 'common',
+        trigger: 'calculateShopPrice',
+        execute: (game, price) => {
+            const discount = Math.max(1, Math.floor(game.rent * 0.005));
+            return Math.max(1, price - discount);
+        }
+    }),
+    createJoker({
+        id: 'stack_overflow',
+        name: { en: 'Stack Overflow', fr: 'Stack Overflow' },
+        icon: '🥞',
+        description: { en: 'Gain 1% of Rent on duplicate guess (Min $2).', fr: 'Gagnez 1% du Loyer sur doublon (Min 2$).' },
+        price: 3,
+        rarity: 'common',
+        trigger: 'onGuess',
+        execute: (game, guess) => {
+            const count = game.history.filter(h => h === guess).length;
+            if (count > 1) {
+                const amount = Math.max(2, Math.floor(game.rent * 0.01));
+                game.cash += amount;
+                return { message: `Overflow: +$${amount}`, logOnly: true };
+            }
+        }
     })
 ];
 
@@ -586,6 +729,122 @@ export const SCRIPTS = [
         execute: (game) => {
             game.nextGuessBonus = 50;
             return { success: true, message: 'HOTFIX applied. Next win +50$.' };
+        }
+    }),
+    // --- NEW COMMON SCRIPTS ---
+    createScript({
+        id: 'clear_cache',
+        name: { en: 'clear_cache', fr: 'clear_cache' },
+        icon: '🗑️',
+        description: { en: 'Reduces Max Range by 10.', fr: 'Réduit la borne Max de 10.' },
+        price: 10,
+        execute: (game) => {
+            game.max = Math.max(game.min, game.max - 10);
+            return { success: true, message: `CACHE CLEARED: Max is now ${game.max}` };
+        }
+    }),
+    createScript({
+        id: 'npm_install',
+        name: { en: 'npm install', fr: 'npm install' },
+        icon: '📦',
+        description: { en: '+1 Attempt this round.', fr: '+1 Essai pour ce round.' },
+        price: 3,
+        execute: (game) => {
+            game.attempts = Math.max(0, game.attempts - 1);
+            return { success: true, message: 'DEPENDENCIES INSTALLED: +1 Attempt' };
+        }
+    }),
+    createScript({
+        id: 'print_hello',
+        name: { en: 'print("Hello")', fr: 'print("Hello")' },
+        icon: '👋',
+        description: { en: 'Reveals if number is > 50.', fr: 'Révèle si le nombre est > 50.' },
+        price: 2,
+        execute: (game) => {
+            const isGreater = game.mysteryNumber > 50;
+            return { success: true, message: `OUTPUT: > 50 ? ${isGreater}` };
+        }
+    }),
+    createScript({
+        id: 'debug_mode',
+        name: { en: 'debug_mode', fr: 'debug_mode' },
+        icon: '🐞',
+        description: { en: 'Reveals if number is divisible by 3.', fr: 'Révèle si le nombre est divisible par 3.' },
+        price: 2,
+        execute: (game) => {
+            const isDiv3 = game.mysteryNumber % 3 === 0;
+            return { success: true, message: `DEBUG: Divisible by 3 ? ${isDiv3}` };
+        }
+    }),
+    createScript({
+        id: 'git_commit',
+        name: { en: 'git commit', fr: 'git commit' },
+        icon: '💾',
+        description: { en: 'Gain +$5 immediately.', fr: 'Gain immédiat de +5$.' },
+        price: 2,
+        execute: (game) => {
+            game.cash += 5;
+            return { success: true, message: 'COMMITTED: +$5' };
+        }
+    }),
+    createScript({
+        id: 'rm_rf',
+        name: { en: 'rm -rf /', fr: 'rm -rf /' },
+        icon: '🔥',
+        description: { en: 'Increases Min Range by 5.', fr: 'Augmente la borne Min de 5.' },
+        price: 2,
+        execute: (game) => {
+            game.min = Math.min(game.max, game.min + 5);
+            return { success: true, message: `FILES DELETED: Min is now ${game.min}` };
+        }
+    }),
+    createScript({
+        id: 'chmod_777',
+        name: { en: 'chmod 777', fr: 'chmod 777' },
+        icon: '🔓',
+        description: { en: 'Shrinks range by 5 from both sides.', fr: 'Réduit l\'intervalle de 5 des deux côtés.' },
+        price: 3,
+        execute: (game) => {
+            game.min = Math.min(game.max, game.min + 5);
+            game.max = Math.max(game.min, game.max - 5);
+            return { success: true, message: `PERMISSIONS OPEN: [${game.min}-${game.max}]` };
+        }
+    }),
+    createScript({
+        id: 'ping_localhost',
+        name: { en: 'ping 127.0.0.1', fr: 'ping 127.0.0.1' },
+        icon: '🔁',
+        description: { en: 'Reveals if number is < 50.', fr: 'Révèle si le nombre est < 50.' },
+        price: 2,
+        execute: (game) => {
+            const isLess = game.mysteryNumber < 50;
+            return { success: true, message: `PING: < 50 ? ${isLess}` };
+        }
+    }),
+    createScript({
+        id: 'grep_search',
+        name: { en: 'grep "1"', fr: 'grep "1"' },
+        icon: '🔍',
+        description: { en: 'Reveals if number contains digit "1".', fr: 'Révèle si le nombre contient le chiffre "1".' },
+        price: 3,
+        execute: (game) => {
+            const hasOne = game.mysteryNumber.toString().includes('1');
+            return { success: true, message: `GREP: Contains "1" ? ${hasOne}` };
+        }
+    }),
+    createScript({
+        id: 'kill_process',
+        name: { en: 'kill -9', fr: 'kill -9' },
+        icon: '💀',
+        description: { en: 'Lose 1 attempt, gain $10.', fr: 'Perdez 1 essai, gagnez 10$.' },
+        price: 0,
+        execute: (game) => {
+            if (game.attempts < game.maxAttempts - 1) {
+                game.attempts += 1;
+                game.cash += 10;
+                return { success: true, message: 'PROCESS KILLED: +$10, -1 Attempt' };
+            }
+            return { success: false, message: 'Not enough attempts to kill process.' };
         }
     })
 ];

@@ -3,7 +3,7 @@ import { ARCS, STANDARD_ARC } from './arcs.js';
 
 export class Game {
   constructor() {
-    this.cash = 100; // Starting cash
+    this.cash = 10; // Starting cash
     this.rent = 50; // Starting rent
     this.level = 1;
     this.round = 1;
@@ -39,9 +39,6 @@ export class Game {
 
   toggleDevMode(enabled) {
       this.devMode = enabled;
-      if (this.devMode) {
-          this.cash = 999999;
-      }
       this.log(`Dev Mode: ${this.devMode}`);
   }
 
@@ -59,7 +56,7 @@ export class Game {
   }
 
   startRun() {
-      this.cash = this.devMode ? 999999 : 100;
+      this.cash = 100;
       this.level = 1;
       this.rent = 50;
       this.round = 1;
@@ -469,6 +466,7 @@ export class Game {
                   this.cash -= item.price;
                   this.jokers.push(item);
                   this.shopInventory.splice(itemIndex, 1);
+                  this.triggerJokers('onBuy', item);
                   return true;
               }
           } else if (item.type === 'consumable') {
@@ -476,6 +474,7 @@ export class Game {
                   this.cash -= item.price;
                   this.scripts.push(item);
                   this.shopInventory.splice(itemIndex, 1);
+                  this.triggerJokers('onBuy', item);
                   return true;
               }
           }
@@ -518,6 +517,7 @@ export class Game {
           if (item) {
               this.cash += Math.floor(item.price / 2);
               this.jokers.splice(index, 1);
+              this.triggerJokers('onSell', item);
               return true;
           }
       } else if (type === 'script') {
@@ -525,6 +525,7 @@ export class Game {
           if (item) {
               this.cash += Math.floor(item.price / 2);
               this.scripts.splice(index, 1);
+              this.triggerJokers('onSell', item);
               return true;
           }
       }
