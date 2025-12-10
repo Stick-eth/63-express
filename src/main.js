@@ -46,13 +46,13 @@ function render() {
     // Update Glitch Effect based on Level/Round
     Animations.updateGlitchEffect(game);
 
-    UI.renderInventory(game, { handleSell, useScript });
+    UI.renderInventory(game, { handleSell, useScript }, currentLang);
     UI.updateHistory(game);
     UI.updateGrid(game);
     UI.updateScreenState(game);
     
     if (game.gameState === 'SHOP') {
-        UI.renderShop(game, { handleBuy });
+        UI.renderShop(game, { handleBuy }, currentLang);
     }
     
     // Force Boss Message Update if in Boss Round

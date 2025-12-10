@@ -104,10 +104,16 @@ export class Game {
       
       // Determine Max Range (Default 100 for 0-99)
       let rangeSize = this.triggerJokers('getMaxRange', 100);
-      this.max = rangeSize - 1;
+      let minStart = this.triggerJokers('getMinRange', 0);
+
+      this.absoluteMin = minStart;
+      this.absoluteMax = minStart + rangeSize - 1;
+
+      this.max = this.absoluteMax;
+      this.min = this.absoluteMin;
 
       while (!valid) {
-        candidate = Math.floor(Math.random() * rangeSize);
+        candidate = minStart + Math.floor(Math.random() * rangeSize);
         valid = this.checkJokerConstraints('rng_validation', candidate);
       }
       this.mysteryNumber = candidate;
@@ -115,8 +121,7 @@ export class Game {
       this.attempts = 0;
       this.maxAttempts = 7; // Reset to base
       
-      this.min = 0;
-      // this.max is already set above
+      // this.min and this.max are set above
       this.history = [];
       this.roundLogs = [];
       this.bossEffect = null;
@@ -125,12 +130,22 @@ export class Game {
       this.quantumChanged = false; // For Quantum Tens
 
       // Apply Boss Effect if Round 3
-      if (this.round === 3) {
+      const preventBoss = this.jokers.some(j => j.id === 'temerraire');
+      if (this.round === 3 && !preventBoss) {
           const boss = BOSSES[Math.min(this.level - 1, BOSSES.length - 1)];
           this.bossEffect = boss.id;
           this.message = { key: 'boss_round', params: { name: boss.name, desc: boss.description } };
       } else {
-          this.message = { key: 'round_start', params: { level: this.level, round: this.round, rent: this.rent } };
+          this.message = { 
+              key: 'round_start', 
+              params: { 
+                  level: this.level, 
+                  round: this.round, 
+                  rent: this.rent,
+                  min: this.absoluteMin,
+                  max: this.absoluteMax
+              } 
+          };
       }
 
       // Apply Joker Hooks: onRoundStart
@@ -141,8 +156,12 @@ export class Game {
     if (this.gameState !== 'PLAYING') return;
 
     guess = parseInt(guess);
-    if (isNaN(guess) || guess < 0 || guess > 99) {
-      this.message = { key: 'invalid_guess' };
+    
+    const lower = this.absoluteMin !== undefined ? this.absoluteMin : 0;
+    const upper = this.absoluteMax !== undefined ? this.absoluteMax : 99;
+
+    if (isNaN(guess) || guess < lower || guess > upper) {
+      this.message = { key: 'invalid_guess', params: { min: lower, max: upper } };
       return;
     }
 
@@ -192,6 +211,9 @@ export class Game {
         }
       }
 
+      // Apply Joker Hooks: onMiss (Allows modifying bounds further)
+      this.triggerJokers('onMiss', guess);
+
       if (this.attempts >= this.maxAttempts) {
           this.gameState = 'LOST_ROUND';
           this.message = { key: 'lost_round', params: { number: this.mysteryNumber } };
@@ -228,15 +250,18 @@ export class Game {
           this.round++;
           if (this.round > this.maxRounds) {
               // End of Level - Pay Rent
-              if (this.cash >= this.rent) {
-                  this.cash -= this.rent;
+              let effectiveRent = this.triggerJokers('calculateRent', this.rent);
+              
+              const canGoDebt = this.jokers.some(j => j.id === 'endette');
+              if (this.cash >= effectiveRent || canGoDebt) {
+                  this.cash -= effectiveRent;
                   this.level++;
                   this.round = 1;
                   this.rent = Math.floor(this.rent * 2.5); // Exponential rent
                   this.startRound();
               } else {
                   this.gameState = 'GAME_OVER';
-                  this.message = { key: 'game_over_rent', params: { cash: this.cash, rent: this.rent } };
+                  this.message = { key: 'game_over_rent', params: { cash: this.cash, rent: effectiveRent } };
               }
           } else {
               this.startRound();
@@ -276,7 +301,9 @@ export class Game {
       const jokersToSpawn = availableJokers.slice(0, 3);
       
       jokersToSpawn.forEach(joker => {
-          this.shopInventory.push({ ...joker, uniqueId: Math.random() });
+          let price = joker.price;
+          price = this.triggerJokers('calculateShopPrice', price);
+          this.shopInventory.push({ ...joker, price, uniqueId: Math.random() });
       });
       
       // Add 2 random Scripts (Unique in this shop batch)
@@ -285,7 +312,9 @@ export class Game {
       const scriptsToSpawn = availableScripts.slice(0, 2);
       
       scriptsToSpawn.forEach(script => {
-          this.shopInventory.push({ ...script, uniqueId: Math.random() });
+          let price = script.price;
+          price = this.triggerJokers('calculateShopPrice', price);
+          this.shopInventory.push({ ...script, price, uniqueId: Math.random() });
       });
   }
 
@@ -307,7 +336,8 @@ export class Game {
       
       if (this.cash >= item.price) {
           if (item.type === 'passive') {
-              if (this.jokers.length < 5) {
+              const maxSlots = this.triggerJokers('getMaxJokerSlots', 5);
+              if (this.jokers.length < maxSlots) {
                   this.cash -= item.price;
                   this.jokers.push(item);
                   this.shopInventory.splice(itemIndex, 1);

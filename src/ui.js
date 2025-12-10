@@ -1,6 +1,14 @@
 import { elements } from './dom.js';
 import { translations, staticTexts } from './localization.js';
 
+function getLoc(obj, lang) {
+    if (typeof obj === 'string' || typeof obj === 'number') return obj;
+    if (typeof obj === 'object' && obj !== null) {
+        return obj[lang] || obj['en'] || '';
+    }
+    return '';
+}
+
 export function updateStaticTexts(currentLang, currentTheme, themes) {
     const t = staticTexts[currentLang];
     
@@ -24,10 +32,6 @@ export function updateStats(game) {
     elements.levelDisplay.textContent = game.level;
     elements.roundDisplay.textContent = `${game.round}/${game.maxRounds}`;
     
-    // Attempts Display
-    const attemptsDiv = document.getElementById('attempts-display') || createAttemptsDisplay();
-    attemptsDiv.textContent = `ATTEMPTS: ${game.attempts} / ${game.maxAttempts}`;
-    
     // Visual alert for rent
     if (game.cash < game.rent && game.round === game.maxRounds) {
         elements.rentDisplay.classList.add('animate-pulse', 'text-red-500');
@@ -36,7 +40,36 @@ export function updateStats(game) {
         elements.rentDisplay.classList.add('text-red-500');
     }
 
+    renderAttempts(game);
     renderLogs(game);
+}
+
+function renderAttempts(game) {
+    let attemptsContainer = document.getElementById('large-attempts-display');
+    if (!attemptsContainer) {
+        attemptsContainer = document.createElement('div');
+        attemptsContainer.id = 'large-attempts-display';
+        attemptsContainer.className = 'text-center mb-2 py-2 border-b border-green-900/30';
+        
+        // Insert before message area
+        const messageArea = elements.messageArea || document.getElementById('message-area');
+        if (messageArea) {
+            messageArea.parentNode.insertBefore(attemptsContainer, messageArea);
+        }
+    }
+
+    const remaining = game.maxAttempts - game.attempts;
+    // Color logic for urgency
+    let colorClass = 'text-green-500';
+    if (remaining <= 2) colorClass = 'text-red-500 animate-pulse';
+    else if (remaining <= 4) colorClass = 'text-yellow-500';
+
+    attemptsContainer.innerHTML = `
+        <div class="text-[10px] text-green-800 uppercase tracking-[0.3em] mb-1">SYSTEM INTEGRITY</div>
+        <div class="text-5xl font-bold ${colorClass} font-mono tracking-tighter drop-shadow-[0_0_5px_rgba(0,255,0,0.2)]">
+            ${remaining}<span class="text-xl text-green-900">/${game.maxAttempts}</span>
+        </div>
+    `;
 }
 
 function renderLogs(game) {
@@ -63,25 +96,7 @@ function renderLogs(game) {
     }
 }
 
-function createAttemptsDisplay() {
-    const div = document.createElement('div');
-    div.id = 'attempts-display';
-    div.className = 'text-xl font-mono text-green-400 flex flex-col';
-    const label = document.createElement('span');
-    label.className = 'text-xs text-green-700 uppercase tracking-wider';
-    label.textContent = '[ ATTEMPTS ]';
-    
-    // Insert into stats panel
-    const statsPanel = document.querySelector('.bg-black.border-2.border-green-500.p-4.grid.grid-cols-2');
-    if (statsPanel) {
-        const container = document.createElement('div');
-        container.className = 'flex flex-col';
-        container.appendChild(label);
-        container.appendChild(div);
-        statsPanel.appendChild(container);
-    }
-    return div;
-}
+
 
 export function updateMessage(game, currentLang) {
     if (!game.message) return;
@@ -92,6 +107,13 @@ export function updateMessage(game, currentLang) {
     // Check for Spaghetti Code (Hide Min/Max)
     const hasSpaghetti = game.jokers.some(j => j.id === 'spaghetti_code');
     let displayParams = { ...params }; 
+    
+    // Resolve localized params
+    if (displayParams) {
+        Object.keys(displayParams).forEach(k => {
+            displayParams[k] = getLoc(displayParams[k], currentLang);
+        });
+    }
     
     if (hasSpaghetti && (key.includes('higher') || key.includes('lower'))) {
         displayParams.min = '???';
@@ -119,29 +141,89 @@ export function updateMessage(game, currentLang) {
     else elements.messageText.classList.add('text-green-400');
 }
 
-export function renderInventory(game, handlers) {
+// --- TOOLTIP SYSTEM ---
+function createTooltip() {
+    let tooltip = document.getElementById('custom-tooltip');
+    if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.id = 'custom-tooltip';
+        tooltip.className = 'fixed z-50 hidden bg-black border border-green-500 p-2 text-xs max-w-xs pointer-events-none shadow-lg';
+        document.body.appendChild(tooltip);
+    }
+    return tooltip;
+}
+
+function showTooltip(e, title, desc, rarity, price) {
+    const tooltip = createTooltip();
+    tooltip.innerHTML = `
+        <div class="font-bold text-green-400 mb-1 border-b border-green-800 pb-1 flex justify-between items-center gap-4">
+            <span>${title}</span>
+            ${rarity ? `<span class="text-[10px] uppercase text-green-600 border border-green-900 px-1">${rarity}</span>` : ''}
+        </div>
+        <div class="text-green-300 mb-1">${desc}</div>
+        ${price ? `<div class="text-yellow-500 font-mono text-right text-[10px]">Value: $${price}</div>` : ''}
+    `;
+    tooltip.classList.remove('hidden');
+    moveTooltip(e);
+}
+
+function moveTooltip(e) {
+    const tooltip = document.getElementById('custom-tooltip');
+    if (tooltip && !tooltip.classList.contains('hidden')) {
+        const x = e.clientX + 15;
+        const y = e.clientY + 15;
+        
+        // Basic boundary check to prevent overflow
+        const rect = tooltip.getBoundingClientRect();
+        let finalX = x;
+        let finalY = y;
+        
+        if (x + rect.width > window.innerWidth) finalX = e.clientX - rect.width - 10;
+        if (y + rect.height > window.innerHeight) finalY = e.clientY - rect.height - 10;
+
+        tooltip.style.left = `${finalX}px`;
+        tooltip.style.top = `${finalY}px`;
+    }
+}
+
+function hideTooltip() {
+    const tooltip = document.getElementById('custom-tooltip');
+    if (tooltip) tooltip.classList.add('hidden');
+}
+
+export function renderInventory(game, handlers, currentLang) {
+    // Ensure lists are grids
+    elements.jokersList.className = 'grid grid-cols-5 gap-2 p-2 content-start'; 
+    elements.scriptsList.className = 'grid grid-cols-5 gap-2 p-2 content-start';
+
     // Jokers
     elements.jokersList.innerHTML = '';
     if (game.jokers.length === 0) {
-        elements.jokersList.innerHTML = '<div class="text-green-800 text-sm italic">No active jokers</div>';
+        elements.jokersList.innerHTML = '<div class="col-span-5 text-green-800 text-sm italic text-center py-4">Empty Slot</div>';
     } else {
         game.jokers.forEach((joker, index) => {
             const el = document.createElement('div');
-            el.className = 'bg-black border border-green-700 p-2 flex justify-between items-center group hover:bg-green-900/20 transition-colors';
-            el.innerHTML = `
-                <div>
-                    <div class="text-sm font-bold text-green-400">${joker.name}</div>
-                    <div class="text-xs text-green-600">${joker.description}</div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="text-xs bg-green-900/30 px-1 text-green-500 border border-green-800">${joker.rarity}</span>
-                    ${game.gameState === 'SHOP' ? `<button class="text-red-500 hover:text-red-400 text-xs font-bold px-1">[SELL]</button>` : ''}
-                </div>
-            `;
-            // Bind click for sell
-            const btn = el.querySelector('button');
-            if (btn) btn.onclick = (e) => { e.stopPropagation(); handlers.handleSell('joker', index); };
+            el.className = 'aspect-square bg-black border border-green-700 flex items-center justify-center text-2xl cursor-help hover:bg-green-900/40 hover:border-green-400 transition-all relative group select-none';
+            el.textContent = joker.icon || '🃏';
             
+            // Tooltip events
+            el.onmouseenter = (e) => showTooltip(e, getLoc(joker.name, currentLang), getLoc(joker.description, currentLang), joker.rarity, joker.price);
+            el.onmousemove = moveTooltip;
+            el.onmouseleave = hideTooltip;
+
+            // Sell interaction
+            if (game.gameState === 'SHOP') {
+                el.classList.add('cursor-pointer', 'hover:border-red-500');
+                el.onclick = (e) => { 
+                    e.stopPropagation(); 
+                    handlers.handleSell('joker', index); 
+                    hideTooltip();
+                };
+                const sellInd = document.createElement('div');
+                sellInd.className = 'absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100';
+                el.appendChild(sellInd);
+            }
+
             elements.jokersList.appendChild(el);
         });
     }
@@ -149,37 +231,44 @@ export function renderInventory(game, handlers) {
     // Scripts
     elements.scriptsList.innerHTML = '';
     if (game.scripts.length === 0) {
-        elements.scriptsList.innerHTML = '<div class="col-span-2 text-green-800 text-sm italic">No scripts loaded</div>';
+        elements.scriptsList.innerHTML = '<div class="col-span-5 text-green-800 text-sm italic text-center py-4">No Scripts</div>';
     } else {
         game.scripts.forEach((script, index) => {
-            const el = document.createElement('div'); 
-            el.className = 'bg-black border border-green-700 p-2 text-left transition-colors group relative overflow-hidden flex justify-between items-center hover:bg-green-900/20';
-            
             const canUse = game.gameState === 'PLAYING';
-            const opacityClass = canUse ? '' : 'opacity-50';
+            const el = document.createElement('div'); 
+            el.className = `aspect-square bg-black border border-cyan-900 flex items-center justify-center text-2xl transition-all relative group select-none ${canUse ? 'cursor-pointer hover:bg-cyan-900/40 hover:border-cyan-400' : 'opacity-50 cursor-not-allowed'}`;
+            el.textContent = script.icon || '📜';
 
-            el.innerHTML = `
-                <div class="flex-1 cursor-pointer ${opacityClass}">
-                    <div class="text-sm font-bold text-cyan-400 group-hover:text-cyan-300">> ${script.name}</div>
-                    <div class="text-xs text-green-600 truncate">${script.description}</div>
-                </div>
-                ${game.gameState === 'SHOP' ? `<button class="text-red-500 hover:text-red-400 text-xs font-bold px-2 z-10">[SELL]</button>` : ''}
-            `;
+            // Tooltip
+            el.onmouseenter = (e) => showTooltip(e, getLoc(script.name, currentLang), getLoc(script.description, currentLang), 'CONSUMABLE', script.price);
+            el.onmousemove = moveTooltip;
+            el.onmouseleave = hideTooltip;
             
-            // Bind click for use
-            const useDiv = el.querySelector('div');
-            useDiv.onclick = () => { if(canUse) handlers.useScript(index); };
+            if (canUse) {
+                el.onclick = () => { 
+                    handlers.useScript(index); 
+                    hideTooltip();
+                };
+            }
 
-            // Bind click for sell
-            const sellBtn = el.querySelector('button');
-            if (sellBtn) sellBtn.onclick = (e) => { e.stopPropagation(); handlers.handleSell('script', index); };
+            if (game.gameState === 'SHOP') {
+                el.classList.add('hover:border-red-500');
+                el.onclick = (e) => { 
+                    e.stopPropagation(); 
+                    handlers.handleSell('script', index); 
+                    hideTooltip();
+                };
+                const sellInd = document.createElement('div');
+                sellInd.className = 'absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100';
+                el.appendChild(sellInd);
+            }
 
             elements.scriptsList.appendChild(el);
         });
     }
 }
 
-export function renderShop(game, handlers) {
+export function renderShop(game, handlers, currentLang) {
     elements.shopItems.innerHTML = '';
     elements.rerollCostSpan.textContent = game.rerollCost;
     
@@ -192,10 +281,10 @@ export function renderShop(game, handlers) {
         
         el.innerHTML = `
             <div class="flex justify-between items-start">
-                <h4 class="font-bold ${typeColor}">${item.name}</h4>
+                <h4 class="font-bold ${typeColor}">${getLoc(item.name, currentLang)}</h4>
                 <span class="text-xs bg-purple-900/20 px-2 py-1 border border-purple-800 text-purple-400">$${item.price}</span>
             </div>
-            <p class="text-sm text-purple-300/70 flex-1 font-mono">${item.description}</p>
+            <p class="text-sm text-purple-300/70 flex-1 font-mono">${getLoc(item.description, currentLang)}</p>
             <button class="w-full py-2 font-bold text-sm transition-colors border ${isAffordable ? 'bg-purple-900/20 hover:bg-purple-500 hover:text-black text-purple-400 border-purple-500' : 'bg-black text-green-900 border-green-900 cursor-not-allowed'}">
                 [ BUY ]
             </button>
@@ -243,7 +332,11 @@ export function updateHistory(game) {
 
 export function updateGrid(game) {
     elements.numberGrid.innerHTML = '';
-    for (let i = 0; i < 100; i++) {
+    
+    const start = game.absoluteMin !== undefined ? game.absoluteMin : 0;
+    const end = game.absoluteMax !== undefined ? game.absoluteMax : 99;
+
+    for (let i = start; i <= end; i++) {
         const el = document.createElement('div');
         el.textContent = i;
         el.className = 'text-[0.6rem] font-mono flex items-center justify-center h-6 transition-colors ';
