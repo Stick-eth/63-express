@@ -219,11 +219,11 @@ export class Game {
 
   nextAction() {
       if (this.gameState === 'WON' || this.gameState === 'LOST_ROUND') {
-          // Go to Shop
-          this.generateShop();
-          this.gameState = 'SHOP';
-          this.message = { key: 'shop_welcome' };
-      } else if (this.gameState === 'SHOP') {
+          // Go to Browser
+          this.generateShop(); // Generate shop so it's ready
+          this.gameState = 'BROWSER';
+          this.message = { key: 'browser_welcome' };
+      } else if (this.gameState === 'BROWSER') {
           // Next Round or Next Level
           this.round++;
           if (this.round > this.maxRounds) {
@@ -241,6 +241,22 @@ export class Game {
           } else {
               this.startRound();
           }
+      }
+  }
+
+  openApp(appName) {
+      if (this.gameState === 'BROWSER') {
+          if (appName === 'SHOP') {
+              this.gameState = 'SHOP';
+              this.message = { key: 'shop_welcome' };
+          }
+      }
+  }
+
+  closeApp() {
+      if (this.gameState === 'SHOP') {
+          this.gameState = 'BROWSER';
+          this.message = { key: 'browser_welcome' };
       }
   }
 
@@ -307,6 +323,13 @@ export class Game {
           }
       }
       return false;
+  }
+
+  getBoss() {
+      if (this.round === this.maxRounds) {
+          return BOSSES[Math.min(this.level - 1, BOSSES.length - 1)];
+      }
+      return null;
   }
 
   useScript(index) {

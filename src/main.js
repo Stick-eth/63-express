@@ -14,10 +14,13 @@ const scriptsList = document.getElementById('scripts-list');
 
 const gameScreen = document.getElementById('game-screen');
 const shopScreen = document.getElementById('shop-screen');
+const browserScreen = document.getElementById('browser-screen');
 const shopItems = document.getElementById('shop-items');
 const rerollBtn = document.getElementById('reroll-btn');
 const rerollCostSpan = document.getElementById('reroll-cost');
 const leaveShopBtn = document.getElementById('leave-shop-btn');
+const appShopBtn = document.getElementById('app-shop-btn');
+const browserContinueBtn = document.getElementById('browser-continue-btn');
 
 const messageText = document.getElementById('message-text');
 const historyWheel = document.getElementById('history-wheel');
@@ -141,6 +144,7 @@ function updateMessage() {
             'higher_burning': `🔥 BURNING! Range: [${displayParams?.min} - ${displayParams?.max}]`,
             'lower_burning': `🔥 BURNING! Range: [${displayParams?.min} - ${displayParams?.max}]`,
             'shop_welcome': 'Welcome to the Dark Web Market.',
+            'browser_welcome': 'Netscape Navigator v1.0. Connected.',
             'game_over_rent': `Evicted! Cash: $${displayParams?.cash} < Rent: $${displayParams?.rent}`,
             'item_bought': 'Item acquired.',
             'insufficient_funds': 'Insufficient funds.',
@@ -160,6 +164,7 @@ function updateMessage() {
             'higher_burning': `🔥 BRÛLANT! Intervalle: [${displayParams?.min} - ${displayParams?.max}]`,
             'lower_burning': `🔥 BRÛLANT! Intervalle: [${displayParams?.min} - ${displayParams?.max}]`,
             'shop_welcome': 'Bienvenue au Marché du Dark Web.',
+            'browser_welcome': 'Netscape Navigator v1.0. Connecté.',
             'game_over_rent': `Expulsé! Cash: $${displayParams?.cash} < Loyer: $${displayParams?.rent}`,
             'item_bought': 'Objet acquis.',
             'insufficient_funds': 'Fonds insuffisants.',
@@ -329,13 +334,17 @@ function updateGrid() {
 
 function updateScreenState() {
     // Toggle Screens
+    gameScreen.classList.add('hidden');
+    shopScreen.classList.add('hidden');
+    browserScreen.classList.add('hidden');
+
     if (game.gameState === 'SHOP') {
-        gameScreen.classList.add('hidden');
         shopScreen.classList.remove('hidden');
         renderShop();
+    } else if (game.gameState === 'BROWSER') {
+        browserScreen.classList.remove('hidden');
     } else {
         gameScreen.classList.remove('hidden');
-        shopScreen.classList.add('hidden');
     }
 
     // Toggle Controls
@@ -352,7 +361,7 @@ function updateScreenState() {
         startBtn.classList.add('hidden');
         gameInputDiv.classList.add('hidden');
         nextBtn.classList.remove('hidden');
-        nextBtn.textContent = 'Go to Shop';
+        nextBtn.textContent = '> ACCESS_BROWSER';
     } else if (game.gameState === 'GAME_OVER') {
         startBtn.classList.remove('hidden');
         startBtn.textContent = 'Restart Run';
@@ -362,18 +371,53 @@ function updateScreenState() {
 }
 
 function render() {
+    // Check for Boss Cutscene (Level 1 Boss)
+    if (game.gameState === 'PLAYING' && game.round === game.maxRounds && game.level === 1 && !game.bossIntroPlayed) {
+        game.bossIntroPlayed = true;
+        app.classList.add('hidden');
+        bootScreen.classList.remove('hidden');
+        
+        const bankLore = currentLang === 'fr' ? bankSequenceFr : bankSequenceEn;
+        const bugLore = currentLang === 'fr' ? bugSequenceFr : bugSequenceEn;
+        
+        runTerminalSequence(bankLore, () => {
+            // Chain the bug sequence (auto, fast)
+            runTerminalSequence(bugLore, () => {
+                bootScreen.classList.add('hidden');
+                app.classList.remove('hidden');
+                render(); // Force update to show Game Screen
+            }, 30, false);
+        }, 40, true);
+        return; // Stop render to avoid flickering
+    }
+
     updateStats();
     updateMessage();
     renderInventory();
     updateHistory();
     updateGrid();
     updateScreenState();
+    
+    // Force Boss Message Update if in Boss Round
+    if (game.gameState === 'PLAYING' && game.round === game.maxRounds && game.bossEffect) {
+        // Ensure the boss message is set correctly in the UI
+        // This is a visual patch to ensure the player sees the boss info
+        // even if the message state was overwritten by something else
+        if (game.message.key === 'round_start') {
+             const boss = game.getBoss();
+             if (boss) {
+                 game.message = { key: 'boss_round', params: { name: boss.name, desc: boss.description } };
+                 updateMessage();
+             }
+        }
+    }
 }
 
 // --- ACTIONS ---
 
 function handleStart() {
     game.startRun();
+    game.bossIntroPlayed = false;
     render();
 }
 
@@ -405,7 +449,17 @@ function handleReroll() {
 }
 
 function handleLeaveShop() {
-    game.nextAction(); // Proceed to next round/level
+    game.closeApp();
+    render();
+}
+
+function handleOpenShop() {
+    game.openApp('SHOP');
+    render();
+}
+
+function handleBrowserContinue() {
+    game.nextAction();
     render();
 }
 
@@ -433,6 +487,8 @@ nextBtn.addEventListener('click', handleNext);
 
 rerollBtn.addEventListener('click', handleReroll);
 leaveShopBtn.addEventListener('click', handleLeaveShop);
+appShopBtn.addEventListener('click', handleOpenShop);
+browserContinueBtn.addEventListener('click', handleBrowserContinue);
 
 // Help / Grid
 helpBtn.addEventListener('mouseenter', () => {
@@ -487,6 +543,60 @@ const loreSequenceFr = [
     "C'est la seule chance de m'en sortir.",
     "----------------------------------------",
     "INITIALISATION DU PROTOCOLE DE MINAGE..."
+];
+
+const bankSequenceEn = [
+    "CONNECTING TO SECURE SERVER...",
+    "AUTHENTICATION: SUCCES",
+    "INBOX (1 NEW MESSAGE)",
+    "----------------------------------------",
+    "FROM: GOLIATH NATIONAL BANK",
+    "SUBJECT: LOAN REPAYMENT NOTIFICATION",
+    "----------------------------------------",
+    "Dear Customer,",
+    "We confirm receipt of your final interest payment.",
+    "Your student loan status is now: ACTIVE (PRINCIPAL UNPAID).",
+    "Congratulations on staying current.",
+    "We have a special offer for you...",
+    "Downloading attachment: future_secure.exe..."
+];
+
+const bankSequenceFr = [
+    "CONNEXION AU SERVEUR SÉCURISÉ...",
+    "AUTHENTIFICATION: SUCCÈS",
+    "BOÎTE DE RÉCEPTION (1 NOUVEAU MESSAGE)",
+    "----------------------------------------",
+    "DE: GOLIATH NATIONAL BANK",
+    "OBJET: NOTIFICATION DE REMBOURSEMENT",
+    "----------------------------------------",
+    "Cher Client,",
+    "Nous confirmons la réception de votre dernier paiement d'intérêts.",
+    "Statut de votre prêt étudiant: ACTIF (CAPITAL NON PAYÉ).",
+    "Félicitations pour votre régularité.",
+    "Nous avons une offre spéciale pour vous...",
+    "Téléchargement de la pièce jointe: future_secure.exe..."
+];
+
+const bugSequenceEn = [
+    "Download: 10%...",
+    "Download: 45%...",
+    "Download: 99%...",
+    "ERROR: CHECKSUM MISMATCH",
+    "WARNING: UNKNOWN EXECUTABLE DETECTED",
+    "SYSTEM COMPROMISED",
+    "INITIATING DEFENSE PROTOCOLS...",
+    "BOSS DETECTED."
+];
+
+const bugSequenceFr = [
+    "Téléchargement: 10%...",
+    "Téléchargement: 45%...",
+    "Téléchargement: 99%...",
+    "ERREUR: SOMME DE CONTRÔLE INVALIDE",
+    "ATTENTION: EXÉCUTABLE INCONNU DÉTECTÉ",
+    "SYSTÈME COMPROMIS",
+    "LANCEMENT DES PROTOCOLES DE DÉFENSE...",
+    "BOSS DÉTECTÉ."
 ];
 
 // Start Boot on Load
@@ -612,7 +722,10 @@ if (homeStartBtn) {
         runTerminalSequence(lore, () => {
             bootScreen.classList.add('hidden');
             app.classList.remove('hidden');
-            if (game.gameState === 'GAME_OVER') {
+            if (game.gameState === 'IDLE') {
+                game.startRun();
+                render();
+            } else if (game.gameState === 'GAME_OVER') {
                 window.location.reload();
             }
         }, 40, true);
