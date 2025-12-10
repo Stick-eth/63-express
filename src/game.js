@@ -372,4 +372,8 @@ export class Game {
       }
       return false;
   }
+
+  getBoss() {
+      return BOSSES[Math.min(this.level - 1, BOSSES.length - 1)];
+  }
 }
