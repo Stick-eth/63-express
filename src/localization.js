@@ -192,6 +192,183 @@ export const rebootSequenceFr = [
     "Restauration de la session..."
 ];
 
+// --- ARC: AUDIT ---
+export const auditIntroEn = [
+    "INCOMING SECURE TRANSMISSION...",
+    "SOURCE: FINANCIAL REGULATION AUTHORITY",
+    "SUBJECT: IRREGULAR ACTIVITY DETECTED",
+    "----------------------------------------",
+    "We have detected suspicious patterns in your revenue stream.",
+    "An automated audit has been scheduled.",
+    "Compliance is mandatory.",
+    "Any discrepancy will result in immediate asset seizure.",
+    "----------------------------------------",
+    "MONITORING TOOLS INSTALLED."
+];
+
+export const auditIntroFr = [
+    "TRANSMISSION SÉCURISÉE ENTRANTE...",
+    "SOURCE: AUTORITÉ DE RÉGULATION FINANCIÈRE",
+    "OBJET: ACTIVITÉ IRRÉGULIÈRE DÉTECTÉE",
+    "----------------------------------------",
+    "Nous avons détecté des motifs suspects dans vos flux de revenus.",
+    "Un audit automatisé a été programmé.",
+    "La conformité est obligatoire.",
+    "Toute divergence entraînera une saisie immédiate des actifs.",
+    "----------------------------------------",
+    "OUTILS DE SURVEILLANCE INSTALLÉS."
+];
+
+// --- ARC: OVERCLOCK ---
+export const overclockIntroEn = [
+    "DOWNLOADING PATCH: TURBO_MINER_V9...",
+    "INSTALLING DRIVERS...",
+    "WARNING: UNVERIFIED PUBLISHER",
+    "WARNING: THERMAL SENSORS DISABLED",
+    "----------------------------------------",
+    "Performance boost initialized.",
+    "System temperature rising...",
+    "Fan speed: 100%",
+    "Let's hope it holds together.",
+    "----------------------------------------",
+    "OVERCLOCK ACTIVE."
+];
+
+export const overclockIntroFr = [
+    "TÉLÉCHARGEMENT PATCH: TURBO_MINER_V9...",
+    "INSTALLATION DES PILOTES...",
+    "ATTENTION: ÉDITEUR NON VÉRIFIÉ",
+    "ATTENTION: CAPTEURS THERMIQUES DÉSACTIVÉS",
+    "----------------------------------------",
+    "Boost de performance initialisé.",
+    "Montée en température du système...",
+    "Vitesse ventilateurs: 100%",
+    "Pourvu que ça tienne.",
+    "----------------------------------------",
+    "OVERCLOCK ACTIF."
+];
+
+export const meltdownIntroEn = [
+    "CRITICAL ALERT: TEMPERATURE THRESHOLD EXCEEDED",
+    "CORE INTEGRITY: 45%",
+    "COOLING SYSTEM FAILURE",
+    "----------------------------------------",
+    "The system is melting down.",
+    "Data corruption imminent.",
+    "We need to finish this batch before the CPU fries.",
+    "----------------------------------------",
+    "EMERGENCY PROTOCOLS ENGAGED."
+];
+
+export const meltdownIntroFr = [
+    "ALERTE CRITIQUE: SEUIL DE TEMPÉRATURE DÉPASSÉ",
+    "INTÉGRITÉ DU CŒUR: 45%",
+    "ÉCHEC DU SYSTÈME DE REFROIDISSEMENT",
+    "----------------------------------------",
+    "Le système est en train de fondre.",
+    "Corruption des données imminente.",
+    "Il faut finir ce lot avant que le CPU ne grille.",
+    "----------------------------------------",
+    "PROTOCOLES D'URGENCE ACTIVÉS."
+];
+
+// --- ARC: STANDARD (FILLER) ---
+export const standardIntroEn = [
+    "SYSTEM STATUS: STABLE",
+    "NETWORK TRAFFIC: NORMAL",
+    "NO THREATS DETECTED",
+    "----------------------------------------",
+    "Enjoy the calm before the storm.",
+    "Focus on accumulating capital.",
+    "----------------------------------------",
+    "RESUMING STANDARD OPERATIONS..."
+];
+
+export const standardIntroFr = [
+    "STATUT SYSTÈME: STABLE",
+    "TRAFIC RÉSEAU: NORMAL",
+    "AUCUNE MENACE DÉTECTÉE",
+    "----------------------------------------",
+    "Profitez du calme avant la tempête.",
+    "Concentrez-vous sur l'accumulation de capital.",
+    "----------------------------------------",
+    "REPRISE DES OPÉRATIONS STANDARDS..."
+];
+
+// --- ARC: BOTNET ---
+export const botnetIntroEn = [
+    "WARNING: UNUSUAL NETWORK TRAFFIC",
+    "BACKGROUND PROCESSES: +400%",
+    "CPU USAGE: 99%",
+    "----------------------------------------",
+    "Your machine has been enslaved.",
+    "You are now part of the Hive.",
+    "Resources are being leeched.",
+    "----------------------------------------",
+    "BOTNET PROTOCOL: ACTIVE"
+];
+
+export const botnetIntroFr = [
+    "ATTENTION: TRAFIC RÉSEAU INHABITUEL",
+    "PROCESSUS EN ARRIÈRE-PLAN: +400%",
+    "USAGE CPU: 99%",
+    "----------------------------------------",
+    "Votre machine a été asservie.",
+    "Vous faites maintenant partie de la Ruche.",
+    "Les ressources sont siphonnées.",
+    "----------------------------------------",
+    "PROTOCOLE BOTNET: ACTIF"
+];
+
+export const hiveIntroEn = [
+    "CONNECTION ESTABLISHED TO MASTER NODE.",
+    "UPLOAD SPEED: 10TB/s",
+    "USER CONTROL: MINIMAL",
+    "----------------------------------------",
+    "The Hive Mind demands compute power.",
+    "Your inputs are being overridden.",
+    "Resistance is futile.",
+    "----------------------------------------",
+    "SYNCHRONIZING..."
+];
+
+export const hiveIntroFr = [
+    "CONNEXION ÉTABLIE AU NŒUD MAÎTRE.",
+    "VITESSE D'UPLOAD: 10TB/s",
+    "CONTRÔLE UTILISATEUR: MINIMAL",
+    "----------------------------------------",
+    "L'Esprit de la Ruche exige de la puissance de calcul.",
+    "Vos entrées sont détournées.",
+    "Toute résistance est futile.",
+    "----------------------------------------",
+    "SYNCHRONISATION..."
+];
+
+// --- ARC: RANSOMWARE ---
+export const ransomwareIntroEn = [
+    "!!! YOUR FILES HAVE BEEN ENCRYPTED !!!",
+    "ENCRYPTION ALGORITHM: AES-4096",
+    "KEY: UNKNOWN",
+    "----------------------------------------",
+    "All your data is locked.",
+    "Pay the ransom or lose everything.",
+    "You are flying blind.",
+    "----------------------------------------",
+    "LOCKDOWN INITIATED."
+];
+
+export const ransomwareIntroFr = [
+    "!!! VOS FICHIERS ONT ÉTÉ CHIFFRÉS !!!",
+    "ALGORITHME DE CHIFFREMENT: AES-4096",
+    "CLÉ: INCONNUE",
+    "----------------------------------------",
+    "Toutes vos données sont verrouillées.",
+    "Payez la rançon ou perdez tout.",
+    "Vous naviguez à l'aveugle.",
+    "----------------------------------------",
+    "VERROUILLAGE LANCÉ."
+];
+
 export const translations = {
     en: {
         'welcome_hustle': 'Welcome to the Binary Hustle. Crack the code.',

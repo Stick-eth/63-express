@@ -54,31 +54,52 @@ function applySettings() {
 
 // --- RENDER ---
 function render() {
-    // Check for Boss Cutscene (Level 1 Boss)
-    if (game.gameState === 'PLAYING' && game.round === game.maxRounds && game.level === 1 && !game.bossIntroPlayed) {
-        game.bossIntroPlayed = true;
+    // Check for Arc Intro Cutscene
+    if (game.gameState === 'ARC_INTRO') {
         elements.app.classList.add('hidden');
         elements.bootScreen.classList.remove('hidden');
         
-        const bankLore = currentLang === 'fr' ? Localization.bankSequenceFr : Localization.bankSequenceEn;
-        const bugLore = currentLang === 'fr' ? Localization.bugSequenceFr : Localization.bugSequenceEn;
+        const lore = game.currentArc.introSequence(currentLang);
         
-        Animations.runTerminalSequence(bankLore, () => {
-            // Chain the bug sequence (auto, fast)
-            Animations.runTerminalSequence(bugLore, () => {
+        Animations.runTerminalSequence(lore, () => {
+            elements.bootScreen.classList.add('hidden');
+            elements.app.classList.remove('hidden');
+            
+            // Proceed to Browser/Shop after Arc Intro
+            game.generateShop();
+            game.gameState = 'BROWSER';
+            game.message = { key: 'browser_welcome' };
+            render();
+        }, 40, true);
+        return;
+    }
+
+    // Check for Month Events (Boss Intro / Special Events)
+    // Triggered at start of Week 3 (Round 3) usually, or end of month?
+    // Let's stick to the existing logic: Week 3 Start = Boss Intro if applicable
+    if (game.gameState === 'PLAYING' && game.round === game.maxRounds && !game.bossIntroPlayed) {
+        const monthEvents = game.currentArc.monthEvents[game.monthInArc];
+        if (monthEvents && monthEvents.intro) {
+            game.bossIntroPlayed = true;
+            elements.app.classList.add('hidden');
+            elements.bootScreen.classList.remove('hidden');
+            
+            const lore = monthEvents.intro(currentLang);
+            
+            Animations.runTerminalSequence(lore, () => {
                 elements.bootScreen.classList.add('hidden');
                 elements.app.classList.remove('hidden');
-                render(); // Force update to show Game Screen
-            }, 30, false);
-        }, 40, true);
-        return; // Stop render to avoid flickering
+                render(); 
+            }, 40, true); // Wait for click if it's a long text, or auto? Let's say true (wait)
+            return;
+        }
     }
 
     UI.updateStats(game);
     UI.updateMessage(game, currentLang);
     
-    // Update Glitch Effect based on Level/Round
-    Animations.updateGlitchEffect(game);
+    // Update Visual Effects based on Arc/Progress
+    Animations.updateVisualEffects(game);
 
     UI.renderInventory(game, { handleSell, useScript }, currentLang);
     UI.updateHistory(game);
@@ -131,6 +152,9 @@ function handleStart() {
     game.startRun();
     game.bossIntroPlayed = false;
     game.bossOutroPlayed = false;
+    
+    // Trigger First Arc Intro
+    game.gameState = 'ARC_INTRO';
     render();
 }
 
@@ -143,44 +167,27 @@ function handleGuess() {
 }
 
 function handleNext() {
-    // Check for Boss Defeated Cutscene (Level 1 Boss)
-    if (game.gameState === 'WON' && game.round === game.maxRounds && game.level === 1 && !game.bossOutroPlayed) {
-        game.bossOutroPlayed = true;
-        
-        elements.app.classList.add('hidden');
-        elements.bootScreen.classList.remove('hidden');
-        
-        const phishingLore = currentLang === 'fr' ? Localization.phishingSequenceFr : Localization.phishingSequenceEn;
-        
-        Animations.runTerminalSequence(phishingLore, () => {
-            elements.bootScreen.classList.add('hidden');
-            elements.app.classList.remove('hidden');
+    // Check for Boss Defeated Cutscene (End of Month Outro)
+    if (game.gameState === 'WON' && game.round === game.maxRounds && !game.bossOutroPlayed) {
+        const monthEvents = game.currentArc.monthEvents[game.monthInArc];
+        if (monthEvents && monthEvents.outro) {
+            game.bossOutroPlayed = true;
             
-            // Proceed to Browser
-            game.nextAction();
-            render(); 
-        }, 40, true);
-        return; 
-    }
-
-    // Check for Boss Defeated Cutscene (Level 2 Boss)
-    if (game.gameState === 'WON' && game.round === game.maxRounds && game.level === 2 && !game.bossOutroPlayed) {
-        game.bossOutroPlayed = true;
-        
-        elements.app.classList.add('hidden');
-        elements.bootScreen.classList.remove('hidden');
-        
-        const rebootLore = currentLang === 'fr' ? Localization.rebootSequenceFr : Localization.rebootSequenceEn;
-        
-        Animations.runTerminalSequence(rebootLore, () => {
-            elements.bootScreen.classList.add('hidden');
-            elements.app.classList.remove('hidden');
+            elements.app.classList.add('hidden');
+            elements.bootScreen.classList.remove('hidden');
             
-            // Proceed to Browser
-            game.nextAction();
-            render(); 
-        }, 40, true);
-        return; 
+            const lore = monthEvents.outro(currentLang);
+            
+            Animations.runTerminalSequence(lore, () => {
+                elements.bootScreen.classList.add('hidden');
+                elements.app.classList.remove('hidden');
+                
+                // Proceed to Browser
+                game.nextAction();
+                render(); 
+            }, 40, true);
+            return; 
+        }
     }
 
     game.nextAction();

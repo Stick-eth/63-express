@@ -1,4 +1,5 @@
 import { JOKERS, SCRIPTS, BOSSES } from './items.js';
+import { ARCS, STANDARD_ARC } from './arcs.js';
 
 export class Game {
   constructor() {
@@ -29,6 +30,11 @@ export class Game {
     
     this.bossEffect = null;
     this.devMode = false;
+
+    // Arc System
+    this.arcQueue = [];
+    this.currentArc = null;
+    this.monthInArc = 1;
   }
 
   toggleDevMode(enabled) {
@@ -59,9 +65,35 @@ export class Game {
       this.round = 1;
       this.jokers = [];
       this.scripts = [];
+
+      // Initialize Arcs
+      this.initArcs();
+
       this.startRound();
       // Override message for onboarding
       this.message = { key: 'run_start', params: { rent: this.rent, maxAttempts: this.maxAttempts } };
+  }
+
+  initArcs() {
+      // Always start with Tutorial Virus Arc
+      const tutorialArc = ARCS.find(a => a.id === 'tutorial_virus');
+      
+      // Shuffle other arcs
+      const otherArcs = ARCS.filter(a => a.id !== 'tutorial_virus');
+      otherArcs.sort(() => Math.random() - 0.5);
+      
+      // Interleave Standard Arcs
+      this.arcQueue = [tutorialArc];
+      otherArcs.forEach(arc => {
+          this.arcQueue.push(STANDARD_ARC);
+          this.arcQueue.push(arc);
+      });
+      
+      // Add one final Standard Arc at the end (or loop logic later)
+      this.arcQueue.push(STANDARD_ARC);
+
+      this.currentArc = this.arcQueue[0];
+      this.monthInArc = 1;
   }
 
   triggerJokers(triggerName, initialValue = null) {
@@ -146,12 +178,30 @@ export class Game {
       this.reverseGuessed = false; // For Mirror Dimension
       this.quantumChanged = false; // For Quantum Tens
 
-      // Apply Boss Effect if Round 3
+      const totalMonth = (this.level - 1) * this.maxRounds + this.round;
+
+      // Apply Boss Effect if Round 3 (Week 3)
       const preventBoss = this.jokers.some(j => j.id === 'temerraire');
       if (this.round === 3 && !preventBoss) {
-          const boss = BOSSES[Math.min(this.level - 1, BOSSES.length - 1)];
-          this.bossEffect = boss.id;
-          this.message = { key: 'boss_round', params: { name: boss.name, desc: boss.description } };
+          // Get Boss from Current Arc
+          const arcBossData = this.currentArc.bosses[this.monthInArc];
+          
+          if (arcBossData) {
+              this.bossEffect = arcBossData.effect;
+              this.message = { key: 'boss_round', params: { name: arcBossData.name, desc: arcBossData.description } };
+          } else {
+              // Fallback or No Boss this month
+              this.message = { 
+                  key: 'round_start', 
+                  params: { 
+                      level: this.level, 
+                      round: this.round, 
+                      rent: this.rent,
+                      min: this.absoluteMin,
+                      max: this.absoluteMax
+                  } 
+              };
+          }
       } else {
           this.message = { 
               key: 'round_start', 
@@ -231,13 +281,19 @@ export class Game {
       // Apply Joker Hooks: onMiss (Allows modifying bounds further)
       this.triggerJokers('onMiss', guess);
 
+      // Boss Effect: Tax (Audit Arc)
+      if (this.bossEffect === 'tax') {
+          this.cash = Math.max(0, this.cash - 1);
+      }
+
       if (this.attempts >= this.maxAttempts) {
           this.gameState = 'LOST_ROUND';
           this.message = { key: 'lost_round', params: { number: this.mysteryNumber } };
       } else {
           // Near miss check (unless Boss prevents it)
           let isBurning = false;
-          if (this.bossEffect !== 'firewall') {
+          // Boss Effect: Firewall (No Burning) or Meltdown (No Burning)
+          if (this.bossEffect !== 'firewall' && this.bossEffect !== 'meltdown') {
             const diff = Math.abs(this.mysteryNumber - guess);
             isBurning = diff <= 5;
           }
@@ -296,6 +352,42 @@ export class Game {
       this.rent = Math.floor(this.rent * 2.5); // Exponential rent
       this.newMonthStarted = true;
       
+      // Advance Arc Progress
+      this.monthInArc++;
+      
+      // Check if Arc is finished
+      if (this.monthInArc > this.currentArc.duration) {
+          // Move to next Arc
+          this.arcQueue.shift(); // Remove finished arc
+          if (this.arcQueue.length > 0) {
+              this.currentArc = this.arcQueue[0];
+              this.monthInArc = 1;
+              this.gameState = 'ARC_INTRO'; // Trigger Arc Intro Cutscene
+              return;
+          } else {
+              // No more arcs? Loop or Generic?
+              // Re-init Arcs (excluding tutorial if desired, but for now full reset logic with shuffle)
+              // To avoid re-playing tutorial, we can filter it out here
+              
+              // Shuffle other arcs again
+              const otherArcs = ARCS.filter(a => a.id !== 'tutorial_virus');
+              otherArcs.sort(() => Math.random() - 0.5);
+              
+              // Rebuild Queue: Standard -> Arc -> Standard -> Arc...
+              this.arcQueue = [];
+              otherArcs.forEach(arc => {
+                  this.arcQueue.push(STANDARD_ARC);
+                  this.arcQueue.push(arc);
+              });
+              this.arcQueue.push(STANDARD_ARC);
+
+              this.currentArc = this.arcQueue[0];
+              this.monthInArc = 1;
+              this.gameState = 'ARC_INTRO';
+              return;
+          }
+      }
+
       this.generateShop();
       this.gameState = 'BROWSER';
       this.message = { key: 'browser_welcome' };
