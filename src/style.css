@@ -40,6 +40,15 @@
   animation: flame 2s ease-in-out infinite;
 }
 
+@keyframes terminalPulse {
+  0%, 100% { opacity: 1; text-shadow: 0 0 8px currentColor; }
+  50% { opacity: 0.85; text-shadow: 0 0 2px currentColor; }
+}
+
+.animate-terminal-pulse {
+  animation: terminalPulse 4s ease-in-out infinite;
+}
+
 /* Hide scrollbar for Chrome, Safari and Opera */
 #history-wheel::-webkit-scrollbar {
   display: none;

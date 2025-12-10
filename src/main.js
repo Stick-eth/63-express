@@ -31,6 +31,20 @@ const helpBtn = document.getElementById('help-btn');
 const gridOverlay = document.getElementById('grid-overlay');
 const numberGrid = document.getElementById('number-grid');
 
+// --- SCREENS & SETTINGS ---
+const homeScreen = document.getElementById('home-screen');
+const pauseOverlay = document.getElementById('pause-overlay');
+const app = document.getElementById('app');
+const homeStartBtn = document.getElementById('home-start-btn');
+const langBtn = document.getElementById('lang-btn');
+const themeBtn = document.getElementById('theme-btn');
+const resumeBtn = document.getElementById('resume-btn');
+const quitBtn = document.getElementById('quit-btn');
+const pauseBtn = document.getElementById('pause-btn');
+
+let currentLang = 'en';
+let currentTheme = 'green';
+
 // --- UI UPDATES ---
 
 function updateStats() {
@@ -41,14 +55,14 @@ function updateStats() {
     
     // Attempts Display (New)
     const attemptsDiv = document.getElementById('attempts-display') || createAttemptsDisplay();
-    attemptsDiv.textContent = `Attempts: ${game.attempts} / ${game.maxAttempts}`;
+    attemptsDiv.textContent = `ATTEMPTS: ${game.attempts} / ${game.maxAttempts}`;
     
     // Visual alert for rent
     if (game.cash < game.rent && game.round === game.maxRounds) {
         rentDisplay.classList.add('animate-pulse', 'text-red-500');
     } else {
         rentDisplay.classList.remove('animate-pulse', 'text-red-500');
-        rentDisplay.classList.add('text-red-400');
+        rentDisplay.classList.add('text-red-500');
     }
 
     renderLogs();
@@ -59,7 +73,7 @@ function renderLogs() {
     if (!logsDiv) {
         logsDiv = document.createElement('div');
         logsDiv.id = 'system-logs';
-        logsDiv.className = 'mt-2 w-full max-w-md mx-auto bg-black/40 rounded border border-zinc-800 p-2 font-mono text-xs text-zinc-400 max-h-32 overflow-y-auto hidden';
+        logsDiv.className = 'mt-2 w-full max-w-md mx-auto bg-black border border-green-900 p-2 font-mono text-xs text-green-600 max-h-32 overflow-y-auto hidden';
         
         // Insert after message area
         const messageArea = document.getElementById('message-area');
@@ -72,7 +86,7 @@ function renderLogs() {
         logsDiv.classList.add('hidden');
     } else {
         logsDiv.classList.remove('hidden');
-        logsDiv.innerHTML = '<div class="text-emerald-500/50 text-[10px] uppercase tracking-widest mb-1 border-b border-zinc-800 pb-1">System Logs</div>' + 
+        logsDiv.innerHTML = '<div class="text-green-500 text-[10px] uppercase tracking-widest mb-1 border-b border-green-900 pb-1">System Logs</div>' + 
             game.roundLogs.map(log => `<div class="mb-1 last:mb-0">> ${log}</div>`).join('');
         logsDiv.scrollTop = logsDiv.scrollHeight;
     }
@@ -81,13 +95,13 @@ function renderLogs() {
 function createAttemptsDisplay() {
     const div = document.createElement('div');
     div.id = 'attempts-display';
-    div.className = 'text-xl font-mono text-zinc-300 flex flex-col';
+    div.className = 'text-xl font-mono text-green-400 flex flex-col';
     const label = document.createElement('span');
-    label.className = 'text-xs text-zinc-500 uppercase tracking-wider';
-    label.textContent = 'Attempts';
+    label.className = 'text-xs text-green-700 uppercase tracking-wider';
+    label.textContent = '[ ATTEMPTS ]';
     
     // Insert into stats panel
-    const statsPanel = document.querySelector('.bg-zinc-900.border.border-zinc-800.rounded-xl.p-4.grid.grid-cols-2');
+    const statsPanel = document.querySelector('.bg-black.border-2.border-green-500.p-4.grid.grid-cols-2');
     if (statsPanel) {
         const container = document.createElement('div');
         container.className = 'flex flex-col';
@@ -113,57 +127,78 @@ function updateMessage() {
         displayParams.max = '???';
     }
     
-    // Simple localization map (can be expanded later)
-    const messages = {
-        'welcome_hustle': 'Welcome to the Binary Hustle. Crack the code.',
-        'run_start': `MISSION: Find the code (0-99) in ${displayParams?.maxAttempts} attempts. Rent Due: $${displayParams?.rent}.`,
-        'round_start': `Level ${displayParams?.level} - Round ${displayParams?.round}. Rent Due: $${displayParams?.rent}`,
-        'boss_round': `BOSS DETECTED: ${displayParams?.name}. ${displayParams?.desc}`,
-        'invalid_guess': 'Invalid input. Enter 0-99.',
-        'won_round': `Access Granted! Gain: $${displayParams?.gain}. Total: $${displayParams?.cash}`,
-        'lost_round': `Access Denied. The code was ${displayParams?.number}.`,
-        'higher': `🔼 HIGHER. Range: [${displayParams?.min} - ${displayParams?.max}]`,
-        'lower': `🔽 LOWER. Range: [${displayParams?.min} - ${displayParams?.max}]`,
-        'higher_burning': `🔥 BURNING! Range: [${displayParams?.min} - ${displayParams?.max}]`,
-        'lower_burning': `🔥 BURNING! Range: [${displayParams?.min} - ${displayParams?.max}]`,
-        'shop_welcome': 'Welcome to the Dark Web Market.',
-        'game_over_rent': `Evicted! Cash: $${displayParams?.cash} < Rent: $${displayParams?.rent}`,
-        'item_bought': 'Item acquired.',
-        'insufficient_funds': 'Insufficient funds.',
-        'inventory_full': 'Inventory full.',
-        'script_effect': `> ${displayParams?.text}`
+    const translations = {
+        en: {
+            'welcome_hustle': 'Welcome to the Binary Hustle. Crack the code.',
+            'run_start': `MISSION: Find the code (0-99) in ${displayParams?.maxAttempts} attempts. Rent Due: $${displayParams?.rent}.`,
+            'round_start': `Level ${displayParams?.level} - Round ${displayParams?.round}. Rent Due: $${displayParams?.rent}`,
+            'boss_round': `BOSS DETECTED: ${displayParams?.name}. ${displayParams?.desc}`,
+            'invalid_guess': 'Invalid input. Enter 0-99.',
+            'won_round': `Access Granted! Gain: $${displayParams?.gain}. Total: $${displayParams?.cash}`,
+            'lost_round': `Access Denied. The code was ${displayParams?.number}.`,
+            'higher': `🔼 HIGHER. Range: [${displayParams?.min} - ${displayParams?.max}]`,
+            'lower': `🔽 LOWER. Range: [${displayParams?.min} - ${displayParams?.max}]`,
+            'higher_burning': `🔥 BURNING! Range: [${displayParams?.min} - ${displayParams?.max}]`,
+            'lower_burning': `🔥 BURNING! Range: [${displayParams?.min} - ${displayParams?.max}]`,
+            'shop_welcome': 'Welcome to the Dark Web Market.',
+            'game_over_rent': `Evicted! Cash: $${displayParams?.cash} < Rent: $${displayParams?.rent}`,
+            'item_bought': 'Item acquired.',
+            'insufficient_funds': 'Insufficient funds.',
+            'inventory_full': 'Inventory full.',
+            'script_effect': `> ${displayParams?.text}`
+        },
+        fr: {
+            'welcome_hustle': 'Bienvenue dans le Binary Hustle. Craquez le code.',
+            'run_start': `MISSION: Trouvez le code (0-99) en ${displayParams?.maxAttempts} essais. Loyer: $${displayParams?.rent}.`,
+            'round_start': `Niveau ${displayParams?.level} - Manche ${displayParams?.round}. Loyer: $${displayParams?.rent}`,
+            'boss_round': `BOSS DÉTECTÉ: ${displayParams?.name}. ${displayParams?.desc}`,
+            'invalid_guess': 'Entrée invalide. Entrez 0-99.',
+            'won_round': `Accès Autorisé! Gain: $${displayParams?.gain}. Total: $${displayParams?.cash}`,
+            'lost_round': `Accès Refusé. Le code était ${displayParams?.number}.`,
+            'higher': `🔼 PLUS GRAND. Intervalle: [${displayParams?.min} - ${displayParams?.max}]`,
+            'lower': `🔽 PLUS PETIT. Intervalle: [${displayParams?.min} - ${displayParams?.max}]`,
+            'higher_burning': `🔥 BRÛLANT! Intervalle: [${displayParams?.min} - ${displayParams?.max}]`,
+            'lower_burning': `🔥 BRÛLANT! Intervalle: [${displayParams?.min} - ${displayParams?.max}]`,
+            'shop_welcome': 'Bienvenue au Marché du Dark Web.',
+            'game_over_rent': `Expulsé! Cash: $${displayParams?.cash} < Loyer: $${displayParams?.rent}`,
+            'item_bought': 'Objet acquis.',
+            'insufficient_funds': 'Fonds insuffisants.',
+            'inventory_full': 'Inventaire plein.',
+            'script_effect': `> ${displayParams?.text}`
+        }
     };
     
+    const messages = translations[currentLang] || translations.en;
     text = messages[key] || key;
     messageText.textContent = text;
     
     // Color coding
     messageText.className = 'text-xl font-medium transition-colors duration-300 ';
-    if (key.includes('won')) messageText.classList.add('text-emerald-400');
-    else if (key.includes('lost') || key.includes('game_over')) messageText.classList.add('text-red-400');
+    if (key.includes('won')) messageText.classList.add('text-green-400');
+    else if (key.includes('lost') || key.includes('game_over')) messageText.classList.add('text-red-500');
     else if (key.includes('burning')) messageText.classList.add('text-orange-500', 'font-bold', 'animate-pulse');
-    else if (key.includes('boss')) messageText.classList.add('text-purple-400', 'font-bold');
+    else if (key.includes('boss')) messageText.classList.add('text-purple-500', 'font-bold');
     else if (key === 'script_effect') messageText.classList.add('text-cyan-400', 'font-mono');
-    else messageText.classList.add('text-zinc-300');
+    else messageText.classList.add('text-green-400');
 }
 
 function renderInventory() {
     // Jokers
     jokersList.innerHTML = '';
     if (game.jokers.length === 0) {
-        jokersList.innerHTML = '<div class="text-zinc-600 text-sm italic">No active jokers</div>';
+        jokersList.innerHTML = '<div class="text-green-800 text-sm italic">No active jokers</div>';
     } else {
         game.jokers.forEach((joker, index) => {
             const el = document.createElement('div');
-            el.className = 'bg-zinc-800/50 border border-zinc-700 p-2 rounded flex justify-between items-center group';
+            el.className = 'bg-black border border-green-700 p-2 flex justify-between items-center group hover:bg-green-900/20 transition-colors';
             el.innerHTML = `
                 <div>
-                    <div class="text-sm font-bold text-emerald-400">${joker.name}</div>
-                    <div class="text-xs text-zinc-500">${joker.description}</div>
+                    <div class="text-sm font-bold text-green-400">${joker.name}</div>
+                    <div class="text-xs text-green-600">${joker.description}</div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="text-xs bg-zinc-900 px-1 rounded text-zinc-500">${joker.rarity}</span>
-                    ${game.gameState === 'SHOP' ? `<button onclick="sellItem('joker', ${index})" class="text-red-500 hover:text-red-400 text-xs font-bold px-1">SELL</button>` : ''}
+                    <span class="text-xs bg-green-900/30 px-1 text-green-500 border border-green-800">${joker.rarity}</span>
+                    ${game.gameState === 'SHOP' ? `<button onclick="sellItem('joker', ${index})" class="text-red-500 hover:text-red-400 text-xs font-bold px-1">[SELL]</button>` : ''}
                 </div>
             `;
             // Bind click for sell
@@ -177,11 +212,11 @@ function renderInventory() {
     // Scripts
     scriptsList.innerHTML = '';
     if (game.scripts.length === 0) {
-        scriptsList.innerHTML = '<div class="col-span-2 text-zinc-600 text-sm italic">No scripts loaded</div>';
+        scriptsList.innerHTML = '<div class="col-span-2 text-green-800 text-sm italic">No scripts loaded</div>';
     } else {
         game.scripts.forEach((script, index) => {
             const el = document.createElement('div'); // Changed to div to handle buttons inside
-            el.className = 'bg-zinc-800/50 border border-zinc-700 p-2 rounded text-left transition-colors group relative overflow-hidden flex justify-between items-center';
+            el.className = 'bg-black border border-green-700 p-2 text-left transition-colors group relative overflow-hidden flex justify-between items-center hover:bg-green-900/20';
             
             // Cooldown/Usage visual
             const canUse = game.gameState === 'PLAYING';
@@ -189,10 +224,10 @@ function renderInventory() {
 
             el.innerHTML = `
                 <div class="flex-1 cursor-pointer ${opacityClass}" onclick="useScript(${index})">
-                    <div class="text-sm font-bold text-cyan-400 group-hover:text-cyan-300">${script.name}</div>
-                    <div class="text-xs text-zinc-500 truncate">${script.description}</div>
+                    <div class="text-sm font-bold text-cyan-400 group-hover:text-cyan-300">> ${script.name}</div>
+                    <div class="text-xs text-green-600 truncate">${script.description}</div>
                 </div>
-                ${game.gameState === 'SHOP' ? `<button class="text-red-500 hover:text-red-400 text-xs font-bold px-2 z-10">SELL</button>` : ''}
+                ${game.gameState === 'SHOP' ? `<button class="text-red-500 hover:text-red-400 text-xs font-bold px-2 z-10">[SELL]</button>` : ''}
             `;
             
             // Bind click for use
@@ -214,20 +249,20 @@ function renderShop() {
     
     game.shopInventory.forEach(item => {
         const el = document.createElement('div');
-        el.className = 'bg-zinc-800 border border-zinc-700 p-4 rounded-xl flex flex-col gap-2 hover:border-zinc-600 transition-colors';
+        el.className = 'bg-black border border-purple-700 p-4 flex flex-col gap-2 hover:border-purple-500 transition-colors shadow-[0_0_5px_rgba(168,85,247,0.1)]';
         
         const isAffordable = game.cash >= item.price;
-        const typeColor = item.type === 'passive' ? 'text-emerald-400' : 'text-cyan-400';
+        const typeColor = item.type === 'passive' ? 'text-green-400' : 'text-cyan-400';
         
         el.innerHTML = `
             <div class="flex justify-between items-start">
                 <h4 class="font-bold ${typeColor}">${item.name}</h4>
-                <span class="text-xs bg-zinc-900 px-2 py-1 rounded text-zinc-400">$${item.price}</span>
+                <span class="text-xs bg-purple-900/20 px-2 py-1 border border-purple-800 text-purple-400">$${item.price}</span>
             </div>
-            <p class="text-sm text-zinc-400 flex-1">${item.description}</p>
-            <button class="w-full py-2 rounded-lg font-bold text-sm transition-colors ${isAffordable ? 'bg-zinc-700 hover:bg-zinc-600 text-white' : 'bg-zinc-900 text-zinc-600 cursor-not-allowed'}"
+            <p class="text-sm text-purple-300/70 flex-1 font-mono">${item.description}</p>
+            <button class="w-full py-2 font-bold text-sm transition-colors border ${isAffordable ? 'bg-purple-900/20 hover:bg-purple-500 hover:text-black text-purple-400 border-purple-500' : 'bg-black text-green-900 border-green-900 cursor-not-allowed'}"
                 onclick="buyItem(${item.uniqueId})">
-                BUY
+                [ BUY ]
             </button>
         `;
         
@@ -247,26 +282,26 @@ function updateHistory() {
         let opacity = Math.max(0.4, 1 - (reverseIndex * 0.15));
         
         let hint = '';
-        let colorClass = 'text-zinc-500';
+        let colorClass = 'text-green-700';
         
         if (game.mysteryNumber !== null) {
             if (guess < game.mysteryNumber) {
                 hint = '↑ HIGHER';
-                colorClass = 'text-emerald-500';
+                colorClass = 'text-green-500';
             } else if (guess > game.mysteryNumber) {
                 hint = '↓ LOWER';
                 colorClass = 'text-red-500';
             } else {
                 hint = 'MATCH';
-                colorClass = 'text-emerald-400 font-bold';
+                colorClass = 'text-green-400 font-bold';
             }
         }
 
-        el.className = `flex justify-between items-center bg-zinc-800/30 p-2 rounded w-full`;
+        el.className = `flex justify-between items-center border-b border-green-900/30 p-2 w-full font-mono`;
         el.style.opacity = opacity;
         
         el.innerHTML = `
-            <span class="font-mono text-zinc-300">#${index + 1}: ${guess}</span>
+            <span class="text-green-300">#${index + 1}: ${guess}</span>
             <span class="text-xs font-bold ${colorClass}">${hint}</span>
         `;
         historyWheel.prepend(el); // Newest first
@@ -278,15 +313,15 @@ function updateGrid() {
     for (let i = 0; i < 100; i++) {
         const el = document.createElement('div');
         el.textContent = i;
-        el.className = 'text-[0.6rem] font-mono flex items-center justify-center h-6 rounded transition-colors ';
+        el.className = 'text-[0.6rem] font-mono flex items-center justify-center h-6 transition-colors ';
         
         let isValid = true;
         if (i < game.min || i > game.max) isValid = false;
         
         if (isValid) {
-            el.classList.add('text-emerald-400', 'bg-emerald-900/20', 'font-bold', 'border', 'border-emerald-500/30');
+            el.classList.add('text-green-400', 'bg-green-900/20', 'font-bold', 'border', 'border-green-500/30');
         } else {
-            el.classList.add('text-zinc-700', 'opacity-30');
+            el.classList.add('text-green-900', 'opacity-20');
         }
         numberGrid.appendChild(el);
     }
@@ -409,3 +444,152 @@ helpBtn.addEventListener('mouseleave', () => {
 
 // Initial Render
 render();
+startTitleAnimation();
+
+// --- TITLE ANIMATION ---
+function startTitleAnimation() {
+    const homeTitle = document.getElementById('home-title');
+    if (!homeTitle) return;
+    
+    const titleText = "BINARY HUSTLE";
+    const glitchChars = "!<>-_\\/[]{}—=+*^?#________";
+    let currentIndex = 0;
+    
+    // Typing Phase
+    const typeInterval = setInterval(() => {
+        homeTitle.textContent = titleText.substring(0, currentIndex) + '█';
+        currentIndex++;
+        
+        if (currentIndex > titleText.length) {
+            clearInterval(typeInterval);
+            homeTitle.textContent = titleText;
+            homeTitle.classList.add('animate-terminal-pulse');
+            startGlitchEffect(homeTitle, titleText, glitchChars);
+        }
+    }, 100);
+}
+
+function startGlitchEffect(element, originalText, chars) {
+    setInterval(() => {
+        // Randomly decide to glitch
+        if (Math.random() > 0.3) return; // 70% chance to do nothing this tick
+
+        const glitchCount = Math.floor(Math.random() * 2) + 1; // 1 or 2 chars
+        let glitchedText = originalText.split('');
+        
+        for (let i = 0; i < glitchCount; i++) {
+            const index = Math.floor(Math.random() * originalText.length);
+            if (originalText[index] !== ' ') {
+                glitchedText[index] = chars[Math.floor(Math.random() * chars.length)];
+            }
+        }
+        
+        element.textContent = glitchedText.join('');
+        
+        // Reset quickly
+        setTimeout(() => {
+            element.textContent = originalText;
+        }, 50 + Math.random() * 100);
+        
+    }, 150);
+}
+
+// --- NEW SCREENS LOGIC ---
+
+const themes = {
+    'green': { filter: 'none', label: 'GREEN' },
+    'blue': { filter: 'hue-rotate(90deg)', label: 'BLUE' },
+    'amber': { filter: 'hue-rotate(260deg)', label: 'AMBER' },
+    'red': { filter: 'hue-rotate(220deg)', label: 'RED' },
+};
+const themeKeys = Object.keys(themes);
+
+if (homeStartBtn) {
+    homeStartBtn.onclick = () => {
+        homeScreen.classList.add('hidden');
+        app.classList.remove('hidden');
+        if (game.gameState === 'GAME_OVER') {
+            window.location.reload();
+        }
+    };
+}
+
+if (pauseBtn) {
+    pauseBtn.onclick = () => {
+        pauseOverlay.classList.remove('hidden');
+    };
+}
+
+if (resumeBtn) {
+    resumeBtn.onclick = () => {
+        pauseOverlay.classList.add('hidden');
+    };
+}
+
+if (quitBtn) {
+    quitBtn.onclick = () => {
+        window.location.reload();
+    };
+}
+
+if (themeBtn) {
+    themeBtn.onclick = () => {
+        const currentIndex = themeKeys.indexOf(currentTheme);
+        const nextIndex = (currentIndex + 1) % themeKeys.length;
+        currentTheme = themeKeys[nextIndex];
+        
+        document.body.style.filter = themes[currentTheme].filter;
+        
+        updateStaticTexts();
+    };
+}
+
+if (langBtn) {
+    langBtn.onclick = () => {
+        currentLang = currentLang === 'en' ? 'fr' : 'en';
+        updateStaticTexts();
+        updateMessage();
+    };
+}
+
+function updateStaticTexts() {
+    const texts = {
+        en: {
+            start: '> INITIALIZE_RUN',
+            lang: 'LANG: EN',
+            theme: `COLOR: ${themes[currentTheme].label}`,
+            resume: '> RESUME_SESSION',
+            quit: '> ABORT_RUN',
+            paused: 'SYSTEM PAUSED',
+            enter: '[ ENTER ]',
+            exitShop: '> EXIT_MARKET',
+            continue: '> CONTINUE'
+        },
+        fr: {
+            start: '> INITIALISER_RUN',
+            lang: 'LANG: FR',
+            theme: `COULEUR: ${themes[currentTheme].label}`,
+            resume: '> REPRENDRE',
+            quit: '> ABANDONNER',
+            paused: 'SYSTÈME EN PAUSE',
+            enter: '[ ENTRER ]',
+            exitShop: '> QUITTER_MARCHÉ',
+            continue: '> CONTINUER'
+        }
+    };
+    
+    const t = texts[currentLang];
+    
+    if (homeStartBtn) homeStartBtn.textContent = t.start;
+    if (langBtn) langBtn.textContent = t.lang;
+    if (themeBtn) themeBtn.textContent = t.theme;
+    if (resumeBtn) resumeBtn.textContent = t.resume;
+    if (quitBtn) quitBtn.textContent = t.quit;
+    
+    const pauseTitle = pauseOverlay.querySelector('h2');
+    if (pauseTitle) pauseTitle.textContent = t.paused;
+    
+    if (guessBtn) guessBtn.textContent = t.enter;
+    if (leaveShopBtn) leaveShopBtn.textContent = t.exitShop;
+    if (nextBtn) nextBtn.textContent = t.continue;
+}
