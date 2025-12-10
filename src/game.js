@@ -54,7 +54,7 @@ export class Game {
           // Check primary trigger
           if (joker.trigger === triggerName) {
               const result = joker.execute(this, currentValue);
-              if (triggerName === 'calculateGain' || triggerName === 'rng_validation') {
+              if (['calculateGain', 'rng_validation', 'getMaxRange'].includes(triggerName)) {
                   currentValue = result;
               } else if (result && result.message) {
                    this.message = { key: 'script_effect', params: { text: result.message } };
@@ -65,7 +65,7 @@ export class Game {
           // Check hooks
           if (joker.hooks && joker.hooks[triggerName]) {
               const result = joker.hooks[triggerName](this, currentValue);
-              if (triggerName === 'calculateGain' || triggerName === 'rng_validation') {
+              if (['calculateGain', 'rng_validation', 'getMaxRange'].includes(triggerName)) {
                   currentValue = result;
               } else if (result && result.message) {
                    this.message = { key: 'script_effect', params: { text: result.message } };
@@ -102,8 +102,12 @@ export class Game {
       let candidate = 0;
       let valid = false;
       
+      // Determine Max Range (Default 100 for 0-99)
+      let rangeSize = this.triggerJokers('getMaxRange', 100);
+      this.max = rangeSize - 1;
+
       while (!valid) {
-        candidate = Math.floor(Math.random() * 100);
+        candidate = Math.floor(Math.random() * rangeSize);
         valid = this.checkJokerConstraints('rng_validation', candidate);
       }
       this.mysteryNumber = candidate;
@@ -112,11 +116,13 @@ export class Game {
       this.maxAttempts = 7; // Reset to base
       
       this.min = 0;
-      this.max = 99;
+      // this.max is already set above
       this.history = [];
       this.roundLogs = [];
       this.bossEffect = null;
       this.nextGuessBonus = 0;
+      this.reverseGuessed = false; // For Mirror Dimension
+      this.quantumChanged = false; // For Quantum Tens
 
       // Apply Boss Effect if Round 3
       if (this.round === 3) {
@@ -142,6 +148,9 @@ export class Game {
 
     this.attempts++;
     this.history.push(guess);
+
+    // Trigger Jokers: onGuess
+    this.triggerJokers('onGuess', guess);
 
     if (guess === this.mysteryNumber) {
       this.handleWin();
@@ -239,17 +248,29 @@ export class Game {
       this.shopInventory = [];
       this.rerollCost = 5;
       
-      // Add 3 random Jokers
-      for (let i = 0; i < 3; i++) {
-          const randomJoker = JOKERS[Math.floor(Math.random() * JOKERS.length)];
-          this.shopInventory.push({ ...randomJoker, uniqueId: Math.random() });
-      }
+      // Filter out owned jokers
+      const ownedJokerIds = this.jokers.map(j => j.id);
+      // Filter available jokers (not owned)
+      let availableJokers = JOKERS.filter(j => !ownedJokerIds.includes(j.id));
       
-      // Add 2 random Scripts
-      for (let i = 0; i < 2; i++) {
-          const randomScript = SCRIPTS[Math.floor(Math.random() * SCRIPTS.length)];
-          this.shopInventory.push({ ...randomScript, uniqueId: Math.random() });
-      }
+      // Shuffle available jokers
+      availableJokers.sort(() => Math.random() - 0.5);
+      
+      // Take up to 3 unique jokers
+      const jokersToSpawn = availableJokers.slice(0, 3);
+      
+      jokersToSpawn.forEach(joker => {
+          this.shopInventory.push({ ...joker, uniqueId: Math.random() });
+      });
+      
+      // Add 2 random Scripts (Unique in this shop batch)
+      const availableScripts = [...SCRIPTS];
+      availableScripts.sort(() => Math.random() - 0.5);
+      const scriptsToSpawn = availableScripts.slice(0, 2);
+      
+      scriptsToSpawn.forEach(script => {
+          this.shopInventory.push({ ...script, uniqueId: Math.random() });
+      });
   }
 
   rerollShop() {

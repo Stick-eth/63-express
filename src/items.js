@@ -205,6 +205,104 @@ export const JOKERS = [
                 game.memoryLeakStacks = (game.memoryLeakStacks || 0) + 1;
             }
         }
+    }),
+    // --- NEW JOKERS ---
+    createJoker({
+        id: 'speedrunner',
+        name: 'Speedrunner',
+        description: 'Gain x2 si trouvé en 3 essais ou moins. Sinon, Gain / 2.',
+        price: 12,
+        rarity: 'uncommon',
+        trigger: 'calculateGain',
+        execute: (game, baseGain) => {
+            if (game.attempts <= 3) {
+                return baseGain * 2;
+            }
+            return Math.floor(baseGain / 2);
+        }
+    }),
+    createJoker({
+        id: 'quantum_tens',
+        name: 'Quantum Tens',
+        description: 'Révèle les dizaines, mais l\'unité change une fois par round.',
+        price: 14,
+        rarity: 'rare',
+        hooks: {
+            onRoundStart: (game) => {
+                const tens = Math.floor(game.mysteryNumber / 10);
+                return { message: `QUANTUM: Starts with ${tens}X` };
+            },
+            onGuess: (game) => {
+                if (!game.quantumChanged && Math.random() < 0.25) {
+                    // Change units digit
+                    const tens = Math.floor(game.mysteryNumber / 10);
+                    let newNumber = -1;
+                    let attempts = 0;
+                    
+                    // Try to find a valid number respecting constraints (Even Flow, Lazy Dev, etc.)
+                    while (attempts < 20) {
+                        const newUnits = Math.floor(Math.random() * 10);
+                        const candidate = (tens * 10) + newUnits;
+                        
+                        // Check against global constraints
+                        if (game.checkJokerConstraints('rng_validation', candidate)) {
+                            newNumber = candidate;
+                            break;
+                        }
+                        attempts++;
+                    }
+
+                    if (newNumber !== -1 && newNumber !== game.mysteryNumber) {
+                        game.mysteryNumber = newNumber;
+                        game.quantumChanged = true;
+                        // Optional: return { message: "QUANTUM FLUX DETECTED" };
+                    }
+                }
+            }
+        }
+    }),
+    createJoker({
+        id: 'big_data',
+        name: 'Big Data',
+        description: 'Intervalle 0-200. Gains augmentés (x1.5 globalement via difficulté).',
+        price: 15,
+        rarity: 'rare',
+        hooks: {
+            getMaxRange: (game, currentRange) => 200,
+            calculateGain: (game, baseGain) => Math.floor(baseGain * 1.5)
+        }
+    }),
+    createJoker({
+        id: 'mirror_dimension',
+        name: 'Mirror Dimension',
+        description: 'Gain x2 si vous devinez l\'inverse du nombre avant de gagner (ex: 45 avant 54).',
+        price: 12,
+        rarity: 'uncommon',
+        hooks: {
+            onGuess: (game, guess) => {
+                const targetStr = game.mysteryNumber.toString().padStart(2, '0');
+                const reverseTarget = parseInt(targetStr.split('').reverse().join(''));
+                if (guess === reverseTarget && guess !== game.mysteryNumber) {
+                    game.reverseGuessed = true;
+                    return { message: "MIRROR: Reverse pattern matched!" };
+                }
+            },
+            calculateGain: (game, baseGain) => {
+                if (game.reverseGuessed) return baseGain * 2;
+                return baseGain;
+            }
+        }
+    }),
+    createJoker({
+        id: 'high_roller',
+        name: 'High Roller',
+        description: 'Gagnez 2x la valeur du nombre mystère en bonus.',
+        price: 18,
+        rarity: 'legendary',
+        trigger: 'calculateGain',
+        execute: (game, baseGain) => {
+            return baseGain + (game.mysteryNumber * 2);
+        }
     })
 ];
 
