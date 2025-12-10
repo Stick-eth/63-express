@@ -28,6 +28,23 @@ export class Game {
     this.baseGains = [200, 100, 50, 25, 10, 5, 1];
     
     this.bossEffect = null;
+    this.devMode = false;
+  }
+
+  toggleDevMode(enabled) {
+      this.devMode = enabled;
+      if (this.devMode) {
+          this.cash = 999999;
+      }
+      this.log(`Dev Mode: ${this.devMode}`);
+  }
+
+  revealMysteryNumber() {
+      return this.mysteryNumber;
+  }
+
+  addAttempt() {
+      this.attempts = Math.max(0, this.attempts - 1);
   }
 
   log(msg) {
@@ -36,7 +53,7 @@ export class Game {
   }
 
   startRun() {
-      this.cash = 100;
+      this.cash = this.devMode ? 999999 : 100;
       this.level = 1;
       this.rent = 50;
       this.round = 1;
@@ -241,32 +258,47 @@ export class Game {
 
   nextAction() {
       if (this.gameState === 'WON' || this.gameState === 'LOST_ROUND') {
+          // Check if End of Level (Round == MaxRounds)
+          if (this.round === this.maxRounds) {
+              let effectiveRent = this.triggerJokers('calculateRent', this.rent);
+              const canGoDebt = this.jokers.some(j => j.id === 'endette');
+              
+              if (this.cash < effectiveRent && !canGoDebt) {
+                  this.gameState = 'GAME_OVER';
+                  this.message = { key: 'game_over_rent', params: { cash: this.cash, rent: effectiveRent } };
+                  return; 
+              }
+
+              // Pay Rent and Trigger Transition
+              this.cash -= effectiveRent;
+              this.gameState = 'LEVEL_TRANSITION';
+              return;
+          }
+
           // Go to Browser
           this.generateShop(); // Generate shop so it's ready
           this.gameState = 'BROWSER';
           this.message = { key: 'browser_welcome' };
       } else if (this.gameState === 'BROWSER') {
-          // Next Round or Next Level
-          this.round++;
-          if (this.round > this.maxRounds) {
-              // End of Level - Pay Rent
-              let effectiveRent = this.triggerJokers('calculateRent', this.rent);
-              
-              const canGoDebt = this.jokers.some(j => j.id === 'endette');
-              if (this.cash >= effectiveRent || canGoDebt) {
-                  this.cash -= effectiveRent;
-                  this.level++;
-                  this.round = 1;
-                  this.rent = Math.floor(this.rent * 2.5); // Exponential rent
-                  this.startRound();
-              } else {
-                  this.gameState = 'GAME_OVER';
-                  this.message = { key: 'game_over_rent', params: { cash: this.cash, rent: effectiveRent } };
-              }
+          if (this.newMonthStarted) {
+              this.newMonthStarted = false;
+              this.startRound();
           } else {
+              this.round++;
               this.startRound();
           }
       }
+  }
+
+  enterNewMonth() {
+      this.level++;
+      this.round = 1;
+      this.rent = Math.floor(this.rent * 2.5); // Exponential rent
+      this.newMonthStarted = true;
+      
+      this.generateShop();
+      this.gameState = 'BROWSER';
+      this.message = { key: 'browser_welcome' };
   }
 
   openApp(appName) {

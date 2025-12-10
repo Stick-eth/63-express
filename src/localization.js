@@ -8,6 +8,24 @@ export const bootSequence = [
     "Starting user interface..."
 ];
 
+export const monthlyBootSequenceEn = [
+    "SYSTEM MAINTENANCE...",
+    "PROCESSING RENT PAYMENT...",
+    "OPTIMIZING DRIVERS...",
+    "CLEARING CACHE...",
+    "MONTHLY UPDATE COMPLETE.",
+    "RESTARTING SESSION..."
+];
+
+export const monthlyBootSequenceFr = [
+    "MAINTENANCE SYSTÈME...",
+    "TRAITEMENT DU LOYER...",
+    "OPTIMISATION DES PILOTES...",
+    "VIDAGE DU CACHE...",
+    "MISE À JOUR MENSUELLE TERMINÉE.",
+    "REDÉMARRAGE DE LA SESSION..."
+];
+
 export const loreSequenceEn = [
     "SYSTEM CHECK COMPLETE.",
     "USER: [ANONYMOUS]",
@@ -120,11 +138,65 @@ export const phishingSequenceFr = [
     "NETTOYAGE SYSTÈME LANCÉ..."
 ];
 
+export const gameOverLoreEn = [
+    "PAYMENT FAILED.",
+    "EVICTION NOTICE RECEIVED.",
+    "----------------------------------------",
+    "Unfortunately, we couldn't pay the rent.",
+    "This machine falls back into oblivion...",
+    "But it hides something...",
+    "As if it was struck by a curse...",
+    "SYSTEM ERROR: SIGNAL LOST",
+    "----------------------------------------",
+    "TERMINATING CONNECTION..."
+];
+
+export const gameOverLoreFr = [
+    "ÉCHEC DU PAIEMENT.",
+    "AVIS D'EXPULSION REÇU.",
+    "----------------------------------------",
+    "Malheureusement, nous n'avons pas réussi à payer le loyer.",
+    "Cette machine retombe dans les oubliettes...",
+    "Mais elle cache quelque chose...",
+    "Comme si elle avait été frappée par une malédiction...",
+    "ERREUR SYSTÈME: SIGNAL PERDU",
+    "----------------------------------------",
+    "ARRÊT DE LA CONNEXION..."
+];
+
+export const rebootSequenceEn = [
+    "SYSTEM REBOOT INITIATED...",
+    "LOADING KERNEL...",
+    "CHECKING DISK INTEGRITY... OK",
+    "RUNNING ANTIVIRUS SCAN...",
+    "SCANNING: C:/SYSTEM32...",
+    "SCANNING: USER_DATA...",
+    "SCAN COMPLETE: 0 THREATS FOUND.",
+    "----------------------------------------",
+    "System seems stable.",
+    "All anomalies have been resolved.",
+    "Restoring user session..."
+];
+
+export const rebootSequenceFr = [
+    "REDÉMARRAGE SYSTÈME...",
+    "CHARGEMENT DU NOYAU...",
+    "VÉRIFICATION DISQUE... OK",
+    "LANCEMENT SCAN ANTIVIRUS...",
+    "SCAN: C:/SYSTEM32...",
+    "SCAN: DONNÉES_UTILISATEUR...",
+    "SCAN TERMINÉ: 0 MENACE DÉTECTÉE.",
+    "----------------------------------------",
+    "Le système semble stable.",
+    "Toutes les anomalies ont été résolues.",
+    "Restauration de la session..."
+];
+
 export const translations = {
     en: {
         'welcome_hustle': 'Welcome to the Binary Hustle. Crack the code.',
         'run_start': (p) => `MISSION: Find the code (0-99) in ${p?.maxAttempts} attempts. Rent Due: $${p?.rent}.`,
-        'round_start': (p) => `Level ${p?.level} - Round ${p?.round}. Range: [${p?.min}-${p?.max}]. Rent Due: $${p?.rent}`,
+        'round_start': (p) => `Month ${p?.level} - Week ${p?.round}. Range: [${p?.min}-${p?.max}]. Rent Due: $${p?.rent}`,
         'boss_round': (p) => `BOSS DETECTED: ${p?.name}. ${p?.desc}`,
         'invalid_guess': (p) => `Invalid input. Enter ${p?.min}-${p?.max}.`,
         'won_round': (p) => `Access Granted! Gain: $${p?.gain}. Total: $${p?.cash}`,
@@ -144,7 +216,7 @@ export const translations = {
     fr: {
         'welcome_hustle': 'Bienvenue dans le Binary Hustle. Craquez le code.',
         'run_start': (p) => `MISSION: Trouvez le code (0-99) en ${p?.maxAttempts} essais. Loyer: $${p?.rent}.`,
-        'round_start': (p) => `Niveau ${p?.level} - Manche ${p?.round}. Intervalle: [${p?.min}-${p?.max}]. Loyer: $${p?.rent}`,
+        'round_start': (p) => `Mois ${p?.level} - Semaine ${p?.round}. Intervalle: [${p?.min}-${p?.max}]. Loyer: $${p?.rent}`,
         'boss_round': (p) => `BOSS DÉTECTÉ: ${p?.name}. ${p?.desc}`,
         'invalid_guess': (p) => `Entrée invalide. Entrez ${p?.min}-${p?.max}.`,
         'won_round': (p) => `Accès Autorisé! Gain: $${p?.gain}. Total: $${p?.cash}`,
@@ -166,8 +238,11 @@ export const translations = {
 export const staticTexts = {
     en: {
         start: '> INITIALIZE_RUN',
-        lang: 'LANG: EN',
-        theme: (label) => `COLOR: ${label}`,
+        settings: '> CONFIGURATION',
+        lang: 'LANGUAGE',
+        theme: 'THEME',
+        gridKey: 'GRID SHORTCUT',
+        return: '< RETURN',
         resume: '> RESUME_SESSION',
         quit: '> ABORT_RUN',
         paused: 'SYSTEM PAUSED',
@@ -177,8 +252,11 @@ export const staticTexts = {
     },
     fr: {
         start: '> INITIALISER_RUN',
-        lang: 'LANG: FR',
-        theme: (label) => `COULEUR: ${label}`,
+        settings: '> CONFIGURATION',
+        lang: 'LANGUE',
+        theme: 'THÈME',
+        gridKey: 'RACCOURCI GRILLE',
+        return: '< RETOUR',
         resume: '> REPRENDRE',
         quit: '> ABANDONNER',
         paused: 'SYSTÈME EN PAUSE',

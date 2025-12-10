@@ -13,8 +13,16 @@ export function updateStaticTexts(currentLang, currentTheme, themes) {
     const t = staticTexts[currentLang];
     
     if (elements.homeStartBtn) elements.homeStartBtn.textContent = t.start;
-    if (elements.langBtn) elements.langBtn.textContent = t.lang;
-    if (elements.themeBtn) elements.themeBtn.textContent = t.theme(themes[currentTheme].label);
+    if (elements.settingsBtn) elements.settingsBtn.textContent = t.settings;
+    
+    if (elements.lblLang) elements.lblLang.textContent = t.lang;
+    if (elements.lblTheme) elements.lblTheme.textContent = t.theme;
+    if (elements.lblGridKey) elements.lblGridKey.textContent = t.gridKey;
+    if (elements.settingsBackBtn) elements.settingsBackBtn.textContent = t.return;
+
+    if (elements.settingLangBtn) elements.settingLangBtn.textContent = currentLang.toUpperCase();
+    if (elements.settingThemeBtn) elements.settingThemeBtn.textContent = themes[currentTheme].label;
+
     if (elements.resumeBtn) elements.resumeBtn.textContent = t.resume;
     if (elements.quitBtn) elements.quitBtn.textContent = t.quit;
     
@@ -383,7 +391,7 @@ export function updateScreenState(game) {
         elements.nextBtn.textContent = '> ACCESS_BROWSER';
     } else if (game.gameState === 'GAME_OVER') {
         elements.startBtn.classList.remove('hidden');
-        elements.startBtn.textContent = 'Restart Run';
+        elements.startBtn.textContent = '> CONTINUE';
         elements.gameInputDiv.classList.add('hidden');
         elements.nextBtn.classList.add('hidden');
     }

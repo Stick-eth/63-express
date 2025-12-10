@@ -38,4 +38,19 @@ export const elements = {
     bootContinueBtn: document.getElementById('boot-continue-btn'),
     homeTitle: document.getElementById('home-title'),
     messageArea: document.getElementById('message-area'),
+    
+    // Settings
+    settingsBtn: document.getElementById('settings-btn'),
+    settingsScreen: document.getElementById('settings-screen'),
+    settingLangBtn: document.getElementById('setting-lang-btn'),
+    settingThemeBtn: document.getElementById('setting-theme-btn'),
+    settingKeyBtn: document.getElementById('setting-key-btn'),
+    settingDevBtn: document.getElementById('setting-dev-btn'),
+    devControls: document.getElementById('dev-controls'),
+    devRevealBtn: document.getElementById('dev-reveal-btn'),
+    devAttemptBtn: document.getElementById('dev-attempt-btn'),
+    settingsBackBtn: document.getElementById('settings-back-btn'),
+    lblLang: document.getElementById('lbl-lang'),
+    lblTheme: document.getElementById('lbl-theme'),
+    lblGridKey: document.getElementById('lbl-grid-key'),
 };

@@ -93,6 +93,15 @@ let currentIntensity = 0;
 const GLITCH_CHARS = "!<>-_\\/[]{}—=+*^?#________";
 
 export function updateGlitchEffect(game) {
+    // Disable glitch if Level 3+ (Post-Reboot)
+    if (game.level >= 3) {
+        if (glitchInterval) {
+            clearInterval(glitchInterval);
+            glitchInterval = null;
+        }
+        return;
+    }
+
     // Calculate intensity based on Level 2 progression
     let intensity = 0;
     if (game.level >= 2) {

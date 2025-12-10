@@ -9,6 +9,8 @@ const game = new Game();
 
 let currentLang = 'en';
 let currentTheme = 'green';
+let gridKey = 'p';
+let isListeningForKey = false;
 
 const themes = {
     'green': { filter: 'none', label: 'GREEN' },
@@ -17,6 +19,38 @@ const themes = {
     'red': { filter: 'hue-rotate(220deg)', label: 'RED' },
 };
 const themeKeys = Object.keys(themes);
+
+// --- SETTINGS LOGIC ---
+function loadSettings() {
+    const saved = localStorage.getItem('binary_hustle_settings');
+    if (saved) {
+        const data = JSON.parse(saved);
+        currentLang = data.lang || 'en';
+        currentTheme = data.theme || 'green';
+        gridKey = data.gridKey || 'p';
+    }
+    applySettings();
+}
+
+function saveSettings() {
+    const data = {
+        lang: currentLang,
+        theme: currentTheme,
+        gridKey: gridKey
+    };
+    localStorage.setItem('binary_hustle_settings', JSON.stringify(data));
+}
+
+function applySettings() {
+    // Apply Theme
+    if (themes[currentTheme]) {
+        document.body.style.filter = themes[currentTheme].filter;
+    }
+    // Update UI Texts
+    UI.updateStaticTexts(currentLang, currentTheme, themes);
+    // Update Key Button Text
+    if (elements.settingKeyBtn) elements.settingKeyBtn.textContent = gridKey.toUpperCase();
+}
 
 // --- RENDER ---
 function render() {
@@ -51,6 +85,13 @@ function render() {
     UI.updateGrid(game);
     UI.updateScreenState(game);
     
+    // Dev Mode UI
+    if (game.devMode) {
+        elements.devControls.classList.remove('hidden');
+    } else {
+        elements.devControls.classList.add('hidden');
+    }
+
     if (game.gameState === 'SHOP') {
         UI.renderShop(game, { handleBuy }, currentLang);
     }
@@ -72,6 +113,21 @@ function render() {
 // --- ACTIONS ---
 
 function handleStart() {
+    if (game.gameState === 'GAME_OVER') {
+        // Game Over Cutscene
+        elements.app.classList.add('hidden');
+        elements.bootScreen.classList.remove('hidden');
+        
+        const lore = currentLang === 'fr' ? Localization.gameOverLoreFr : Localization.gameOverLoreEn;
+        
+        Animations.runTerminalSequence(lore, () => {
+            // Return to Home Screen
+            sessionStorage.setItem('skipBoot', 'true');
+            window.location.reload();
+        }, 40, false);
+        return;
+    }
+
     game.startRun();
     game.bossIntroPlayed = false;
     game.bossOutroPlayed = false;
@@ -107,8 +163,73 @@ function handleNext() {
         return; 
     }
 
+    // Check for Boss Defeated Cutscene (Level 2 Boss)
+    if (game.gameState === 'WON' && game.round === game.maxRounds && game.level === 2 && !game.bossOutroPlayed) {
+        game.bossOutroPlayed = true;
+        
+        elements.app.classList.add('hidden');
+        elements.bootScreen.classList.remove('hidden');
+        
+        const rebootLore = currentLang === 'fr' ? Localization.rebootSequenceFr : Localization.rebootSequenceEn;
+        
+        Animations.runTerminalSequence(rebootLore, () => {
+            elements.bootScreen.classList.add('hidden');
+            elements.app.classList.remove('hidden');
+            
+            // Proceed to Browser
+            game.nextAction();
+            render(); 
+        }, 40, true);
+        return; 
+    }
+
     game.nextAction();
+
+    // Check for Level Transition (Monthly Boot)
+    if (game.gameState === 'LEVEL_TRANSITION') {
+        elements.app.classList.add('hidden');
+        elements.bootScreen.classList.remove('hidden');
+        
+        const bootLore = currentLang === 'fr' ? Localization.monthlyBootSequenceFr : Localization.monthlyBootSequenceEn;
+        
+        Animations.runTerminalSequence(bootLore, () => {
+            elements.bootScreen.classList.add('hidden');
+            elements.app.classList.remove('hidden');
+            
+            game.enterNewMonth();
+            render();
+        }, 40, true);
+        return;
+    }
+
+    // Check for Immediate Game Over (Rent Failure)
+    if (game.gameState === 'GAME_OVER') {
+        triggerGameOverCutscene();
+        return;
+    }
+
     render();
+}
+
+function triggerGameOverCutscene() {
+    elements.app.classList.add('hidden');
+    elements.bootScreen.classList.remove('hidden');
+    
+    const lore = currentLang === 'fr' ? Localization.gameOverLoreFr : Localization.gameOverLoreEn;
+    
+    Animations.runTerminalSequence(lore, () => {
+        // Sequence finished. Wait for reading.
+        setTimeout(() => {
+            // Clear screen (Black)
+            if (elements.bootText) elements.bootText.innerHTML = ''; 
+            // Wait again
+            setTimeout(() => {
+                // Reload
+                sessionStorage.setItem('skipBoot', 'true');
+                window.location.reload();
+            }, 2000);
+        }, 3000);
+    }, 40, false);
 }
 
 function handleBuy(id) {
@@ -177,7 +298,86 @@ if (elements.helpBtn) {
     });
 }
 
+// Keyboard Shortcuts
+document.addEventListener('keydown', (e) => {
+    if (isListeningForKey) {
+        e.preventDefault();
+        gridKey = e.key.toLowerCase();
+        isListeningForKey = false;
+        elements.settingKeyBtn.classList.remove('animate-pulse', 'bg-green-900');
+        saveSettings();
+        applySettings();
+        return;
+    }
+
+    if (game.gameState === 'PLAYING') {
+        // Grid Shortcut
+        if (e.key.toLowerCase() === gridKey.toLowerCase()) {
+            elements.gridOverlay.classList.remove('opacity-0', 'pointer-events-none');
+        }
+
+        // Global Enter
+        if (e.key === 'Enter') {
+            handleGuess();
+            return;
+        }
+
+        // Auto-focus Input on Number/Backspace
+        if (/^[0-9]$/.test(e.key) || e.key === 'Backspace') {
+            if (document.activeElement !== elements.guessInput) {
+                elements.guessInput.focus();
+            }
+        }
+    }
+});
+
+document.addEventListener('keyup', (e) => {
+    if (game.gameState === 'PLAYING' && e.key.toLowerCase() === gridKey.toLowerCase()) {
+        elements.gridOverlay.classList.add('opacity-0', 'pointer-events-none');
+    }
+});
+
 // Settings
+if (elements.settingsBtn) {
+    elements.settingsBtn.onclick = () => {
+        elements.homeScreen.classList.add('hidden');
+        elements.settingsScreen.classList.remove('hidden');
+    };
+}
+
+if (elements.settingsBackBtn) {
+    elements.settingsBackBtn.onclick = () => {
+        elements.settingsScreen.classList.add('hidden');
+        elements.homeScreen.classList.remove('hidden');
+    };
+}
+
+if (elements.settingLangBtn) {
+    elements.settingLangBtn.onclick = () => {
+        currentLang = currentLang === 'en' ? 'fr' : 'en';
+        saveSettings();
+        applySettings();
+    };
+}
+
+if (elements.settingThemeBtn) {
+    elements.settingThemeBtn.onclick = () => {
+        const currentIndex = themeKeys.indexOf(currentTheme);
+        const nextIndex = (currentIndex + 1) % themeKeys.length;
+        currentTheme = themeKeys[nextIndex];
+        saveSettings();
+        applySettings();
+    };
+}
+
+if (elements.settingKeyBtn) {
+    elements.settingKeyBtn.onclick = () => {
+        isListeningForKey = true;
+        elements.settingKeyBtn.textContent = '...';
+        elements.settingKeyBtn.classList.add('animate-pulse', 'bg-green-900');
+    };
+}
+
 if (elements.homeStartBtn) {
     elements.homeStartBtn.onclick = () => {
         elements.homeScreen.classList.add('hidden');
@@ -242,6 +442,8 @@ if (elements.themeBtn) {
     };
 }
 
+// Removed old lang/theme btn listeners as they are now in settings
+/*
 if (elements.langBtn) {
     elements.langBtn.onclick = () => {
         currentLang = currentLang === 'en' ? 'fr' : 'en';
@@ -249,9 +451,50 @@ if (elements.langBtn) {
         UI.updateMessage(game, currentLang);
     };
 }
+*/
+
+// Dev Mode Listeners
+if (elements.settingDevBtn) {
+    elements.settingDevBtn.onclick = () => {
+        if (game.devMode) {
+            game.toggleDevMode(false);
+            elements.settingDevBtn.textContent = 'OFF';
+            elements.settingDevBtn.classList.remove('text-red-500');
+            elements.settingDevBtn.classList.add('text-green-900');
+        } else {
+            const code = prompt('ENTER DEV CODE:');
+            if (code === null) return;
+            if (code === '153624') {
+                game.toggleDevMode(true);
+                elements.settingDevBtn.textContent = 'ON';
+                elements.settingDevBtn.classList.remove('text-green-900');
+                elements.settingDevBtn.classList.add('text-red-500');
+            } else {
+                alert('ACCESS DENIED');
+            }
+        }
+        render();
+    };
+}
+
+if (elements.devRevealBtn) {
+    elements.devRevealBtn.onclick = () => {
+        const num = game.revealMysteryNumber();
+        alert(`Mystery Number: ${num}`);
+    };
+}
+
+if (elements.devAttemptBtn) {
+    elements.devAttemptBtn.onclick = () => {
+        game.addAttempt();
+        render();
+    };
+}
 
 // Start Boot on Load
 window.addEventListener('load', () => {
+    loadSettings(); // Load settings first
+
     if (sessionStorage.getItem('skipBoot')) {
         sessionStorage.removeItem('skipBoot');
         elements.bootScreen.classList.add('hidden');
