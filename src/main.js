@@ -444,7 +444,105 @@ helpBtn.addEventListener('mouseleave', () => {
 
 // Initial Render
 render();
-startTitleAnimation();
+// startTitleAnimation(); // Moved to after boot sequence
+
+// --- BOOT & LORE SEQUENCES ---
+const bootScreen = document.getElementById('boot-screen');
+const bootText = document.getElementById('boot-text');
+const bootContinueBtn = document.getElementById('boot-continue-btn');
+
+const bootSequence = [
+    "Initializing Binary Hustle Kernel v1.0.0...",
+    "Loading modules: [ CPU ] [ MEM ] [ GPU ] [ NET ]",
+    "Mounting file system... OK",
+    "Checking integrity... OK",
+    "Establishing secure connection to localhost...",
+    "Access granted.",
+    "Starting user interface..."
+];
+
+const loreSequenceEn = [
+    "SYSTEM CHECK COMPLETE.",
+    "USER: [ANONYMOUS]",
+    "STATUS: CRITICAL DEBT",
+    "INCOMING MESSAGE...",
+    "----------------------------------------",
+    "We have no money left.",
+    "The landlord is demanding higher rent.",
+    "I found this old machine to mine crypto manually.",
+    "It's our only chance to survive.",
+    "----------------------------------------",
+    "INITIALIZING MINING PROTOCOL..."
+];
+
+const loreSequenceFr = [
+    "VÉRIFICATION SYSTÈME TERMINÉE.",
+    "UTILISATEUR: [ANONYME]",
+    "STATUT: DETTE CRITIQUE",
+    "MESSAGE ENTRANT...",
+    "----------------------------------------",
+    "Nous n'avons plus d'argent.",
+    "Le proprio nous demande des loyers de plus en plus élevés.",
+    "J'ai trouvé cette vieille machine à miner de la crypto manuellement.",
+    "C'est la seule chance de m'en sortir.",
+    "----------------------------------------",
+    "INITIALISATION DU PROTOCOLE DE MINAGE..."
+];
+
+// Start Boot on Load
+window.addEventListener('load', () => {
+    if (sessionStorage.getItem('skipBoot')) {
+        sessionStorage.removeItem('skipBoot');
+        bootScreen.classList.add('hidden');
+        homeScreen.classList.remove('hidden');
+        startTitleAnimation();
+    } else {
+        runTerminalSequence(bootSequence, () => {
+            bootScreen.classList.add('hidden');
+            homeScreen.classList.remove('hidden');
+            startTitleAnimation();
+        }, 30, false);
+    }
+});
+
+function runTerminalSequence(lines, onComplete, speed = 50, waitForUser = false) {
+    bootText.innerHTML = '';
+    if (bootContinueBtn) bootContinueBtn.classList.add('hidden');
+    let lineIndex = 0;
+    
+    function typeLine() {
+        if (lineIndex >= lines.length) {
+            if (waitForUser && bootContinueBtn) {
+                bootContinueBtn.classList.remove('hidden');
+                bootContinueBtn.onclick = () => {
+                    bootContinueBtn.classList.add('hidden');
+                    onComplete();
+                };
+            } else {
+                setTimeout(onComplete, 1000);
+            }
+            return;
+        }
+        
+        const line = lines[lineIndex];
+        const p = document.createElement('div');
+        p.className = 'mb-1';
+        bootText.appendChild(p);
+        
+        let charIndex = 0;
+        const interval = setInterval(() => {
+            p.textContent += line[charIndex];
+            charIndex++;
+            if (charIndex >= line.length) {
+                clearInterval(interval);
+                lineIndex++;
+                setTimeout(typeLine, 100); // Pause between lines
+            }
+        }, speed / 2); // Faster typing for boot
+    }
+    
+    typeLine();
+}
 
 // --- TITLE ANIMATION ---
 function startTitleAnimation() {
@@ -507,10 +605,17 @@ const themeKeys = Object.keys(themes);
 if (homeStartBtn) {
     homeStartBtn.onclick = () => {
         homeScreen.classList.add('hidden');
-        app.classList.remove('hidden');
-        if (game.gameState === 'GAME_OVER') {
-            window.location.reload();
-        }
+        bootScreen.classList.remove('hidden');
+        
+        const lore = currentLang === 'fr' ? loreSequenceFr : loreSequenceEn;
+        
+        runTerminalSequence(lore, () => {
+            bootScreen.classList.add('hidden');
+            app.classList.remove('hidden');
+            if (game.gameState === 'GAME_OVER') {
+                window.location.reload();
+            }
+        }, 40, true);
     };
 }
 
@@ -528,7 +633,21 @@ if (resumeBtn) {
 
 if (quitBtn) {
     quitBtn.onclick = () => {
-        window.location.reload();
+        pauseOverlay.classList.add('hidden');
+        app.classList.add('hidden');
+        bootScreen.classList.remove('hidden');
+        
+        const shutdownText = [
+            "ABORTING SESSION...",
+            "SAVING LOGS... ERROR (DISK FULL)",
+            "TERMINATING PROCESSES...",
+            "SYSTEM HALTED."
+        ];
+        
+        runTerminalSequence(shutdownText, () => {
+            sessionStorage.setItem('skipBoot', 'true');
+            window.location.reload();
+        }, 30, false);
     };
 }
 
