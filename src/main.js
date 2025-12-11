@@ -113,6 +113,14 @@ function render() {
     UI.updateHistory(game);
     UI.updateGrid(game);
     UI.updateScreenState(game);
+
+    if (game.gameState === 'TRADING') {
+        startTradingLoop();
+    } else {
+        stopTradingLoop();
+    }
+
+    refreshBrowserApps();
     
     // Dev Mode UI
     if (game.devMode) {
@@ -123,6 +131,8 @@ function render() {
 
     if (game.gameState === 'SHOP') {
         UI.renderShop(game, { handleBuy }, currentLang);
+    } else if (game.gameState === 'TRADING') {
+        UI.renderTrading(game);
     }
     
     // Force Boss Message Update if in Boss Round
@@ -180,6 +190,7 @@ function handleNext() {
         const monthEvents = game.currentArc.monthEvents[game.monthInArc];
         if (monthEvents && monthEvents.outro) {
             game.bossOutroPlayed = true;
+            Animations.stopVisualEffects();
             
             elements.app.classList.add('hidden');
             elements.bootScreen.classList.remove('hidden');
@@ -200,8 +211,18 @@ function handleNext() {
 
     game.nextAction();
 
+    const continuingArc = game.currentArc && game.monthInArc < game.currentArc.duration;
+
     // Check for Level Transition (Monthly Boot)
     if (game.gameState === 'LEVEL_TRANSITION') {
+        if (continuingArc) {
+            Animations.stopVisualEffects();
+            game.enterNewMonth();
+            render();
+            return;
+        }
+
+        Animations.stopVisualEffects();
         elements.app.classList.add('hidden');
         elements.bootScreen.classList.remove('hidden');
         
@@ -266,9 +287,113 @@ function handleLeaveShop() {
     render();
 }
 
+function handleLeaveTrading() {
+    game.closeApp();
+    render();
+}
+
+function handleOpenTrading() {
+    game.openApp('TRADING');
+    UI.renderTrading(game); // Force initial render
+    render();
+}
+
+function handleTradingBuy() {
+    if (!elements.tradingBuyInput) return;
+    const amount = parseFloat(elements.tradingBuyInput.value || '0');
+    const result = game.buyTrading(amount);
+    if (!result.success) {
+        let msg = 'Invalid trade.';
+        if (result.reason === 'limit') msg = 'Cannot invest >50% net worth.';
+        if (result.reason === 'limit_reached') msg = 'Daily trading limit reached (1/1).';
+        game.message = { key: 'script_effect', params: { text: msg } };
+    } else {
+        game.message = { key: 'script_effect', params: { text: `Bought ${result.shares.toFixed(3)} @ $${result.price.toFixed(2)}.` } };
+    }
+    render();
+}
+
+function handleTradingSell() {
+    if (!elements.tradingBuyInput) return;
+    const amount = parseFloat(elements.tradingBuyInput.value || '0');
+    const result = game.sellTrading(amount);
+    if (!result.success) {
+        let msg = 'No holdings to sell.';
+        if (result.reason === 'limit_reached') msg = 'Daily trading limit reached (1/1).';
+        game.message = { key: 'script_effect', params: { text: msg } };
+    } else {
+        game.message = { key: 'script_effect', params: { text: `Sold ${result.shares.toFixed(3)} @ $${result.price.toFixed(2)} for $${result.gained.toFixed(2)}.` } };
+    }
+    render();
+}
+
 function handleOpenShop() {
     game.openApp('SHOP');
     render();
+}
+
+function handleOpenAntivirus() {
+    game.openApp('ANTIVIRUS');
+    // Reset state for fresh view so it doesn't show previous round results
+    game.antivirusTimeLeft = 10;
+    game.antivirusScore = 0;
+    UI.renderAntivirus(game);
+    render();
+}
+
+function handleLeaveAntivirus() {
+    stopAntivirusGame();
+    game.closeApp();
+    render();
+}
+
+let antivirusTimerInterval = null;
+let antivirusSpawnInterval = null;
+
+function handleStartAntivirus() {
+    if (game.antivirusActive) return;
+    
+    game.startAntivirusGame();
+    UI.renderAntivirus(game);
+    
+    // Timer Loop
+    antivirusTimerInterval = setInterval(() => {
+        game.antivirusTimeLeft--;
+        if (game.antivirusTimeLeft <= 0) {
+            stopAntivirusGame();
+        }
+        UI.renderAntivirus(game);
+    }, 1000);
+    
+    // Spawn Loop
+    antivirusSpawnInterval = setInterval(() => {
+        if (game.antivirusActive) {
+            UI.spawnAntivirusTarget(game, () => {
+                game.hitAntivirusTarget();
+                UI.renderAntivirus(game);
+            });
+        }
+    }, 600); // Spawn every 600ms
+}
+
+function stopAntivirusGame() {
+    game.endAntivirusGame();
+    if (antivirusTimerInterval) {
+        clearInterval(antivirusTimerInterval);
+        antivirusTimerInterval = null;
+    }
+    if (antivirusSpawnInterval) {
+        clearInterval(antivirusSpawnInterval);
+        antivirusSpawnInterval = null;
+    }
+    // Clear remaining targets
+    if (elements.antivirusGameArea) {
+        const targets = elements.antivirusGameArea.querySelectorAll('div.absolute'); // Select targets
+        targets.forEach(t => {
+            if (t.id !== 'antivirus-start-overlay') t.remove();
+        });
+    }
+    UI.renderAntivirus(game);
 }
 
 function handleBrowserContinue() {
@@ -287,6 +412,55 @@ function useScript(index) {
     render();
 }
 
+function handleOpenSystem() {
+    if (!game.systemMonitorUnlocked) return;
+    game.gameState = 'SYSTEM_MONITOR';
+    UI.renderSystemMonitor(game);
+    render();
+}
+
+function handleLeaveSystem() {
+    game.gameState = 'BROWSER';
+    render();
+}
+
+function handleCalibrate() {
+    let allAligned = true;
+    game.systemSliders.forEach((val, i) => {
+        if (Math.abs(val - game.systemTargets[i]) > 5) allAligned = false;
+    });
+
+    if (allAligned) {
+        game.systemCalibratedThisRound = true;
+        game.systemOverheatLevel = Math.max(0, game.systemOverheatLevel - 30); // Cool down significantly
+        
+        // Randomize targets for next time
+        game.systemTargets = [
+            Math.floor(Math.random() * 80) + 10,
+            Math.floor(Math.random() * 80) + 10,
+            Math.floor(Math.random() * 80) + 10
+        ];
+        
+        UI.renderSystemMonitor(game);
+        
+        // Visual feedback
+        const btn = document.getElementById('system-calibrate-btn');
+        if(btn) {
+            btn.textContent = "SYSTEM STABILIZED";
+            btn.classList.add('bg-green-500', 'text-black');
+        }
+
+        setTimeout(() => {
+             handleLeaveSystem();
+        }, 800);
+    }
+}
+
+window.updateSystemSlider = function(index, value) {
+    game.systemSliders[index] = parseInt(value);
+    UI.renderSystemMonitor(game);
+}
+
 // --- EVENT LISTENERS ---
 
 if (elements.startBtn) elements.startBtn.addEventListener('click', handleStart);
@@ -301,7 +475,44 @@ if (elements.nextBtn) elements.nextBtn.addEventListener('click', handleNext);
 if (elements.rerollBtn) elements.rerollBtn.addEventListener('click', handleReroll);
 if (elements.leaveShopBtn) elements.leaveShopBtn.addEventListener('click', handleLeaveShop);
 if (elements.appShopBtn) elements.appShopBtn.addEventListener('click', handleOpenShop);
+if (elements.appTradingBtn) elements.appTradingBtn.addEventListener('click', handleOpenTrading);
+if (elements.appAntivirusBtn) elements.appAntivirusBtn.addEventListener('click', handleOpenAntivirus);
 if (elements.browserContinueBtn) elements.browserContinueBtn.addEventListener('click', handleBrowserContinue);
+if (elements.tradingBackBtn) elements.tradingBackBtn.addEventListener('click', handleLeaveTrading);
+if (elements.antivirusBackBtn) elements.antivirusBackBtn.addEventListener('click', handleLeaveAntivirus);
+if (elements.antivirusStartBtn) elements.antivirusStartBtn.addEventListener('click', handleStartAntivirus);
+if (elements.tradingBuyBtn) elements.tradingBuyBtn.addEventListener('click', handleTradingBuy);
+if (elements.tradingSellBtn) elements.tradingSellBtn.addEventListener('click', handleTradingSell);
+
+const appSystemBtn = document.getElementById('app-system-btn');
+const systemBackBtn = document.getElementById('system-back-btn');
+const systemCalibrateBtn = document.getElementById('system-calibrate-btn');
+
+if (appSystemBtn) appSystemBtn.addEventListener('click', handleOpenSystem);
+if (systemBackBtn) systemBackBtn.addEventListener('click', handleLeaveSystem);
+if (systemCalibrateBtn) systemCalibrateBtn.addEventListener('click', handleCalibrate);
+
+// Update trading app button state on render
+function refreshBrowserApps() {
+    if (elements.appTradingBtn && game.tradingUnlocked) {
+        elements.appTradingBtn.classList.remove('cursor-not-allowed', 'bg-blue-950/20', 'text-blue-900');
+        elements.appTradingBtn.classList.add('hover:bg-blue-900/20', 'hover:border-blue-500', 'border-blue-500', 'text-blue-400');
+        const label = elements.appTradingBtn.querySelector('span');
+        if (label) label.textContent = 'TRADING DESK';
+    }
+    if (elements.appAntivirusBtn && game.antivirusUnlocked) {
+        elements.appAntivirusBtn.classList.remove('cursor-not-allowed', 'bg-blue-950/20', 'text-blue-900');
+        elements.appAntivirusBtn.classList.add('hover:bg-blue-900/20', 'hover:border-blue-500', 'border-blue-500', 'text-blue-400');
+        const label = elements.appAntivirusBtn.querySelector('span');
+        if (label) label.textContent = 'ANTIVIRUS';
+    }
+    if (appSystemBtn && game.systemMonitorUnlocked) {
+        appSystemBtn.classList.remove('cursor-not-allowed', 'bg-blue-950/20', 'text-blue-900');
+        appSystemBtn.classList.add('hover:bg-orange-900/20', 'hover:border-orange-500', 'border-orange-500', 'text-orange-400');
+        const label = appSystemBtn.querySelector('span');
+        if (label) label.textContent = 'SYSTEM MONITOR';
+    }
+}
 
 // Help / Grid
 if (elements.helpBtn) {
@@ -310,6 +521,38 @@ if (elements.helpBtn) {
     });
     elements.helpBtn.addEventListener('mouseleave', () => {
         elements.gridOverlay.classList.add('opacity-0', 'pointer-events-none');
+    });
+}
+
+// Trading Candles loop (Always running to simulate market)
+let tradingInterval = null;
+function startTradingLoop() {
+    if (tradingInterval) return;
+    tradingInterval = setInterval(() => {
+        game.addTradingCandle();
+        // Only render if we are looking at the trading screen
+        if (game.gameState === 'TRADING') {
+            UI.renderTrading(game);
+        }
+    }, 3000);
+}
+
+// Start immediately
+startTradingLoop();
+
+function stopTradingLoop() {
+    if (tradingInterval) {
+        clearInterval(tradingInterval);
+        tradingInterval = null;
+    }
+}
+
+if (elements.pauseBtn) {
+    elements.pauseBtn.addEventListener('click', () => {
+        if (game.gameState === 'PLAYING') {
+            const isOpen = !elements.pauseOverlay.classList.contains('hidden');
+            elements.pauseOverlay.classList.toggle('hidden', isOpen);
+        }
     });
 }
 
@@ -570,22 +813,22 @@ if (elements.devCashBtn) {
     };
 }
 
-// Start Boot on Load
-window.addEventListener('load', () => {
-    loadSettings(); // Load settings first
+if (elements.devUnlockAppsBtn) {
+    elements.devUnlockAppsBtn.onclick = () => {
+        game.tradingUnlocked = true;
+        game.antivirusUnlocked = true;
+        refreshBrowserApps();
+        render();
+    };
+}
 
-    if (sessionStorage.getItem('skipBoot')) {
-        sessionStorage.removeItem('skipBoot');
-        elements.bootScreen.classList.add('hidden');
-        elements.homeScreen.classList.remove('hidden');
-        Animations.startTitleAnimation();
-    } else {
-        Animations.runTerminalSequence(Localization.bootSequence, () => {
-            elements.bootScreen.classList.add('hidden');
-            elements.homeScreen.classList.remove('hidden');
-            Animations.startTitleAnimation();
-        }, 30, false);
-    }
+document.addEventListener('DOMContentLoaded', () => {
+    const skipBoot = sessionStorage.getItem('skipBoot') === 'true';
+    if (skipBoot) sessionStorage.removeItem('skipBoot');
+
+    if (elements.bootScreen) elements.bootScreen.classList.add('hidden');
+    if (elements.homeScreen) elements.homeScreen.classList.remove('hidden');
+    Animations.startTitleAnimation();
 });
 
 // Initial Render

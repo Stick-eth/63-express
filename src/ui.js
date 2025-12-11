@@ -305,8 +305,189 @@ export function renderShop(game, handlers, currentLang) {
     });
 }
 
+export function renderTrading(game) {
+    if (!elements.tradingScreen) return;
+    const price = game.getTradingPrice();
+    if (elements.tradingPrice) elements.tradingPrice.textContent = `$${price.toFixed(2)}`;
+    const value = game.tradingHoldings * price;
+    if (elements.tradingHoldings) elements.tradingHoldings.textContent = game.tradingHoldings.toFixed(3);
+    if (elements.tradingHoldingsValue) elements.tradingHoldingsValue.textContent = `$${value.toFixed(2)}`;
+    
+    if (elements.tradingProfitPercent) {
+        if (game.tradingInvested > 0 && game.tradingHoldings > 0) {
+            const profit = value - game.tradingInvested;
+            const percent = (profit / game.tradingInvested) * 100;
+            const sign = percent >= 0 ? '+' : '';
+            elements.tradingProfitPercent.textContent = `(${sign}${percent.toFixed(1)}%)`;
+            
+            elements.tradingProfitPercent.className = `text-xs font-bold ${percent >= 0 ? 'text-green-500' : 'text-red-500'}`;
+        } else {
+            elements.tradingProfitPercent.textContent = '(0%)';
+            elements.tradingProfitPercent.className = 'text-xs font-bold text-gray-500';
+        }
+    }
+
+    if (elements.tradingCash) elements.tradingCash.textContent = `$${game.cash.toFixed(2)}`;
+
+    // Disable buttons if limit reached
+    const buyBtn = document.getElementById('trading-buy-btn');
+    const sellBtn = document.getElementById('trading-sell-btn');
+    if (buyBtn && sellBtn) {
+        if (game.hasTradedThisRound) {
+            buyBtn.disabled = true;
+            sellBtn.disabled = true;
+            buyBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            sellBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            buyBtn.title = "Limit reached for this round";
+            sellBtn.title = "Limit reached for this round";
+        } else {
+            buyBtn.disabled = false;
+            sellBtn.disabled = false;
+            buyBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            sellBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            buyBtn.title = "";
+            sellBtn.title = "";
+        }
+    }
+
+    if (elements.tradingChart) {
+        const chart = elements.tradingChart;
+        chart.innerHTML = '';
+        if (game.tradingCandles.length === 0) {
+            game.addTradingCandle();
+        }
+
+        const candles = game.tradingCandles;
+        if (candles.length === 0) return;
+        const highs = candles.map(c => c.high);
+        const lows = candles.map(c => c.low);
+        const max = Math.max(...highs);
+        const min = Math.min(...lows);
+        const range = Math.max(1, max - min);
+
+        const chartWidth = chart.clientWidth || 320;
+        const chartHeight = chart.clientHeight || 256;
+        const pad = 8;
+        const areaH = Math.max(10, chartHeight - pad * 2);
+        const candleWidth = Math.max(4, Math.min(18, Math.floor((chartWidth - pad * 2) / Math.max(1, candles.length))));
+        const totalWidth = candleWidth * candles.length;
+        const startX = Math.max(pad, chartWidth - totalWidth - pad);
+
+        const scale = (v) => ((v - min) / range) * areaH;
+
+        candles.forEach((c, idx) => {
+            const bar = document.createElement('div');
+            bar.className = 'absolute';
+            if (idx === candles.length - 1) {
+                bar.classList.add('candle-new');
+            }
+            const x = startX + idx * candleWidth;
+
+            const highY = pad + areaH - scale(c.high);
+            const lowY = pad + areaH - scale(c.low);
+            const topBody = pad + areaH - scale(Math.max(c.open, c.close));
+            const bottomBody = pad + areaH - scale(Math.min(c.open, c.close));
+
+            const wick = document.createElement('div');
+            wick.className = 'bg-cyan-600';
+            wick.style.position = 'absolute';
+            wick.style.left = `${Math.floor(candleWidth / 2)}px`;
+            wick.style.top = `${highY}px`;
+            wick.style.width = '2px';
+            wick.style.height = `${Math.max(2, lowY - highY)}px`;
+
+            const bullish = c.close >= c.open;
+            const body = document.createElement('div');
+            body.className = bullish ? 'bg-green-500' : 'bg-red-500';
+            body.style.position = 'absolute';
+            body.style.left = '0px';
+            body.style.top = `${topBody}px`;
+            body.style.width = `${Math.max(3, candleWidth - 2)}px`;
+            body.style.height = `${Math.max(3, bottomBody - topBody)}px`;
+
+            bar.style.left = `${x}px`;
+            bar.style.width = `${candleWidth}px`;
+            bar.style.height = `${chartHeight}px`;
+
+            bar.appendChild(wick);
+            bar.appendChild(body);
+            chart.appendChild(bar);
+        });
+    }
+}
+
+export function renderAntivirus(game) {
+    if (!elements.antivirusScreen) return;
+    
+    if (elements.antivirusTimer) elements.antivirusTimer.textContent = `${game.antivirusTimeLeft}s`;
+    if (elements.antivirusScore) elements.antivirusScore.textContent = game.antivirusScore;
+    
+    if (game.antivirusActive) {
+        elements.antivirusStartOverlay.classList.add('hidden');
+    } else {
+        elements.antivirusStartOverlay.classList.remove('hidden');
+        // Reset button text if game over
+        if (game.antivirusTimeLeft <= 0) {
+            const earned = game.antivirusScore * 2;
+            elements.antivirusStartBtn.innerHTML = `<div class="flex flex-col items-center gap-1"><span class="text-green-400 font-bold text-lg">SCAN COMPLETE: +$${earned}</span><span class="text-xs opacity-70">> RESTART_SYSTEM</span></div>`;
+            elements.antivirusStartBtn.className = "px-8 py-2 bg-black/80 hover:bg-blue-900/30 text-blue-300 border border-blue-500/50 transition-all text-sm backdrop-blur-sm";
+        } else {
+            elements.antivirusStartBtn.textContent = '> INITIATE_CLEANUP';
+            elements.antivirusStartBtn.className = "px-8 py-4 bg-blue-600 hover:bg-blue-500 text-black font-bold text-xl uppercase tracking-widest border-2 border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all transform hover:scale-105";
+        }
+    }
+}
+
+export function spawnAntivirusTarget(game, onClick) {
+    if (!elements.antivirusGameArea) return;
+    
+    const target = document.createElement('div');
+    // Random position
+    const area = elements.antivirusGameArea;
+    const targetSize = 56; // Increased size (w-14)
+    const maxX = area.clientWidth - targetSize; 
+    const maxY = area.clientHeight - targetSize;
+    
+    const x = Math.floor(Math.random() * maxX);
+    const y = Math.floor(Math.random() * maxY);
+    
+    target.className = 'absolute w-14 h-14 bg-red-500 rounded-full border-2 border-red-300 cursor-pointer hover:bg-red-400 transition-transform active:scale-90 shadow-[0_0_10px_rgba(239,68,68,0.8)] flex items-center justify-center animate-in-slide';
+    target.style.left = `${x}px`;
+    target.style.top = `${y}px`;
+    
+    // Icon inside removed
+    
+    target.onmousedown = (e) => {
+        e.stopPropagation(); // Prevent bubbling
+        onClick();
+        
+        // Floating text feedback
+        const floatText = document.createElement('div');
+        floatText.textContent = '+$2';
+        floatText.className = 'absolute text-green-400 font-bold text-xl pointer-events-none animate-float-up z-20 drop-shadow-md';
+        floatText.style.left = `${target.offsetLeft + 10}px`;
+        floatText.style.top = `${target.offsetTop}px`;
+        elements.antivirusGameArea.appendChild(floatText);
+        
+        setTimeout(() => floatText.remove(), 800);
+
+        target.remove();
+        
+        // Spawn particle effect?
+        // For now just remove
+    };
+    
+    elements.antivirusGameArea.appendChild(target);
+    
+    // Auto remove after short time (Increased duration: 1s - 1.5s)
+    setTimeout(() => {
+        if (target.parentNode) target.remove();
+    }, 1000 + Math.random() * 500);
+}
+
 export function updateHistory(game) {
     elements.historyWheel.innerHTML = '';
+    const hideHints = game.currentArc && game.currentArc.id === 'ransomware';
     game.history.forEach((guess, index) => {
         const el = document.createElement('div');
         const reverseIndex = game.history.length - 1 - index;
@@ -316,16 +497,31 @@ export function updateHistory(game) {
         let colorClass = 'text-green-700';
         
         if (game.mysteryNumber !== null) {
-            if (guess < game.mysteryNumber) {
+            let isLower = guess < game.mysteryNumber;
+            let isHigher = guess > game.mysteryNumber;
+
+            // System Overheat Penalty: Invert hints at max level
+            if (game.systemOverheatLevel >= 100) {
+                const temp = isLower;
+                isLower = isHigher;
+                isHigher = temp;
+            }
+
+            if (isLower) {
                 hint = '↑ HIGHER';
                 colorClass = 'text-green-500';
-            } else if (guess > game.mysteryNumber) {
+            } else if (isHigher) {
                 hint = '↓ LOWER';
                 colorClass = 'text-red-500';
             } else {
                 hint = 'MATCH';
                 colorClass = 'text-green-400 font-bold';
             }
+        }
+
+        if (hideHints) {
+            hint = 'LOCKED';
+            colorClass = 'text-red-500';
         }
 
         el.className = `flex justify-between items-center border-b border-green-900/30 p-2 w-full`;
@@ -394,14 +590,29 @@ export function setupNumpadListeners(elements) {
 export function updateScreenState(game) {
     elements.gameScreen.classList.add('hidden');
     elements.shopScreen.classList.add('hidden');
+    if (elements.tradingScreen) elements.tradingScreen.classList.add('hidden');
+    if (elements.antivirusScreen) elements.antivirusScreen.classList.add('hidden');
     elements.browserScreen.classList.add('hidden');
 
     if (game.gameState === 'SHOP') {
         elements.shopScreen.classList.remove('hidden');
+        if (elements.leaveShopBtn) elements.leaveShopBtn.classList.remove('hidden');
+    } else if (game.gameState === 'TRADING') {
+        if (elements.tradingScreen) elements.tradingScreen.classList.remove('hidden');
+        if (elements.leaveShopBtn) elements.leaveShopBtn.classList.add('hidden');
+    } else if (game.gameState === 'ANTIVIRUS') {
+        if (elements.antivirusScreen) elements.antivirusScreen.classList.remove('hidden');
+        if (elements.leaveShopBtn) elements.leaveShopBtn.classList.add('hidden');
+    } else if (game.gameState === 'SYSTEM_MONITOR') {
+        const systemScreen = document.getElementById('system-screen');
+        if (systemScreen) systemScreen.classList.remove('hidden');
+        if (elements.leaveShopBtn) elements.leaveShopBtn.classList.add('hidden');
     } else if (game.gameState === 'BROWSER') {
         elements.browserScreen.classList.remove('hidden');
+        if (elements.leaveShopBtn) elements.leaveShopBtn.classList.add('hidden');
     } else {
         elements.gameScreen.classList.remove('hidden');
+        if (elements.leaveShopBtn) elements.leaveShopBtn.classList.add('hidden');
     }
 
     // Toggle Controls
@@ -424,5 +635,72 @@ export function updateScreenState(game) {
         elements.startBtn.textContent = '> CONTINUE';
         elements.gameInputDiv.classList.add('hidden');
         elements.nextBtn.classList.add('hidden');
+    }
+}
+
+export function renderSystemMonitor(game) {
+    const tempDisplay = document.getElementById('system-temp-display');
+    const statusMsg = document.getElementById('system-status-msg');
+    const calibrateBtn = document.getElementById('system-calibrate-btn');
+
+    if (tempDisplay) {
+        tempDisplay.textContent = `${Math.floor(game.systemOverheatLevel)}%`;
+        if (game.systemOverheatLevel >= 100) {
+            tempDisplay.classList.remove('text-orange-300');
+            tempDisplay.classList.add('text-red-500', 'animate-pulse');
+        } else {
+            tempDisplay.classList.add('text-orange-300');
+            tempDisplay.classList.remove('text-red-500', 'animate-pulse');
+        }
+    }
+
+    let allAligned = true;
+
+    game.systemSliders.forEach((val, i) => {
+        const target = game.systemTargets[i];
+        const sliderFill = document.getElementById(`slider-fill-${i}`);
+        const sliderTarget = document.getElementById(`slider-target-${i}`);
+        const sliderInput = document.querySelector(`#system-screen input[oninput*="updateSystemSlider(${i}"]`);
+
+        if (sliderFill) sliderFill.style.height = `${val}%`;
+        if (sliderTarget) sliderTarget.style.bottom = `${target}%`;
+        if (sliderInput) sliderInput.value = val;
+
+        // Check alignment (tolerance +/- 5)
+        const diff = Math.abs(val - target);
+        const isAligned = diff <= 5;
+        
+        if (!isAligned) allAligned = false;
+
+        if (sliderFill) {
+            if (isAligned) {
+                sliderFill.classList.remove('bg-orange-500');
+                sliderFill.classList.add('bg-green-500');
+            } else {
+                sliderFill.classList.add('bg-orange-500');
+                sliderFill.classList.remove('bg-green-500');
+            }
+        }
+    });
+
+    if (statusMsg) {
+        if (allAligned) {
+            statusMsg.textContent = "SYSTEM STABLE - READY TO CALIBRATE";
+            statusMsg.classList.remove('text-orange-400');
+            statusMsg.classList.add('text-green-400');
+        } else {
+            statusMsg.textContent = "CALIBRATION REQUIRED";
+            statusMsg.classList.add('text-orange-400');
+            statusMsg.classList.remove('text-green-400');
+        }
+    }
+
+    if (calibrateBtn) {
+        calibrateBtn.disabled = !allAligned;
+        if (allAligned) {
+            calibrateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        } else {
+            calibrateBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
     }
 }

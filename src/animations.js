@@ -94,6 +94,16 @@ let currentIntensity = 0;
 const GLITCH_CHARS = "!<>-_\\/[]{}—=+*^?#________";
 
 export function updateVisualEffects(game) {
+    const effectsAllowed = game.gameState === 'PLAYING';
+    if (!effectsAllowed) {
+        if (currentEffect) {
+            clearEffects();
+            currentEffect = null;
+            currentIntensity = 0;
+        }
+        return;
+    }
+
     // Determine Effect based on Current Arc
     let effectType = null;
     let intensity = 0;
@@ -140,6 +150,12 @@ export function updateVisualEffects(game) {
             startEffectLoop();
         }
     }
+}
+
+export function stopVisualEffects() {
+    clearEffects();
+    currentEffect = null;
+    currentIntensity = 0;
 }
 
 function clearEffects() {

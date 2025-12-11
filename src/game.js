@@ -1,5 +1,6 @@
 import { JOKERS, SCRIPTS, BOSSES } from './items.js';
 import { ARCS, STANDARD_ARC } from './arcs.js';
+import stockDataRaw from './assets/stock_prices.csv?raw';
 
 export class Game {
   constructor() {
@@ -35,6 +36,56 @@ export class Game {
     this.arcQueue = [];
     this.currentArc = null;
     this.monthInArc = 1;
+
+    this.monthBossPersistent = null; // e.g., ransomware boss active all month
+    this.monthBossAnnounced = false;
+
+    // Trading App State
+    this.tradingUnlocked = false;
+    this.tradingHoldings = 0;
+    this.tradingInvested = 0;
+    this.currentTradingPrice = 100;
+    this.tradingCandles = [];
+    
+    this.tradingData = this.parseStockData(stockDataRaw);
+    this.tradingDataIndex = 0;
+    this.hasTradedThisRound = false;
+
+    // Antivirus App State
+    this.antivirusUnlocked = false;
+    this.ransomwareFinishedLevel = null;
+    this.antivirusActive = false;
+    this.antivirusScore = 0;
+    this.antivirusTimeLeft = 0;
+
+    // System Monitor App State
+    this.systemMonitorUnlocked = false;
+    this.overclockFinishedLevel = null;
+    this.systemOverheatLevel = 0; // 0-100
+    this.systemCalibratedThisRound = false;
+    this.systemSliders = [50, 50, 50]; // Current values
+    this.systemTargets = [50, 50, 50]; // Target values
+  }
+
+  parseStockData(csv) {
+      const lines = csv.split('\n');
+      const data = [];
+      // Skip header (line 0)
+      for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          const parts = line.split(',');
+          // Format: Date, Open, High, Low, Close
+          if (parts.length >= 5) {
+              data.push({
+                  open: parseFloat(parts[1]),
+                  high: parseFloat(parts[2]),
+                  low: parseFloat(parts[3]),
+                  close: parseFloat(parts[4])
+              });
+          }
+      }
+      return data;
   }
 
   toggleDevMode(enabled) {
@@ -62,6 +113,12 @@ export class Game {
       this.round = 1;
       this.jokers = [];
       this.scripts = [];
+    this.monthBossPersistent = null;
+    this.monthBossAnnounced = false;
+            this.tradingUnlocked = false;
+            this.tradingHoldings = 0;
+            this.currentTradingPrice = 100;
+            this.tradingCandles = [];
 
       // Initialize Arcs
       this.initArcs();
@@ -142,7 +199,34 @@ export class Game {
 
   startRound() {
       this.gameState = 'PLAYING';
+      this.hasTradedThisRound = false;
       
+      // System Monitor Logic
+      if (this.systemMonitorUnlocked) {
+          if (!this.systemCalibratedThisRound && this.round > 1) {
+              // Penalty for not calibrating previous round
+              this.systemOverheatLevel = Math.min(100, this.systemOverheatLevel + 20);
+              if (this.systemOverheatLevel >= 20) {
+                  this.message = { key: 'script_effect', params: { text: 'WARNING: System Overheating. Recalibrate immediately.' } };
+              }
+          }
+          
+          // Reset calibration status for new round
+          this.systemCalibratedThisRound = false;
+          
+          // Randomize targets for this round
+          this.systemTargets = [
+              Math.floor(Math.random() * 80) + 10,
+              Math.floor(Math.random() * 80) + 10,
+              Math.floor(Math.random() * 80) + 10
+          ];
+          // Randomize current values (drift)
+          this.systemSliders = this.systemSliders.map(v => {
+              const drift = (Math.random() - 0.5) * 40;
+              return Math.max(0, Math.min(100, v + drift));
+          });
+      }
+
       // Store previous number
       if (this.mysteryNumber !== null) {
           this.previousMysteryNumber = this.mysteryNumber;
@@ -179,19 +263,46 @@ export class Game {
       this.reverseGuessed = false; // For Mirror Dimension
       this.quantumChanged = false; // For Quantum Tens
 
-      const totalMonth = (this.level - 1) * this.maxRounds + this.round;
+      if (this.round === 1) {
+          this.monthBossPersistent = null;
+          this.monthBossAnnounced = false;
+      }
 
-      // Apply Boss Effect if Round 3 (Week 3)
+      // Handle delayed trading cashout countdown
+      if (this.tradingPendingRounds > 0) {
+          this.tradingPendingRounds -= 1;
+          if (this.tradingPendingRounds === 0 && this.tradingHoldings > 0) {
+              const price = this.getTradingPrice();
+              const proceeds = this.tradingHoldings * price;
+              this.cash += Math.floor(proceeds);
+              this.tradingHoldings = 0;
+              this.message = { key: 'script_effect', params: { text: `Trading cashout executed at $${price.toFixed(2)} for $${proceeds.toFixed(2)}.` } };
+          }
+      }
+
+      const arcBossData = this.currentArc.bosses[this.monthInArc];
       const preventBoss = this.jokers.some(j => j.id === 'temerraire');
-      if (this.round === 3 && !preventBoss) {
-          // Get Boss from Current Arc
-          const arcBossData = this.currentArc.bosses[this.monthInArc];
-          
-          if (arcBossData) {
-              this.bossEffect = arcBossData.effect;
-              this.message = { key: 'boss_round', params: { name: arcBossData.name, desc: arcBossData.description } };
+      const isRansomwareArc = this.currentArc.id === 'ransomware';
+
+      if (preventBoss) {
+          this.monthBossPersistent = null;
+      }
+
+      if (isRansomwareArc && arcBossData && !preventBoss && !this.monthBossPersistent) {
+          this.monthBossPersistent = arcBossData;
+      }
+
+      const bossForThisRound = (!preventBoss && this.monthBossPersistent) 
+          ? this.monthBossPersistent 
+          : (!preventBoss && this.round === 3 ? arcBossData : null);
+
+      if (bossForThisRound) {
+          this.bossEffect = bossForThisRound.effect;
+          const shouldAnnounceBoss = !this.monthBossAnnounced || (!this.monthBossPersistent && this.round === 3);
+          if (shouldAnnounceBoss) {
+              this.message = { key: 'boss_round', params: { name: bossForThisRound.name, desc: bossForThisRound.description } };
+              this.monthBossAnnounced = true;
           } else {
-              // Fallback or No Boss this month
               this.message = { 
                   key: 'round_start', 
                   params: { 
@@ -266,6 +377,11 @@ export class Game {
 
       this.cash += gain;
       this.message = { key: 'won_round', params: { gain, cash: this.cash } };
+
+      // Unlock Trading after defeating Audit boss (month 1 of audit arc at week 3)
+      if (this.currentArc && this.currentArc.id === 'audit' && this.round === this.maxRounds) {
+          this.tradingUnlocked = true;
+      }
   }
 
   handleMiss(guess) {
@@ -301,12 +417,15 @@ export class Game {
           
           const direction = guess < this.mysteryNumber ? 'higher' : 'lower';
           const key = isBurning ? `${direction}_burning` : direction;
+          const hideRange = this.bossEffect === 'blind' && this.attempts <= 3;
+          const displayMin = hideRange ? '???' : this.min;
+          const displayMax = hideRange ? '???' : this.max;
           
           this.message = { 
               key: key, 
               params: { 
-                  min: this.min, 
-                  max: this.max,
+                  min: displayMin, 
+                  max: displayMax,
                   attemptsLeft: this.maxAttempts - this.attempts
               } 
           };
@@ -352,12 +471,32 @@ export class Game {
       this.round = 1;
       this.rent = Math.floor(this.rent * 2.5); // Exponential rent
       this.newMonthStarted = true;
+      this.monthBossPersistent = null;
+      this.monthBossAnnounced = false;
       
+      // Check for Antivirus Unlock (1 month after Ransomware)
+      if (this.ransomwareFinishedLevel && this.level >= this.ransomwareFinishedLevel + 1) {
+          this.antivirusUnlocked = true;
+      }
+
+      // Check for System Monitor Unlock (1 month after Overclock)
+      if (this.overclockFinishedLevel && this.level >= this.overclockFinishedLevel + 1) {
+          this.systemMonitorUnlocked = true;
+      }
+
       // Advance Arc Progress
       this.monthInArc++;
       
       // Check if Arc is finished
       if (this.monthInArc > this.currentArc.duration) {
+          // Record completion
+          if (this.currentArc.id === 'ransomware') {
+              this.ransomwareFinishedLevel = this.level;
+          }
+          if (this.currentArc.id === 'overclock') {
+              this.overclockFinishedLevel = this.level;
+          }
+
           // Move to next Arc
           this.arcQueue.shift(); // Remove finished arc
           if (this.arcQueue.length > 0) {
@@ -398,15 +537,23 @@ export class Game {
       if (this.gameState === 'BROWSER') {
           if (appName === 'SHOP') {
               this.gameState = 'SHOP';
-              this.message = { key: 'shop_welcome' };
+              const isAuditArc = this.currentArc && this.currentArc.id === 'audit';
+              this.message = { key: isAuditArc ? 'shop_welcome_audit' : 'shop_welcome' };
+          } else if (appName === 'TRADING' && this.tradingUnlocked) {
+              this.gameState = 'TRADING';
+              this.message = { key: 'script_effect', params: { text: 'TRADING DESK ONLINE.' } };
+          } else if (appName === 'ANTIVIRUS' && this.antivirusUnlocked) {
+              this.gameState = 'ANTIVIRUS';
+              this.message = { key: 'script_effect', params: { text: 'SYSTEM CLEANER READY.' } };
           }
       }
   }
 
   closeApp() {
-      if (this.gameState === 'SHOP') {
+      if (this.gameState === 'SHOP' || this.gameState === 'TRADING' || this.gameState === 'ANTIVIRUS') {
           this.gameState = 'BROWSER';
           this.message = { key: 'browser_welcome' };
+          this.antivirusActive = false; // Ensure game stops if closed
       }
   }
 
@@ -487,6 +634,94 @@ export class Game {
           return BOSSES[Math.min(this.level - 1, BOSSES.length - 1)];
       }
       return null;
+  }
+
+  // --- TRADING HELPERS ---
+  getTradingPrice() {
+      return this.currentTradingPrice;
+  }
+
+  addTradingCandle() {
+      if (this.tradingData && this.tradingData.length > 0) {
+          const candle = this.tradingData[this.tradingDataIndex];
+          this.currentTradingPrice = candle.close;
+          this.tradingCandles.push(candle);
+          
+          this.tradingDataIndex = (this.tradingDataIndex + 1) % this.tradingData.length;
+      } else {
+          // Fallback if no data
+          const t = Date.now();
+          const base = 100;
+          const amp = 25;
+          const speed = 3000; 
+          const noise = (Math.random() - 0.5) * 2;
+          const newPrice = Math.max(1, base + amp * Math.sin(t / speed) + noise);
+          
+          const open = this.currentTradingPrice;
+          const close = newPrice;
+          const high = Math.max(open, close) + Math.random() * 3;
+          const low = Math.min(open, close) - Math.random() * 3;
+          
+          this.currentTradingPrice = close;
+          this.tradingCandles.push({ open, high, low, close });
+      }
+      
+      if (this.tradingCandles.length > 50) this.tradingCandles.shift();
+  }
+
+  buyTrading(amount) {
+      if (this.hasTradedThisRound) return { success: false, reason: 'limit_reached' };
+      const price = this.getTradingPrice();
+      const spend = Math.min(amount, this.cash);
+      if (spend <= 0) return { success: false, reason: 'limit' };
+
+      const shares = spend / price;
+      this.cash -= spend;
+      this.tradingHoldings += shares;
+      this.tradingInvested += spend;
+      this.hasTradedThisRound = true;
+      return { success: true, shares, price, spent: spend };
+  }
+
+  sellTrading(amount) {
+      if (this.hasTradedThisRound) return { success: false, reason: 'limit_reached' };
+      const price = this.getTradingPrice();
+      const sharesToSell = amount > 0 ? Math.min(this.tradingHoldings, amount / price) : this.tradingHoldings;
+      if (sharesToSell <= 0) return { success: false, reason: 'no_holdings' };
+      
+      // Calculate proportion of investment sold
+      const proportion = sharesToSell / this.tradingHoldings;
+      this.tradingInvested -= this.tradingInvested * proportion;
+      
+      const proceeds = sharesToSell * price;
+      this.tradingHoldings -= sharesToSell;
+      this.cash += proceeds;
+      
+      // Clean up small floating point errors
+      if (this.tradingHoldings < 0.0001) {
+          this.tradingHoldings = 0;
+          this.tradingInvested = 0;
+      }
+      
+      this.hasTradedThisRound = true;
+      return { success: true, shares: sharesToSell, price, gained: proceeds };
+  }
+
+  // --- ANTIVIRUS HELPERS ---
+  startAntivirusGame() {
+      this.antivirusActive = true;
+      this.antivirusScore = 0;
+      this.antivirusTimeLeft = 10;
+  }
+
+  hitAntivirusTarget() {
+      if (!this.antivirusActive) return;
+      this.antivirusScore++;
+      this.cash += 2;
+  }
+
+  endAntivirusGame() {
+      this.antivirusActive = false;
   }
 
   useScript(index) {

@@ -91,3 +91,24 @@ body {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
+@keyframes candleTerminalIn {
+ 0% { opacity: 0; transform: scaleY(0); }
+ 100% { opacity: 1; transform: scaleY(1); }
+}
+
+.candle-new {
+ transform-origin: bottom; /* Or center? */
+ animation: candleTerminalIn 0.3s steps(5) forwards;
+}
+
+
+@keyframes floatUpFade {
+ 0% { opacity: 1; transform: translateY(0); }
+ 100% { opacity: 0; transform: translateY(-20px); }
+}
+
+.animate-float-up {
+ animation: floatUpFade 0.8s ease-out forwards;
+}
+
