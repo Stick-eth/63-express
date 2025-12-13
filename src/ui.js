@@ -540,20 +540,41 @@ export function updateGrid(game) {
     
     const start = game.absoluteMin !== undefined ? game.absoluteMin : 0;
     const end = game.absoluteMax !== undefined ? game.absoluteMax : 99;
+    const totalRange = end - start + 1;
+    
+    // Always 100 cells
+    const cellCount = 100;
+    const step = totalRange / cellCount;
 
-    for (let i = start; i <= end; i++) {
+    for (let i = 0; i < cellCount; i++) {
         const el = document.createElement('div');
-        el.textContent = i;
-        el.className = 'text-[0.6rem] flex items-center justify-center h-6 transition-colors ';
         
-        let isValid = true;
-        if (i < game.min || i > game.max) isValid = false;
+        // Calculate range for this cell
+        const cellStart = Math.floor(start + (i * step));
+        const cellEnd = Math.floor(start + ((i + 1) * step)) - 1;
         
+        el.textContent = cellStart;
+        el.className = 'text-[0.7rem] flex items-center justify-center h-8 transition-colors cursor-help overflow-hidden select-none';
+        el.title = `${cellStart} - ${cellEnd}`;
+
+        // Check validity
+        // A cell is valid if its range overlaps with [game.min, game.max]
+        const isValid = (cellStart <= game.max && cellEnd >= game.min);
+        
+        // Check if fully valid (optional, for color intensity)
+        const isFullyValid = (cellStart >= game.min && cellEnd <= game.max);
+
         if (isValid) {
             el.classList.add('text-green-400', 'bg-green-900/20', 'font-bold', 'border', 'border-green-500/30');
+            if (!isFullyValid) {
+                 // Partial match style (edges of the valid range)
+                 el.classList.remove('bg-green-900/20');
+                 el.classList.add('bg-green-900/50');
+            }
         } else {
             el.classList.add('text-green-900', 'opacity-20');
         }
+        
         elements.numberGrid.appendChild(el);
     }
 }
@@ -592,6 +613,8 @@ export function updateScreenState(game) {
     elements.shopScreen.classList.add('hidden');
     if (elements.tradingScreen) elements.tradingScreen.classList.add('hidden');
     if (elements.antivirusScreen) elements.antivirusScreen.classList.add('hidden');
+    const systemScreen = document.getElementById('system-screen');
+    if (systemScreen) systemScreen.classList.add('hidden');
     elements.browserScreen.classList.add('hidden');
 
     if (game.gameState === 'SHOP') {
@@ -642,10 +665,20 @@ export function renderSystemMonitor(game) {
     const tempDisplay = document.getElementById('system-temp-display');
     const statusMsg = document.getElementById('system-status-msg');
     const calibrateBtn = document.getElementById('system-calibrate-btn');
+    const systemScreen = document.getElementById('system-screen');
+
+    // Overheat Effects
+    if (systemScreen) {
+        if (game.systemOverheatLevel > 80) {
+             systemScreen.classList.add('animate-pulse');
+        } else {
+             systemScreen.classList.remove('animate-pulse');
+        }
+    }
 
     if (tempDisplay) {
         tempDisplay.textContent = `${Math.floor(game.systemOverheatLevel)}%`;
-        if (game.systemOverheatLevel >= 100) {
+        if (game.systemOverheatLevel >= 80) {
             tempDisplay.classList.remove('text-orange-300');
             tempDisplay.classList.add('text-red-500', 'animate-pulse');
         } else {
@@ -660,11 +693,12 @@ export function renderSystemMonitor(game) {
         const target = game.systemTargets[i];
         const sliderFill = document.getElementById(`slider-fill-${i}`);
         const sliderTarget = document.getElementById(`slider-target-${i}`);
-        const sliderInput = document.querySelector(`#system-screen input[oninput*="updateSystemSlider(${i}"]`);
+        const sliderValue = document.getElementById(`slider-value-${i}`);
+        const sliderContainer = document.getElementById(`slider-container-${i}`);
 
         if (sliderFill) sliderFill.style.height = `${val}%`;
         if (sliderTarget) sliderTarget.style.bottom = `${target}%`;
-        if (sliderInput) sliderInput.value = val;
+        if (sliderValue) sliderValue.textContent = Math.floor(val);
 
         // Check alignment (tolerance +/- 5)
         const diff = Math.abs(val - target);
@@ -681,10 +715,38 @@ export function renderSystemMonitor(game) {
                 sliderFill.classList.remove('bg-green-500');
             }
         }
+        
+        if (sliderValue) {
+             if (isAligned) {
+                sliderValue.classList.remove('text-orange-500');
+                sliderValue.classList.add('text-green-500');
+            } else {
+                sliderValue.classList.add('text-orange-500');
+                sliderValue.classList.remove('text-green-500');
+            }
+        }
+
+        // Locked State Visuals
+        if (game.systemCalibratedThisRound) {
+            if (sliderContainer) sliderContainer.classList.add('opacity-50', 'cursor-not-allowed');
+            if (sliderValue) sliderValue.classList.add('opacity-50');
+        } else {
+            if (sliderContainer) sliderContainer.classList.remove('opacity-50', 'cursor-not-allowed');
+            if (sliderValue) sliderValue.classList.remove('opacity-50');
+        }
     });
 
     if (statusMsg) {
-        if (allAligned) {
+        if (game.systemCalibratedThisRound) {
+            statusMsg.textContent = "SYSTEM OPTIMIZED - STANDBY";
+            statusMsg.classList.remove('text-orange-400', 'text-red-500');
+            statusMsg.classList.add('text-green-400');
+        } else if (game.systemOverheatLevel > 70 && Math.random() > 0.7) {
+             // Glitch text
+             const chars = "SYSTEM ERROR WARNING FAILURE 010101";
+             statusMsg.textContent = chars.split('').sort(() => 0.5 - Math.random()).join('').substring(0, 20);
+             statusMsg.classList.add('text-red-500');
+        } else if (allAligned) {
             statusMsg.textContent = "SYSTEM STABLE - READY TO CALIBRATE";
             statusMsg.classList.remove('text-orange-400');
             statusMsg.classList.add('text-green-400');
@@ -696,11 +758,24 @@ export function renderSystemMonitor(game) {
     }
 
     if (calibrateBtn) {
-        calibrateBtn.disabled = !allAligned;
-        if (allAligned) {
-            calibrateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-        } else {
+        if (game.systemCalibratedThisRound) {
+            calibrateBtn.disabled = true;
+            calibrateBtn.textContent = "OPTIMIZED";
+            calibrateBtn.classList.remove('hover:bg-orange-500', 'hover:text-black', 'animate-pulse');
             calibrateBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            calibrateBtn.disabled = !allAligned;
+            calibrateBtn.textContent = "CONFIRM CALIBRATION";
+            calibrateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            calibrateBtn.classList.add('hover:bg-orange-500', 'hover:text-black');
+            
+            if (allAligned) {
+                calibrateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                calibrateBtn.classList.add('animate-pulse');
+            } else {
+                calibrateBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                calibrateBtn.classList.remove('animate-pulse');
+            }
         }
     }
 }

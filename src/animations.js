@@ -89,73 +89,82 @@ export function startGlitchEffect(element, originalText, chars) {
 // --- GLOBAL INTERFACE EFFECTS ---
 
 let effectInterval = null;
-let currentEffect = null;
-let currentIntensity = 0;
+let currentArcEffect = null;
+let currentArcIntensity = 0;
+let currentSystemEffect = null;
+let currentSystemIntensity = 0;
 const GLITCH_CHARS = "!<>-_\\/[]{}—=+*^?#________";
 
 export function updateVisualEffects(game) {
-    const effectsAllowed = game.gameState === 'PLAYING';
+    // Allow effects in most states except boot/intro sequences
+    const effectsAllowed = !['ARC_INTRO', 'BOOT', 'LEVEL_TRANSITION'].includes(game.gameState);
+    
     if (!effectsAllowed) {
-        if (currentEffect) {
-            clearEffects();
-            currentEffect = null;
-            currentIntensity = 0;
-        }
+        stopVisualEffects();
         return;
     }
 
-    // Determine Effect based on Current Arc
-    let effectType = null;
-    let intensity = 0;
+    // 1. Determine Arc Effect
+    let arcEffect = null;
+    let arcIntensity = 0;
 
     if (game.currentArc) {
         if (game.currentArc.id === 'tutorial_virus' && game.level === 2) {
-            effectType = 'glitch';
-            // Intensity scales with round (Week)
-            if (game.round === 1) intensity = 0.05;
-            else if (game.round === 2) intensity = 0.2;
-            else intensity = 0.6;
+            arcEffect = 'glitch';
+            if (game.round === 1) arcIntensity = 0.05;
+            else if (game.round === 2) arcIntensity = 0.2;
+            else arcIntensity = 0.6;
         } else if (game.currentArc.id === 'audit') {
-            effectType = 'audit';
-            // Intensity scales with round
-            if (game.round === 1) intensity = 0.1;
-            else if (game.round === 2) intensity = 0.3;
-            else intensity = 0.8;
+            arcEffect = 'audit';
+            if (game.round === 1) arcIntensity = 0.1;
+            else if (game.round === 2) arcIntensity = 0.3;
+            else arcIntensity = 0.8;
         } else if (game.currentArc.id === 'overclock') {
-            effectType = 'overclock';
-            // Intensity scales with Month AND Round
-            const totalProgress = (game.monthInArc - 1) * 3 + game.round; // 1 to 6
-            intensity = totalProgress / 6; // 0.16 to 1.0
-        } else if (game.currentArc.id === 'botnet') {
-            effectType = 'botnet';
+            arcEffect = 'overclock';
             const totalProgress = (game.monthInArc - 1) * 3 + game.round;
-            intensity = totalProgress / 6;
+            arcIntensity = totalProgress / 6;
+        } else if (game.currentArc.id === 'botnet') {
+            arcEffect = 'botnet';
+            const totalProgress = (game.monthInArc - 1) * 3 + game.round;
+            arcIntensity = totalProgress / 6;
         } else if (game.currentArc.id === 'ransomware') {
-            effectType = 'ransomware';
-            if (game.round === 1) intensity = 0.2;
-            else if (game.round === 2) intensity = 0.5;
-            else intensity = 1.0;
+            arcEffect = 'ransomware';
+            if (game.round === 1) arcIntensity = 0.2;
+            else if (game.round === 2) arcIntensity = 0.5;
+            else arcIntensity = 1.0;
         }
     }
 
-    // Update State
-    if (effectType !== currentEffect || Math.abs(intensity - currentIntensity) > 0.01) {
-        // Clear previous
-        clearEffects();
-        
-        currentEffect = effectType;
-        currentIntensity = intensity;
+    // 2. Determine System Overheat Effect
+    let systemEffect = null;
+    let systemIntensity = 0;
 
-        if (currentEffect) {
-            startEffectLoop();
-        }
+    if (game.systemOverheatLevel > 20) {
+        // Overheat creates a shaking/heat effect similar to 'overclock' but independent
+        systemEffect = 'overclock'; 
+        // Intensity scales from 0 at 20% to 1.0 at 100%
+        systemIntensity = (game.systemOverheatLevel - 20) / 80; 
+    }
+
+    // Update State
+    if (arcEffect !== currentArcEffect || Math.abs(arcIntensity - currentArcIntensity) > 0.01 ||
+        systemEffect !== currentSystemEffect || Math.abs(systemIntensity - currentSystemIntensity) > 0.01) {
+        
+        currentArcEffect = arcEffect;
+        currentArcIntensity = arcIntensity;
+        currentSystemEffect = systemEffect;
+        currentSystemIntensity = systemIntensity;
+
+        startEffectLoop();
     }
 }
 
 export function stopVisualEffects() {
     clearEffects();
-    currentEffect = null;
-    currentIntensity = 0;
+    currentArcEffect = null;
+    currentArcIntensity = 0;
+    currentSystemEffect = null;
+    currentSystemIntensity = 0;
 }
 
 function clearEffects() {
@@ -165,39 +174,106 @@ function clearEffects() {
     }
     // Reset Styles
     document.body.classList.remove('animate-shake', 'animate-pulse-red');
-    document.body.style.filter = ''; // Be careful not to override theme filter, handled in main.js applySettings
-    // We might need a dedicated overlay div for filters to avoid conflict
+    document.body.style.filter = ''; 
+    document.body.style.transform = 'none';
     
     const overlay = document.getElementById('effect-overlay');
     if (overlay) {
         overlay.className = 'pointer-events-none fixed inset-0 z-[40] hidden';
         overlay.innerHTML = '';
+        overlay.style.background = '';
     }
 }
 
 function startEffectLoop() {
     if (effectInterval) clearInterval(effectInterval);
 
-    if (currentEffect === 'glitch') {
-        effectInterval = setInterval(performGlobalGlitch, 150);
-    } else if (currentEffect === 'audit') {
-        effectInterval = setInterval(performAuditEffect, 1000);
-        // Add static overlay
-        const overlay = getOverlay();
-        overlay.classList.remove('hidden');
-        overlay.innerHTML = `<div class="absolute top-4 right-4 border border-red-500 text-red-500 px-2 py-1 text-xs animate-pulse">REC ●</div>`;
-        if (currentIntensity > 0.5) {
+    if (!currentArcEffect && !currentSystemEffect) return;
+
+    const overlay = getOverlay();
+    overlay.innerHTML = ''; 
+    overlay.classList.remove('hidden');
+    overlay.style.background = '';
+
+    // Static Overlay Elements for Arc Effects
+    if (currentArcEffect === 'audit') {
+        overlay.innerHTML += `<div class="absolute top-4 right-4 border border-red-500 text-red-500 px-2 py-1 text-xs animate-pulse">REC ●</div>`;
+        if (currentArcIntensity > 0.5) {
              overlay.innerHTML += `<div class="absolute inset-0 border-4 border-red-500/20 pointer-events-none"></div>`;
         }
-    } else if (currentEffect === 'overclock') {
-        effectInterval = setInterval(performOverclockEffect, 100);
-    } else if (currentEffect === 'botnet') {
-        effectInterval = setInterval(performBotnetEffect, 200);
-    } else if (currentEffect === 'ransomware') {
-        effectInterval = setInterval(performRansomwareEffect, 500);
+    } else if (currentArcEffect === 'ransomware') {
+        overlay.innerHTML += `<div class="absolute top-4 left-1/2 -translate-x-1/2 border border-red-500 bg-red-900/20 text-red-500 px-4 py-1 text-sm font-bold animate-pulse">🔒 FILES ENCRYPTED</div>`;
+    }
+
+    // Run the combined effect loop
+    effectInterval = setInterval(performCombinedEffects, 100);
+}
+
+function performCombinedEffects() {
+    let shakeIntensity = 0;
+    let heatIntensity = 0;
+
+    // 1. Apply Arc Specific Effects
+    if (currentArcEffect === 'glitch') performGlobalGlitch(currentArcIntensity);
+    if (currentArcEffect === 'audit') performAuditEffect(currentArcIntensity);
+    if (currentArcEffect === 'botnet') performBotnetEffect(currentArcIntensity);
+    if (currentArcEffect === 'ransomware') performRansomwareEffect(currentArcIntensity);
+    
+    // Arc 'overclock' contributes to shake/heat
+    if (currentArcEffect === 'overclock') {
+        shakeIntensity = Math.max(shakeIntensity, currentArcIntensity);
+        heatIntensity = Math.max(heatIntensity, currentArcIntensity);
+    }
+
+    // 2. Apply System Overheat Effects
+    if (currentSystemEffect === 'overclock') {
+        // System overheat contributes to shake/heat
+        shakeIntensity = Math.max(shakeIntensity, currentSystemIntensity);
+        heatIntensity = Math.max(heatIntensity, currentSystemIntensity);
+    }
+
+    // 3. Apply Physical Effects (Shake/Heat) if any source is active
+    if (shakeIntensity > 0 || heatIntensity > 0) {
+        applyPhysicalEffects(shakeIntensity, heatIntensity);
+    } else {
+        // Reset physical effects if no longer active but loop is running (e.g. only glitching)
+        document.body.style.transform = 'none';
         const overlay = getOverlay();
-        overlay.classList.remove('hidden');
-        overlay.innerHTML = `<div class="absolute top-4 left-1/2 -translate-x-1/2 border border-red-500 bg-red-900/20 text-red-500 px-4 py-1 text-sm font-bold animate-pulse">🔒 FILES ENCRYPTED</div>`;
+        // Only clear background if we aren't using it for something else? 
+        // Actually applyPhysicalEffects manages the background for heat.
+        // We should be careful not to clear other overlay elements.
+        // Let's just reset the background property used for heat.
+        if (overlay.style.background.includes('radial-gradient')) {
+             overlay.style.background = '';
+        }
+    }
+}
+
+function applyPhysicalEffects(shakeIntensity, heatIntensity) {
+    const body = document.body;
+    
+    // Shake
+    if (Math.random() < shakeIntensity * 0.5) {
+        const x = (Math.random() - 0.5) * shakeIntensity * 10;
+        const y = (Math.random() - 0.5) * shakeIntensity * 10;
+        body.style.transform = `translate(${x}px, ${y}px)`;
+    } else {
+        body.style.transform = 'none';
+    }
+
+    // Heat Blur / Color Shift
+    const overlay = getOverlay();
+    if (heatIntensity > 0) {
+        overlay.style.background = `radial-gradient(circle, transparent 50%, rgba(255, 69, 0, ${heatIntensity * 0.3}))`;
+        
+        // Occasional "WARNING" flash
+        if (heatIntensity > 0.7 && Math.random() < 0.05) {
+            const warning = document.createElement('div');
+            warning.className = 'absolute inset-0 flex items-center justify-center text-red-500 font-bold text-9xl opacity-20 rotate-[-10deg] pointer-events-none';
+            warning.textContent = 'HEAT CRITICAL';
+            overlay.appendChild(warning);
+            setTimeout(() => warning.remove(), 200);
+        }
     }
 }
 
@@ -212,209 +288,123 @@ function getOverlay() {
     return overlay;
 }
 
-function performAuditEffect() {
-    // Random "SCANNING" lines or popups
-    if (Math.random() > currentIntensity) return;
-
+function performAuditEffect(intensity) {
+    if (Math.random() > intensity) return;
     const overlay = getOverlay();
     const scanLine = document.createElement('div');
     scanLine.className = 'absolute w-full h-[2px] bg-red-500/50 shadow-[0_0_10px_red]';
     scanLine.style.top = `${Math.random() * 100}%`;
     overlay.appendChild(scanLine);
-
-    // Animate removal
     setTimeout(() => scanLine.remove(), 500);
 }
 
-function performOverclockEffect() {
-    const body = document.body;
-    
-    // Shake
-    if (Math.random() < currentIntensity * 0.5) {
-        const x = (Math.random() - 0.5) * currentIntensity * 10;
-        const y = (Math.random() - 0.5) * currentIntensity * 10;
-        body.style.transform = `translate(${x}px, ${y}px)`;
-    } else {
-        body.style.transform = 'none';
-    }
-
-    // Heat Blur / Color Shift (Simulated via overlay)
-    const overlay = getOverlay();
-    overlay.classList.remove('hidden');
-    
-    // Update heat opacity based on intensity
-    // We use a radial gradient for heat center
-    overlay.style.background = `radial-gradient(circle, transparent 50%, rgba(255, 69, 0, ${currentIntensity * 0.3}))`;
-    
-    // Occasional "WARNING" flash
-    if (currentIntensity > 0.7 && Math.random() < 0.05) {
-        const warning = document.createElement('div');
-        warning.className = 'absolute inset-0 flex items-center justify-center text-red-500 font-bold text-9xl opacity-20 rotate-[-10deg]';
-        warning.textContent = 'HEAT CRITICAL';
-        overlay.appendChild(warning);
-        setTimeout(() => warning.remove(), 200);
-    }
-}
-
-function performGlobalGlitch() {
-    // List of UI elements to target
+function performGlobalGlitch(intensity) {
     const targets = [
-        elements.cashDisplay,
-        elements.rentDisplay,
-        elements.levelDisplay,
-        elements.roundDisplay,
-        elements.messageText,
-        elements.startBtn,
-        elements.nextBtn,
-        elements.guessBtn,
-        elements.leaveShopBtn,
-        elements.appShopBtn,
+        elements.cashDisplay, elements.rentDisplay, elements.levelDisplay,
+        elements.roundDisplay, elements.messageText, elements.startBtn,
+        elements.nextBtn, elements.guessBtn, elements.leaveShopBtn,
+        // Target the span inside appShopBtn to avoid destroying the icon div
+        elements.appShopBtn ? elements.appShopBtn.querySelector('span') : null,
         elements.browserContinueBtn,
-        // Add some static labels if possible, but they are harder to target without IDs
-        document.querySelector('h1'), // Main Title in App
+        document.querySelector('h1')
     ];
 
     targets.forEach(el => {
-        if (!el || Math.random() > currentIntensity) return;
-        
-        // Prevent double glitching
+        if (!el || Math.random() > intensity) return;
         if (el.dataset.isGlitching) return;
 
         const original = el.textContent;
         if (!original) return;
 
         el.dataset.isGlitching = "true";
-        
-        // Create glitched string
         const glitched = original.split('').map(char => {
             if (char === ' ' || char === '\n') return char;
-            return Math.random() < currentIntensity ? GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)] : char;
+            return Math.random() < intensity ? GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)] : char;
         }).join('');
 
         el.textContent = glitched;
         
-        // Visual displacement
-        if (currentIntensity > 0.3) {
+        if (intensity > 0.3) {
             el.style.transform = `translate(${Math.random() * 4 - 2}px, ${Math.random() * 4 - 2}px)`;
-            el.style.color = Math.random() > 0.5 ? '#ef4444' : '#22c55e'; // Red or Green
+            el.style.color = Math.random() > 0.5 ? '#ef4444' : '#22c55e';
         }
 
         setTimeout(() => {
-            // Restore
             if (el) {
                 el.textContent = original;
                 el.style.transform = 'none';
-                el.style.color = ''; // Reset color
+                el.style.color = '';
                 delete el.dataset.isGlitching;
             }
         }, 50 + Math.random() * 100);
     });
 }
 
-function performBotnetEffect() {
-    // Theme: Hive Mind, Network Traffic, Green/Cyan aesthetic
-    if (Math.random() > currentIntensity) return;
-
+function performBotnetEffect(intensity) {
+    if (Math.random() > intensity) return;
     const overlay = getOverlay();
     
-    // 1. Network Packets (moving dots)
     if (Math.random() < 0.3) {
         const packet = document.createElement('div');
         packet.className = 'absolute w-2 h-2 bg-cyan-500 rounded-full shadow-[0_0_5px_cyan]';
-        
-        // Random start position
         const startX = Math.random() * 100;
         const startY = Math.random() * 100;
         packet.style.left = `${startX}%`;
         packet.style.top = `${startY}%`;
         packet.style.opacity = '0.8';
         packet.style.transition = `all ${1 + Math.random()}s linear`;
-        
         overlay.appendChild(packet);
-
-        // Move to random end position
         requestAnimationFrame(() => {
             const endX = Math.random() * 100;
             const endY = Math.random() * 100;
             packet.style.transform = `translate(${endX - startX}vw, ${endY - startY}vh)`;
             packet.style.opacity = '0';
         });
-
         setTimeout(() => packet.remove(), 2000);
     }
 
-    // 2. Status Text (Terminal logs)
-    if (Math.random() < 0.1 * currentIntensity) {
+    if (Math.random() < 0.1 * intensity) {
         const log = document.createElement('div');
         log.className = 'absolute text-xs text-cyan-500/70 pointer-events-none';
         log.style.left = `${Math.random() * 80 + 10}%`;
         log.style.top = `${Math.random() * 80 + 10}%`;
-        
-        const messages = [
-            "UPLOADING...", "PACKET_LOSS: 0%", "NODE_SYNC", 
-            "HIVE_STATUS: ACTIVE", "PING: 1ms", "TARGET_ACQUIRED",
-            "DISTRIBUTING_LOAD", "BYPASSING_FIREWALL"
-        ];
+        const messages = ["UPLOADING...", "PACKET_LOSS: 0%", "NODE_SYNC", "HIVE_STATUS: ACTIVE", "PING: 1ms", "TARGET_ACQUIRED"];
         log.textContent = `> ${messages[Math.floor(Math.random() * messages.length)]}`;
-        
         overlay.appendChild(log);
         setTimeout(() => log.remove(), 1500);
     }
-
-    // 3. Background Pulse (Subtle)
-    if (Math.random() < 0.05) {
-        overlay.style.backgroundColor = 'rgba(0, 255, 255, 0.05)';
-        setTimeout(() => {
-            overlay.style.backgroundColor = 'transparent';
-        }, 200);
-    }
 }
 
-function performRansomwareEffect() {
-    // Theme: Encryption, Locks, Red/Warning aesthetic, Glitches
+function performRansomwareEffect(intensity) {
     const overlay = getOverlay();
-
-    // 1. Lock Icons
-    if (Math.random() < 0.2 * currentIntensity) {
+    if (Math.random() < 0.2 * intensity) {
         const lock = document.createElement('div');
         lock.className = 'absolute text-red-600/40 text-4xl font-bold select-none pointer-events-none';
         lock.textContent = '🔒';
         lock.style.left = `${Math.random() * 90}%`;
         lock.style.top = `${Math.random() * 90}%`;
         lock.style.transform = `rotate(${Math.random() * 30 - 15}deg)`;
-        
         overlay.appendChild(lock);
         setTimeout(() => lock.remove(), 1000);
     }
-
-    // 2. Scary Text
-    if (Math.random() < 0.1 * currentIntensity) {
+    if (Math.random() < 0.1 * intensity) {
         const msg = document.createElement('div');
         msg.className = 'absolute text-red-500 font-bold bg-black/80 px-2 py-1 border border-red-500';
         msg.style.left = `${Math.random() * 70 + 15}%`;
         msg.style.top = `${Math.random() * 70 + 15}%`;
         msg.style.fontSize = `${Math.random() * 1.5 + 0.8}rem`;
-        
-        const texts = [
-            "YOUR FILES ARE ENCRYPTED", "PAYMENT REQUIRED", "KEY NOT FOUND",
-            "ACCESS DENIED", "SYSTEM COMPROMISED", "TIME REMAINING: 00:00:00"
-        ];
+        const texts = ["YOUR FILES ARE ENCRYPTED", "PAYMENT REQUIRED", "KEY NOT FOUND", "ACCESS DENIED"];
         msg.textContent = texts[Math.floor(Math.random() * texts.length)];
-        
         overlay.appendChild(msg);
         setTimeout(() => msg.remove(), 800);
     }
-
-    // 3. Screen Inversion / Glitch
-    if (currentIntensity > 0.5 && Math.random() < 0.02) {
+    if (intensity > 0.5 && Math.random() < 0.02) {
         document.body.style.filter = 'invert(1)';
-        setTimeout(() => {
-            document.body.style.filter = 'none';
-        }, 100 + Math.random() * 200);
+        setTimeout(() => { document.body.style.filter = 'none'; }, 100 + Math.random() * 200);
     }
-
+    
     // 4. Reuse Global Glitch
-    if (Math.random() < currentIntensity * 0.5) {
-        performGlobalGlitch();
+    if (Math.random() < intensity * 0.5) {
+        performGlobalGlitch(intensity);
     }
 }

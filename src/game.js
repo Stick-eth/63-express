@@ -206,7 +206,28 @@ export class Game {
           if (!this.systemCalibratedThisRound && this.round > 1) {
               // Penalty for not calibrating previous round
               this.systemOverheatLevel = Math.min(100, this.systemOverheatLevel + 20);
-              if (this.systemOverheatLevel >= 20) {
+              
+              // Cooling Cost
+              if (this.systemOverheatLevel > 0) {
+                  let coolingCost;
+                  if (this.systemOverheatLevel >= 100) {
+                      coolingCost = Math.floor(this.cash * 0.05);
+                  } else {
+                      coolingCost = Math.floor(this.systemOverheatLevel * 0.5);
+                  }
+
+                  this.cash = Math.max(0, this.cash - coolingCost);
+                  this.log(`System Overheat: -$${coolingCost} for emergency cooling`);
+                  if (coolingCost > 0) {
+                      this.message = { key: 'script_effect', params: { text: `WARNING: System Overheat. Emergency Cooling: -$${coolingCost}` } };
+                  }
+              }
+
+              // Critical Failure
+              if (this.systemOverheatLevel >= 100) {
+                  this.attempts = Math.max(1, this.attempts - 2);
+                  this.message = { key: 'script_effect', params: { text: 'CRITICAL ERROR: SYSTEM MELTDOWN. INTEGRITY COMPROMISED.' } };
+              } else if (this.systemOverheatLevel >= 20) {
                   this.message = { key: 'script_effect', params: { text: 'WARNING: System Overheating. Recalibrate immediately.' } };
               }
           }
@@ -412,7 +433,10 @@ export class Game {
           // Boss Effect: Firewall (No Burning) or Meltdown (No Burning)
           if (this.bossEffect !== 'firewall' && this.bossEffect !== 'meltdown') {
             const diff = Math.abs(this.mysteryNumber - guess);
-            isBurning = diff <= 5;
+            const rangeSize = this.max - this.min;
+            // Burning if within 10% of current range, or at least within 2 units if range is small
+            const threshold = Math.max(2, Math.ceil(rangeSize * 0.1));
+            isBurning = diff <= threshold;
           }
           
           const direction = guess < this.mysteryNumber ? 'higher' : 'lower';

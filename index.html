@@ -245,25 +245,35 @@
                     <div id="system-temp-display" class="text-2xl font-bold text-orange-300">0%</div>
                 </div>
 
+                <div class="text-[10px] text-orange-800 mb-2 w-full text-center uppercase tracking-widest">Align levels with target zones</div>
+
                 <!-- Sliders Container -->
-                <div class="flex gap-8 justify-center w-full h-64">
+                <div class="flex gap-8 justify-center w-full h-auto">
                     <!-- Slider 1 -->
-                    <div class="relative w-16 bg-gray-900 border border-gray-700 rounded-full overflow-hidden group">
-                        <div id="slider-target-0" class="absolute w-full h-8 bg-green-500/30 border-y border-green-500 z-10 pointer-events-none transition-all duration-500" style="bottom: 50%"></div>
-                        <div id="slider-fill-0" class="absolute bottom-0 w-full bg-orange-500 transition-all duration-300" style="height: 50%"></div>
-                        <input type="range" min="0" max="100" value="50" class="absolute inset-0 w-full h-full opacity-0 cursor-ns-resize z-20" oninput="window.updateSystemSlider(0, this.value)">
+                    <div class="flex flex-col items-center gap-2">
+                        <div id="slider-container-0" class="relative w-16 h-64 bg-gray-900 border border-gray-700 rounded-full overflow-hidden cursor-ns-resize touch-none">
+                            <div id="slider-target-0" class="absolute w-full h-8 bg-green-500/30 border-y border-green-500 z-10 pointer-events-none transition-all duration-500" style="bottom: 50%; transform: translateY(50%);"></div>
+                            <div id="slider-fill-0" class="absolute bottom-0 w-full bg-orange-500 transition-all duration-75 pointer-events-none" style="height: 50%"></div>
+                        </div>
+                        <div id="slider-value-0" class="text-orange-500 font-mono text-xl font-bold">50</div>
                     </div>
+
                     <!-- Slider 2 -->
-                    <div class="relative w-16 bg-gray-900 border border-gray-700 rounded-full overflow-hidden group">
-                        <div id="slider-target-1" class="absolute w-full h-8 bg-green-500/30 border-y border-green-500 z-10 pointer-events-none transition-all duration-500" style="bottom: 50%"></div>
-                        <div id="slider-fill-1" class="absolute bottom-0 w-full bg-orange-500 transition-all duration-300" style="height: 50%"></div>
-                        <input type="range" min="0" max="100" value="50" class="absolute inset-0 w-full h-full opacity-0 cursor-ns-resize z-20" oninput="window.updateSystemSlider(1, this.value)">
+                    <div class="flex flex-col items-center gap-2">
+                        <div id="slider-container-1" class="relative w-16 h-64 bg-gray-900 border border-gray-700 rounded-full overflow-hidden cursor-ns-resize touch-none">
+                            <div id="slider-target-1" class="absolute w-full h-8 bg-green-500/30 border-y border-green-500 z-10 pointer-events-none transition-all duration-500" style="bottom: 50%; transform: translateY(50%);"></div>
+                            <div id="slider-fill-1" class="absolute bottom-0 w-full bg-orange-500 transition-all duration-75 pointer-events-none" style="height: 50%"></div>
+                        </div>
+                        <div id="slider-value-1" class="text-orange-500 font-mono text-xl font-bold">50</div>
                     </div>
+
                     <!-- Slider 3 -->
-                    <div class="relative w-16 bg-gray-900 border border-gray-700 rounded-full overflow-hidden group">
-                        <div id="slider-target-2" class="absolute w-full h-8 bg-green-500/30 border-y border-green-500 z-10 pointer-events-none transition-all duration-500" style="bottom: 50%"></div>
-                        <div id="slider-fill-2" class="absolute bottom-0 w-full bg-orange-500 transition-all duration-300" style="height: 50%"></div>
-                        <input type="range" min="0" max="100" value="50" class="absolute inset-0 w-full h-full opacity-0 cursor-ns-resize z-20" oninput="window.updateSystemSlider(2, this.value)">
+                    <div class="flex flex-col items-center gap-2">
+                        <div id="slider-container-2" class="relative w-16 h-64 bg-gray-900 border border-gray-700 rounded-full overflow-hidden cursor-ns-resize touch-none">
+                            <div id="slider-target-2" class="absolute w-full h-8 bg-green-500/30 border-y border-green-500 z-10 pointer-events-none transition-all duration-500" style="bottom: 50%; transform: translateY(50%);"></div>
+                            <div id="slider-fill-2" class="absolute bottom-0 w-full bg-orange-500 transition-all duration-75 pointer-events-none" style="height: 50%"></div>
+                        </div>
+                        <div id="slider-value-2" class="text-orange-500 font-mono text-xl font-bold">50</div>
                     </div>
                 </div>
 
@@ -346,7 +356,7 @@
 
             <!-- Grid Overlay -->
             <div id="grid-overlay" class="absolute inset-0 bg-black/95 z-30 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
-                <div id="number-grid" class="grid grid-cols-10 gap-1 p-4 w-full max-w-sm border border-green-500">
+                <div id="number-grid" class="grid grid-cols-10 gap-1 p-4 w-full max-w-lg border border-green-500">
                     <!-- Populated by JS -->
                 </div>
             </div>

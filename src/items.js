@@ -814,11 +814,19 @@ export const SCRIPTS = [
         id: 'ping_localhost',
         name: { en: 'ping 127.0.0.1', fr: 'ping 127.0.0.1' },
         icon: '🔁',
-        description: { en: 'Reveals if number is < 50.', fr: 'Révèle si le nombre est < 50.' },
+        description: { en: 'Eliminates half of the current range.', fr: 'Élimine la moitié de la zone actuelle.' },
         price: 2,
         execute: (game) => {
-            const isLess = game.mysteryNumber < 50;
-            return { success: true, message: `PING: < 50 ? ${isLess}` };
+            const mid = Math.floor((game.min + game.max) / 2);
+            const isLower = game.mysteryNumber <= mid;
+            
+            if (isLower) {
+                game.max = mid;
+                return { success: true, message: `PING: Target in lower half [${game.min}-${game.max}]` };
+            } else {
+                game.min = mid + 1;
+                return { success: true, message: `PING: Target in upper half [${game.min}-${game.max}]` };
+            }
         }
     }),
     createScript({

@@ -177,6 +177,19 @@ function handleStart() {
 }
 
 function handleGuess() {
+    // Overheat Input Failure
+    if (game.systemOverheatLevel > 60 && Math.random() < 0.2) {
+        game.message = { key: 'script_effect', params: { text: 'SYSTEM ERROR: INPUT REJECTED (OVERHEAT)' } };
+        UI.updateMessage(game, currentLang);
+        // Visual shake
+        const app = document.getElementById('app');
+        if (app) {
+            app.classList.add('animate-glitch');
+            setTimeout(() => app.classList.remove('animate-glitch'), 200);
+        }
+        return;
+    }
+
     const val = elements.guessInput.value;
     if (val === '') return;
     game.makeGuess(val);
@@ -434,13 +447,6 @@ function handleCalibrate() {
         game.systemCalibratedThisRound = true;
         game.systemOverheatLevel = Math.max(0, game.systemOverheatLevel - 30); // Cool down significantly
         
-        // Randomize targets for next time
-        game.systemTargets = [
-            Math.floor(Math.random() * 80) + 10,
-            Math.floor(Math.random() * 80) + 10,
-            Math.floor(Math.random() * 80) + 10
-        ];
-        
         UI.renderSystemMonitor(game);
         
         // Visual feedback
@@ -456,10 +462,42 @@ function handleCalibrate() {
     }
 }
 
-window.updateSystemSlider = function(index, value) {
-    game.systemSliders[index] = parseInt(value);
-    UI.renderSystemMonitor(game);
+// System Monitor Sliders Logic
+function setupSystemSlider(index) {
+    const container = document.getElementById(`slider-container-${index}`);
+    if (!container) return;
+
+    const updateFromEvent = (e) => {
+        const rect = container.getBoundingClientRect();
+        // Calculate percentage from bottom
+        let y = e.clientY;
+        let percentage = ((rect.bottom - y) / rect.height) * 100;
+        percentage = Math.max(0, Math.min(100, percentage));
+        
+        game.systemSliders[index] = percentage;
+        UI.renderSystemMonitor(game);
+    };
+
+    container.addEventListener('pointerdown', (e) => {
+        if (game.gameState !== 'SYSTEM_MONITOR') return;
+        if (game.systemCalibratedThisRound) return; // Prevent interaction if already calibrated
+        container.setPointerCapture(e.pointerId);
+        updateFromEvent(e);
+        
+        container.onpointermove = (e) => {
+            updateFromEvent(e);
+        };
+        
+        container.onpointerup = (e) => {
+            container.onpointermove = null;
+            container.onpointerup = null;
+            container.releasePointerCapture(e.pointerId);
+        };
+    });
 }
+
+// Initialize sliders
+[0, 1, 2].forEach(setupSystemSlider);
 
 // --- EVENT LISTENERS ---
 
@@ -817,6 +855,7 @@ if (elements.devUnlockAppsBtn) {
     elements.devUnlockAppsBtn.onclick = () => {
         game.tradingUnlocked = true;
         game.antivirusUnlocked = true;
+        game.systemMonitorUnlocked = true;
         refreshBrowserApps();
         render();
     };
