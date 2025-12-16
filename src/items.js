@@ -19,28 +19,29 @@ export const JOKERS = [
         id: 'crypto_miner',
         name: { en: 'Crypto Miner', fr: 'Crypto Mineur' },
         icon: '⛏️',
-        description: { en: '+$5 for each unused attempt at round end.', fr: '+5$ pour chaque essai non utilisé à la fin du round.' },
+        description: { en: 'Gain increases by 50% for each unused attempt.', fr: 'Le gain augmente de 50% pour chaque essai non utilisé.' },
         price: 6,
-        trigger: 'onWin',
-        execute: (game) => {
+        trigger: 'calculateGain',
+        execute: (game, baseGain) => {
             const unused = game.maxAttempts - game.attempts;
-            const bonus = unused * 5;
-            game.cash += bonus;
-            return { message: `Mining... +${bonus}$`, logOnly: true };
+            if (unused > 0) {
+                return baseGain * (1 + (0.5 * unused));
+            }
+            return baseGain;
         }
     }),
     createJoker({
         id: 'optimist',
         name: { en: 'The Optimist', fr: 'L\'Optimiste' },
         icon: '🌞',
-        description: { en: 'Gains for attempts 6 and 7 are multiplied by x10.', fr: 'Les gains des essais 6 et 7 sont multipliés par x10.' },
+        description: { en: 'Gains for attempts 6 and 7 are multiplied by x12.', fr: 'Les gains des essais 6 et 7 sont multipliés par x12.' },
         price: 8,
         rarity: 'uncommon',
         maxQuantity: 1,
         trigger: 'calculateGain',
         execute: (game, baseGain) => {
             if (game.attempts >= 6) {
-                return baseGain * 10;
+                return baseGain * 12;
             }
             return baseGain;
         }
@@ -49,14 +50,14 @@ export const JOKERS = [
         id: 'sniper',
         name: { en: 'The Sniper', fr: 'Le Sniper' },
         icon: '🎯',
-        description: { en: 'Exact win on attempt 4 gives +200$.', fr: 'Victoire exacte à l\'essai 4 donne +200$.' },
+        description: { en: 'Exact win on attempt 4 gives +1000$.', fr: 'Victoire exacte à l\'essai 4 donne +1000$.' },
         price: 10,
         rarity: 'rare',
         trigger: 'onWin',
         execute: (game) => {
             if (game.attempts === 4) {
-                game.cash += 200;
-                return { message: 'HEADSHOT! +200$', logOnly: true };
+                game.cash += 1000;
+                return { message: 'HEADSHOT! +1000$', logOnly: true };
             }
         }
     }),
@@ -72,22 +73,6 @@ export const JOKERS = [
             game.maxAttempts += 1;
         }
     }),
-    createJoker({
-        id: 'fibonacci',
-        name: { en: 'Fibonacci', fr: 'Fibonacci' },
-        icon: '🐚',
-        description: { en: 'If mystery number is a Fibonacci number, gain x2.', fr: 'Si le nombre mystère est un nombre de Fibonacci, gain x2.' },
-        price: 12,
-        rarity: 'uncommon',
-        trigger: 'calculateGain',
-        execute: (game, baseGain) => {
-            const fib = [0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89];
-            if (fib.includes(game.mysteryNumber)) {
-                return baseGain * 2;
-            }
-            return baseGain;
-        }
-    }),
     // --- INFO & LOGIC JOKERS ---
     createJoker({
         id: 'parity_check',
@@ -97,7 +82,7 @@ export const JOKERS = [
         maxQuantity: 1,
         trigger: 'onRoundStart',
         execute: (game) => {
-             return { message: `PARITY: ${game.mysteryNumber % 2 === 0 ? 'EVEN' : 'ODD'}`, logOnly: true };
+            return { message: `PARITY: ${game.mysteryNumber % 2 === 0 ? 'EVEN' : 'ODD'}`, logOnly: true };
         }
     }),
     createJoker({
@@ -110,7 +95,7 @@ export const JOKERS = [
         maxQuantity: 1,
         trigger: 'onRoundStart',
         execute: (game) => {
-             return { message: `MODULO: Ends with ${game.mysteryNumber % 10}`, logOnly: true };
+            return { message: `MODULO: Ends with ${game.mysteryNumber % 10}`, logOnly: true };
         }
     }),
     createJoker({
@@ -135,13 +120,14 @@ export const JOKERS = [
         id: 'glitch_hunter',
         name: { en: 'Glitch Hunter', fr: 'Glitch Hunter' },
         icon: '👾',
-        description: { en: 'If mystery number contains "7", it is visually marked.', fr: 'Si le nombre mystère contient un "7", il est marqué visuellement.' },
+        description: { en: 'If mystery number contains "3" or "7", it is visually marked.', fr: 'Si le nombre mystère contient un "3" ou un "7", il est marqué visuellement.' },
         price: 5,
         maxQuantity: 1,
         trigger: 'onRoundStart',
         execute: (game) => {
-            if (game.mysteryNumber.toString().includes('7')) {
-                return { message: 'GLITCH: Number contains "7"', logOnly: true };
+            const str = game.mysteryNumber.toString();
+            if (str.includes('7') || str.includes('3')) {
+                return { message: 'GLITCH: Number contains "3" or "7"', logOnly: true };
             }
         }
     }),
@@ -155,19 +141,42 @@ export const JOKERS = [
         rarity: 'uncommon',
         maxQuantity: 1,
         trigger: 'rng_validation',
-        execute: (game, candidate) => candidate % 2 === 0
+        execute: (game, candidate) => candidate % 2 === 0,
+        hooks: {
+            onRoundStart: (game) => {
+                return { message: 'EVEN FLOW: Mystery Number is EVEN', logOnly: true };
+            }
+        }
+    }),
+    createJoker({
+        id: 'odd_flow',
+        name: { en: 'Odd Flow', fr: 'Odd Flow' },
+        icon: '🌊',
+        description: { en: 'Mystery numbers will ALWAYS be Odd.', fr: 'Les nombres mystères seront TOUJOURS Impairs.' },
+        price: 10,
+        rarity: 'uncommon',
+        trigger: 'rng_validation',
+        execute: (game, candidate) => candidate % 2 === 1,
+        hooks: {
+            onRoundStart: (game) => {
+                return { message: 'ODD FLOW: Mystery Number is ODD', logOnly: true };
+            }
+        }
     }),
     createJoker({
         id: 'lazy_dev',
         name: { en: 'Lazy Dev', fr: 'Lazy Dev' },
         icon: '💤',
-        description: { en: 'Mystery number always multiple of 10. Gains halved.', fr: 'Le nombre mystère sera toujours un multiple de 10. Gains divisés par 2.' },
+        description: { en: 'Mystery number always multiple of 10. Gains halved. Max Attempts -25%.', fr: 'Le nombre mystère est un multiple de 10. Gains / 2. Essais Max -25%.' },
         price: 12,
         rarity: 'rare',
         maxQuantity: 1,
         hooks: {
             rng_validation: (game, candidate) => candidate % 10 === 0,
-            calculateGain: (game, baseGain) => Math.floor(baseGain / 2)
+            calculateGain: (game, baseGain) => Math.floor(baseGain / 2),
+            onRoundStart: (game) => {
+                game.maxAttempts = Math.floor(game.maxAttempts * 0.75);
+            }
         }
     }),
     // --- CURSED JOKERS ---
@@ -175,7 +184,7 @@ export const JOKERS = [
         id: 'spaghetti_code',
         name: { en: 'Spaghetti Code', fr: 'Spaghetti Code' },
         icon: '🍝',
-        description: { en: '+$100 on win, but interval is hidden.', fr: '+100$ à chaque victoire, mais l\'intervalle est caché.' },
+        description: { en: '+$1000 to base gain, but interval is hidden.', fr: '+1000$ au gain, mais l\'intervalle est caché.' },
         price: 10,
         rarity: 'rare',
         maxQuantity: 1,
@@ -344,15 +353,14 @@ export const JOKERS = [
         }
     }),
     createJoker({
-        id: 'temerraire',
-        name: { en: 'Daredevil', fr: 'Téméraire' },
-        icon: '�',
-        description: { en: 'Cancels Boss effects.', fr: 'Annule les effets des Boss.' },
-        price: 20,
-        rarity: 'rare',
-        trigger: 'preventBoss',
-        execute: () => {}
-    
+        id: 'endette',
+        name: { en: 'Indebted', fr: 'Endetté' },
+        icon: '💳',
+        description: { en: 'You can have negative cash without losing.', fr: 'Vous pouvez avoir un solde négatif sans perdre la partie.' },
+        price: 25,
+        rarity: 'legendary',
+        trigger: 'checkGameOver',
+        execute: () => { }
     }),
     createJoker({
         id: 'temerraire',
@@ -362,7 +370,7 @@ export const JOKERS = [
         price: 20,
         rarity: 'rare',
         trigger: 'preventBoss',
-        execute: () => {}
+        execute: () => { }
     }),
     createJoker({
         id: 'joueur',
@@ -439,18 +447,6 @@ export const JOKERS = [
         trigger: 'calculateRent',
         execute: (game, rent) => {
             return Math.floor(rent / 1.4);
-        }
-    }),
-    createJoker({
-        id: 'tricheur',
-        name: { en: 'Cheater', fr: 'Tricheur' },
-        icon: '🃏',
-        description: { en: 'You can hold 1 extra joker.', fr: 'Vous pouvez posséder 1 joker supplémentaire.' },
-        price: 30,
-        rarity: 'legendary',
-        trigger: 'getMaxJokerSlots',
-        execute: (game, slots) => {
-            return slots + 1;
         }
     }),
     createJoker({
@@ -779,10 +775,10 @@ export const SCRIPTS = [
         id: 'cash_inject',
         name: { en: 'cash_inject.js', fr: 'cash_inject.js' },
         icon: '💉',
-        description: { en: '+$20 immediate, but -1 attempt this round.', fr: '+20$ immédiat, mais -1 essai ce round.' },
+        description: { en: '+$25 immediate, but -1 attempt this round.', fr: '+25$ immédiat, mais -1 essai ce round.' },
         price: 2,
         execute: (game) => {
-            game.cash += 20;
+            game.cash += 25;
             game.maxAttempts -= 1;
             return { success: true, message: 'SYSTEM: Injection success. RAM corrupted (-1 attempt).' };
         }
@@ -824,7 +820,7 @@ export const SCRIPTS = [
         price: 8,
         execute: (game) => {
             if (game.attempts < game.maxAttempts) {
-                game.attempts = Math.max(0, game.attempts - 1); 
+                game.attempts = Math.max(0, game.attempts - 1);
                 return { success: true, message: 'UNDO success. Attempt restored.' };
             }
             return { success: false, message: 'Nothing to undo.' };
@@ -929,7 +925,7 @@ export const SCRIPTS = [
         execute: (game) => {
             const mid = Math.floor((game.min + game.max) / 2);
             const isLower = game.mysteryNumber <= mid;
-            
+
             if (isLower) {
                 game.max = mid;
                 return { success: true, message: `PING: Target in lower half [${game.min}-${game.max}]` };

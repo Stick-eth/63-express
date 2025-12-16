@@ -488,7 +488,7 @@ export class Game {
   enterNewMonth() {
       this.level++;
       this.round = 1;
-      this.rent = Math.floor(this.rent * 2.5); // Exponential rent
+      this.rent = Math.floor(this.rent * 1.3); // Exponential rent
       this.newMonthStarted = true;
       this.monthBossPersistent = null;
       this.monthBossAnnounced = false;
