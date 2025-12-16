@@ -389,7 +389,8 @@ export const translations = {
         'item_bought': 'Item acquired.',
         'insufficient_funds': 'Insufficient funds.',
         'inventory_full': 'Inventory full.',
-        'script_effect': (p) => `> ${p?.text}`
+        'script_effect': (p) => `> ${p?.text}`,
+        'firewall_blocked': 'Firewall blocked the error. Attempt saved.'
     },
     fr: {
         'welcome_hustle': 'Bienvenue dans le Binary Hustle. Craquez le code.',
@@ -410,7 +411,8 @@ export const translations = {
         'item_bought': 'Objet acquis.',
         'insufficient_funds': 'Fonds insuffisants.',
         'inventory_full': 'Inventaire plein.',
-        'script_effect': (p) => `> ${p?.text}`
+        'script_effect': (p) => `> ${p?.text}`,
+        'firewall_blocked': 'Pare-feu a bloqué l\'erreur. Essai économisé.'
     }
 };
 

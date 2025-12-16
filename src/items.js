@@ -4,6 +4,7 @@ const createJoker = (data) => ({
     rarity: 'common',
     trigger: 'none',
     icon: '🃏', // Default icon
+    maxQuantity: Infinity, // Default to unlimited
     ...data
 });
 
@@ -36,6 +37,7 @@ export const JOKERS = [
         description: { en: 'Gains for attempts 6 and 7 are multiplied by x12.', fr: 'Les gains des essais 6 et 7 sont multipliés par x12.' },
         price: 8,
         rarity: 'uncommon',
+        maxQuantity: 1,
         trigger: 'calculateGain',
         execute: (game, baseGain) => {
             if (game.attempts >= 6) {
@@ -77,7 +79,7 @@ export const JOKERS = [
         name: { en: 'Parity Check', fr: 'Parity Check' },
         icon: '⚖️',
         description: { en: 'Permanently indicates if mystery number is EVEN or ODD.', fr: 'Indique en permanence si le nombre mystère est PAIR ou IMPAIR.' },
-        price: 8,
+        maxQuantity: 1,
         trigger: 'onRoundStart',
         execute: (game) => {
             return { message: `PARITY: ${game.mysteryNumber % 2 === 0 ? 'EVEN' : 'ODD'}`, logOnly: true };
@@ -90,6 +92,7 @@ export const JOKERS = [
         description: { en: 'Reveals the last digit of the mystery number.', fr: 'Révèle le dernier chiffre du nombre mystère (Unités).' },
         price: 15,
         rarity: 'rare',
+        maxQuantity: 1,
         trigger: 'onRoundStart',
         execute: (game) => {
             return { message: `MODULO: Ends with ${game.mysteryNumber % 10}`, logOnly: true };
@@ -119,6 +122,7 @@ export const JOKERS = [
         icon: '👾',
         description: { en: 'If mystery number contains "3" or "7", it is visually marked.', fr: 'Si le nombre mystère contient un "3" ou un "7", il est marqué visuellement.' },
         price: 5,
+        maxQuantity: 1,
         trigger: 'onRoundStart',
         execute: (game) => {
             const str = game.mysteryNumber.toString();
@@ -135,6 +139,7 @@ export const JOKERS = [
         description: { en: 'Mystery numbers will ALWAYS be Even.', fr: 'Les nombres mystères seront TOUJOURS Pairs.' },
         price: 10,
         rarity: 'uncommon',
+        maxQuantity: 1,
         trigger: 'rng_validation',
         execute: (game, candidate) => candidate % 2 === 0,
         hooks: {
@@ -165,6 +170,7 @@ export const JOKERS = [
         description: { en: 'Mystery number always multiple of 10. Gains halved. Max Attempts -25%.', fr: 'Le nombre mystère est un multiple de 10. Gains / 2. Essais Max -25%.' },
         price: 12,
         rarity: 'rare',
+        maxQuantity: 1,
         hooks: {
             rng_validation: (game, candidate) => candidate % 10 === 0,
             calculateGain: (game, baseGain) => Math.floor(baseGain / 2),
@@ -181,9 +187,28 @@ export const JOKERS = [
         description: { en: '+$1000 to base gain, but interval is hidden.', fr: '+1000$ au gain, mais l\'intervalle est caché.' },
         price: 10,
         rarity: 'rare',
-        trigger: 'calculateGain',
-        execute: (game, baseGain) => {
-            return baseGain + 1000;
+        maxQuantity: 1,
+        trigger: 'onWin',
+        execute: (game) => {
+            game.cash += 100;
+            return { message: 'SPAGHETTI: +100$', logOnly: true };
+        }
+    }),
+    createJoker({
+        id: 'memory_leak',
+        name: { en: 'Memory Leak', fr: 'Memory Leak' },
+        icon: '💧',
+        description: { en: 'Score x3, but -1 Max Attempt each won round (min 3).', fr: 'Score x3, mais -1 Essai Max à chaque round gagné (min 3).' },
+        price: 10,
+        rarity: 'rare',
+        hooks: {
+            calculateGain: (game, baseGain) => baseGain * 3,
+            onRoundStart: (game) => {
+                 game.maxAttempts = Math.max(3, game.maxAttempts - (game.memoryLeakStacks || 0));
+            },
+            onWin: (game) => {
+                game.memoryLeakStacks = (game.memoryLeakStacks || 0) + 1;
+            }
         }
     }),
     // --- NEW JOKERS ---
@@ -200,40 +225,6 @@ export const JOKERS = [
                 return baseGain * 2;
             }
             return Math.floor(baseGain / 2);
-        }
-    }),
-    createJoker({
-        id: 'quantum_tens',
-        name: { en: 'Quantum Tens', fr: 'Quantum Tens' },
-        icon: '⚛️',
-        description: { en: 'Reveals tens, but unit changes once per round.', fr: 'Révèle les dizaines, mais l\'unité change une fois par round.' },
-        price: 14,
-        rarity: 'rare',
-        hooks: {
-            onRoundStart: (game) => {
-                const tens = Math.floor(game.mysteryNumber / 10);
-                return { message: `QUANTUM: Starts with ${tens}X`, logOnly: true };
-            },
-            onGuess: (game) => {
-                if (!game.quantumChanged && Math.random() < 0.25) {
-                    const tens = Math.floor(game.mysteryNumber / 10);
-                    let newNumber = -1;
-                    let attempts = 0;
-                    while (attempts < 20) {
-                        const newUnits = Math.floor(Math.random() * 10);
-                        const candidate = (tens * 10) + newUnits;
-                        if (game.checkJokerConstraints('rng_validation', candidate)) {
-                            newNumber = candidate;
-                            break;
-                        }
-                        attempts++;
-                    }
-                    if (newNumber !== -1 && newNumber !== game.mysteryNumber) {
-                        game.mysteryNumber = newNumber;
-                        game.quantumChanged = true;
-                    }
-                }
-            }
         }
     }),
     createJoker({
@@ -255,6 +246,7 @@ export const JOKERS = [
         description: { en: 'Gain x2 if you guess the reverse number before winning.', fr: 'Gain x2 si vous devinez l\'inverse du nombre avant de gagner (ex: 45 avant 54).' },
         price: 12,
         rarity: 'uncommon',
+        maxQuantity: 1,
         hooks: {
             onGuess: (game, guess) => {
                 const targetStr = game.mysteryNumber.toString().padStart(2, '0');
@@ -612,6 +604,141 @@ export const JOKERS = [
                 game.cash += amount;
                 return { message: `Overflow: +$${amount}`, logOnly: true };
             }
+        }
+    }),
+    createJoker({
+        id: 'snowball',
+        name: { en: 'Snowball', fr: 'Boule de Neige' },
+        icon: '❄️',
+        description: { en: 'Each round, gain a copy of a random owned joker (except Snowball).', fr: 'Chaque round, recevez une copie d\'un joker possédé au hasard (sauf Boule de Neige).' },
+        price: 25,
+        rarity: 'legendary',
+        trigger: 'onRoundStart',
+        execute: (game) => {
+            const candidates = game.jokers.filter(j => j.id !== 'snowball');
+            if (candidates.length > 0) {
+                const target = candidates[Math.floor(Math.random() * candidates.length)];
+                if (target.quantity < (target.maxQuantity || Infinity)) {
+                    target.quantity++;
+                    return { message: `Snowball: +1 ${target.name.en}`, logOnly: true };
+                }
+            }
+        }
+    }),
+    createJoker({
+        id: 'compound_interest',
+        name: { en: 'Compound Interest', fr: 'Intérêts Composés' },
+        icon: '🏦',
+        description: { en: 'Gain +1% of your cash on win.', fr: 'Gagnez +1% de votre cash à chaque victoire.' },
+        price: 10,
+        rarity: 'uncommon',
+        trigger: 'onWin',
+        execute: (game) => {
+            const interest = Math.floor(game.cash * 0.01);
+            if (interest > 0) {
+                game.cash += interest;
+                return { message: `Interest: +$${interest}`, logOnly: true };
+            }
+        }
+    }),
+    createJoker({
+        id: 'range_extender',
+        name: { en: 'Range Extender', fr: 'Extension de Portée' },
+        icon: '🔭',
+        description: { en: '+10 to Max Range.', fr: '+10 à la borne Max.' },
+        price: 6,
+        rarity: 'common',
+        trigger: 'getMaxRange',
+        execute: (game, currentRange) => {
+            return currentRange + 10;
+        }
+    }),
+    createJoker({
+        id: 'generous',
+        name: { en: 'Generous', fr: 'Généreux' },
+        icon: '🎁',
+        description: { en: 'Win if guess is within +/- 2 (Stackable).', fr: 'Victoire si le nombre est à +/- 2 près (Cumulable).' },
+        price: 20,
+        rarity: 'rare',
+        trigger: 'none',
+        execute: () => {}
+    }),
+    createJoker({
+        id: 'firewall',
+        name: { en: 'Firewall', fr: 'Pare-feu' },
+        icon: '🛡️',
+        description: { en: 'First error of each round does not consume an attempt.', fr: 'La première erreur de chaque round ne consomme pas d\'essai.' },
+        price: 18,
+        rarity: 'rare',
+        trigger: 'none', // Handled in handleMiss
+        execute: () => {}
+    }),
+    createJoker({
+        id: 'script_kiddie',
+        name: { en: 'Script Kiddie', fr: 'Script Kiddie' },
+        icon: '🧸',
+        description: { en: '10% chance to recycle used scripts (Max 50%).', fr: '10% de chance de recycler les scripts utilisés (Max 50%).' },
+        price: 12,
+        rarity: 'uncommon',
+        trigger: 'none', // Handled in useScript
+        execute: () => {}
+    }),
+    createJoker({
+        id: 'garbage_collector',
+        name: { en: 'Garbage Collector', fr: 'Ramasse-miettes' },
+        icon: '🗑️',
+        description: { en: 'Gain $2 when using a script.', fr: 'Gagnez 2$ lors de l\'utilisation d\'un script.' },
+        price: 8,
+        rarity: 'common',
+        trigger: 'onScriptUse',
+        execute: (game) => {
+            game.cash += 2;
+            return { message: 'GC: +$2', logOnly: true };
+        }
+    }),
+    createJoker({
+        id: 'loan_shark',
+        name: { en: 'Loan Shark', fr: 'Usurier' },
+        icon: '🦈',
+        description: { en: '+$50 Cash now, but Rent +$5 permanently.', fr: '+50$ Cash maintenant, mais Loyer +5$ permanent.' },
+        price: 0,
+        rarity: 'common',
+        trigger: 'onBuy',
+        execute: (game) => {
+            game.cash += 50;
+            return { message: 'LOAN: +$50', logOnly: true };
+        },
+        hooks: {
+            calculateRent: (game, rent) => rent + 5
+        }
+    }),
+    createJoker({
+        id: 'zero_day',
+        name: { en: 'Zero Day', fr: 'Zero Day' },
+        icon: '☢️',
+        description: { en: 'Win on first attempt gives +$100.', fr: 'Gagner du premier coup donne +100$.' },
+        price: 25,
+        rarity: 'legendary',
+        trigger: 'onWin',
+        execute: (game) => {
+            if (game.attempts === 1) {
+                game.cash += 100;
+                return { message: 'ZERO DAY: +$100', logOnly: true };
+            }
+        }
+    }),
+    createJoker({
+        id: 'blockchain',
+        name: { en: 'Blockchain', fr: 'Blockchain' },
+        icon: '🔗',
+        description: { en: 'Gain $1 for every unique guess made this run.', fr: 'Gagnez 1$ pour chaque nombre unique deviné dans cette partie.' },
+        price: 15,
+        rarity: 'rare',
+        trigger: 'onWin',
+        execute: (game) => {
+            const bonus = game.uniqueGuesses.size;
+            game.cash += bonus;
+            return { message: `BLOCKCHAIN: +$${bonus}`, logOnly: true };
         }
     })
 ];

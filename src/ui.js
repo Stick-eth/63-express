@@ -215,6 +215,14 @@ export function renderInventory(game, handlers, currentLang) {
             el.className = 'aspect-square bg-black border border-green-700 flex items-center justify-center text-2xl cursor-help hover:bg-green-900/40 hover:border-green-400 transition-all relative group select-none';
             el.textContent = joker.icon || '🃏';
             
+            // Add quantity indicator
+            if (joker.quantity && joker.quantity > 1) {
+                const qty = document.createElement('div');
+                qty.className = 'absolute bottom-0 right-0 bg-green-900 text-green-100 text-[10px] px-1 font-bold leading-none';
+                qty.textContent = `x${joker.quantity}`;
+                el.appendChild(qty);
+            }
+            
             // Tooltip events
             el.onmouseenter = (e) => showTooltip(e, getLoc(joker.name, currentLang), getLoc(joker.description, currentLang), joker.rarity, joker.price);
             el.onmousemove = moveTooltip;

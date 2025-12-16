@@ -4,8 +4,18 @@ export function runTerminalSequence(lines, onComplete, speed = 50, waitForUser =
     elements.bootText.innerHTML = '';
     if (elements.bootContinueBtn) elements.bootContinueBtn.classList.add('hidden');
     let lineIndex = 0;
+    let skipped = false;
+
+    // Expose skip function globally for dev tools
+    window.skipTerminalSequence = () => {
+        if (skipped) return;
+        skipped = true;
+        onComplete();
+    };
     
     function typeLine() {
+        if (skipped) return;
+
         if (lineIndex >= lines.length) {
             if (waitForUser && elements.bootContinueBtn) {
                 elements.bootContinueBtn.classList.remove('hidden');
@@ -26,6 +36,10 @@ export function runTerminalSequence(lines, onComplete, speed = 50, waitForUser =
         
         let charIndex = 0;
         const interval = setInterval(() => {
+            if (skipped) {
+                clearInterval(interval);
+                return;
+            }
             p.textContent += line[charIndex];
             charIndex++;
             if (charIndex >= line.length) {
