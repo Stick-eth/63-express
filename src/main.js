@@ -861,6 +861,14 @@ if (elements.devUnlockAppsBtn) {
     };
 }
 
+if (elements.devSkipBootBtn) {
+    elements.devSkipBootBtn.onclick = () => {
+        if (window.skipTerminalSequence) {
+            window.skipTerminalSequence();
+        }
+    };
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const skipBoot = sessionStorage.getItem('skipBoot') === 'true';
     if (skipBoot) sessionStorage.removeItem('skipBoot');

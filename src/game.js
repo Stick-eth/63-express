@@ -65,6 +65,8 @@ export class Game {
     this.systemCalibratedThisRound = false;
     this.systemSliders = [50, 50, 50]; // Current values
     this.systemTargets = [50, 50, 50]; // Target values
+    
+    this.uniqueGuesses = new Set(); // For Blockchain Joker
   }
 
   parseStockData(csv) {
@@ -154,29 +156,32 @@ export class Game {
       let currentValue = initialValue;
       
       this.jokers.forEach(joker => {
-          // Check primary trigger
-          if (joker.trigger === triggerName) {
-              const result = joker.execute(this, currentValue);
-              if (['calculateGain', 'rng_validation', 'getMaxRange'].includes(triggerName)) {
-                  currentValue = result;
-              } else if (result && result.message) {
-                   if (!result.logOnly) {
-                       this.message = { key: 'script_effect', params: { text: result.message } };
-                   }
-                   if (this.roundLogs) this.roundLogs.push(result.message);
+          const count = joker.quantity || 1;
+          for (let i = 0; i < count; i++) {
+              // Check primary trigger
+              if (joker.trigger === triggerName) {
+                  const result = joker.execute(this, currentValue);
+                  if (['calculateGain', 'rng_validation', 'getMaxRange', 'getMinRange', 'calculateRent', 'calculateShopPrice', 'getMaxJokerSlots'].includes(triggerName)) {
+                      currentValue = result;
+                  } else if (result && result.message) {
+                       if (!result.logOnly) {
+                           this.message = { key: 'script_effect', params: { text: result.message } };
+                       }
+                       if (this.roundLogs) this.roundLogs.push(result.message);
+                  }
               }
-          }
-          
-          // Check hooks
-          if (joker.hooks && joker.hooks[triggerName]) {
-              const result = joker.hooks[triggerName](this, currentValue);
-              if (['calculateGain', 'rng_validation', 'getMaxRange'].includes(triggerName)) {
-                  currentValue = result;
-              } else if (result && result.message) {
-                   if (!result.logOnly) {
-                       this.message = { key: 'script_effect', params: { text: result.message } };
-                   }
-                   if (this.roundLogs) this.roundLogs.push(result.message);
+              
+              // Check hooks
+              if (joker.hooks && joker.hooks[triggerName]) {
+                  const result = joker.hooks[triggerName](this, currentValue);
+                  if (['calculateGain', 'rng_validation', 'getMaxRange', 'getMinRange', 'calculateRent', 'calculateShopPrice', 'getMaxJokerSlots'].includes(triggerName)) {
+                      currentValue = result;
+                  } else if (result && result.message) {
+                       if (!result.logOnly) {
+                           this.message = { key: 'script_effect', params: { text: result.message } };
+                       }
+                       if (this.roundLogs) this.roundLogs.push(result.message);
+                  }
               }
           }
       });
@@ -186,12 +191,15 @@ export class Game {
 
   checkJokerConstraints(triggerName, value) {
       return this.jokers.every(joker => {
+          const count = joker.quantity || 1;
           let valid = true;
-          if (joker.trigger === triggerName) {
-              valid = valid && joker.execute(this, value);
-          }
-          if (joker.hooks && joker.hooks[triggerName]) {
-              valid = valid && joker.hooks[triggerName](this, value);
+          for (let i = 0; i < count; i++) {
+              if (joker.trigger === triggerName) {
+                  valid = valid && joker.execute(this, value);
+              }
+              if (joker.hooks && joker.hooks[triggerName]) {
+                  valid = valid && joker.hooks[triggerName](this, value);
+              }
           }
           return valid;
       });
@@ -283,6 +291,7 @@ export class Game {
       this.nextGuessBonus = 0;
       this.reverseGuessed = false; // For Mirror Dimension
       this.quantumChanged = false; // For Quantum Tens
+      this.firewallUsedThisRound = false; // For Firewall
 
       if (this.round === 1) {
           this.monthBossPersistent = null;
@@ -365,22 +374,64 @@ export class Game {
       return;
     }
 
-    this.attempts++;
     this.history.push(guess);
+    
+    // Track unique guesses for Blockchain
+    if (this.gameState === 'WON') { // Wait, this is before win check.
+         // Logic moved to handleWin to ensure we only count winning runs? 
+         // No, "unique guess made in this run".
+         this.uniqueGuesses.add(guess);
+    } else {
+         this.uniqueGuesses.add(guess);
+    }
 
     // Trigger Jokers: onGuess
     this.triggerJokers('onGuess', guess);
 
-    if (guess === this.mysteryNumber) {
+    // Check for Generous Joker Tolerance
+    let tolerance = 0;
+    this.jokers.forEach(j => {
+        if (j.id === 'generous') {
+            tolerance += (j.quantity || 1) * 2;
+        }
+    });
+
+    if (Math.abs(guess - this.mysteryNumber) <= tolerance) {
       this.handleWin();
     } else {
         this.handleMiss(guess);
     }
   }
 
+  handleMiss(guess) {
+      // Check Firewall
+      const firewall = this.jokers.find(j => j.id === 'firewall');
+      if (firewall && !this.firewallUsedThisRound) {
+          this.firewallUsedThisRound = true;
+          this.message = { key: 'firewall_blocked' };
+          return;
+      }
+
+      this.attempts++;
+      
+      if (this.attempts >= this.maxAttempts) {
+          this.gameState = 'LOST_ROUND';
+          this.message = { key: 'lost_round', params: { number: this.mysteryNumber } };
+      } else {
+          if (guess < this.mysteryNumber) {
+              this.min = Math.max(this.min, guess + 1);
+              this.message = { key: 'higher', params: { min: this.min, max: this.max } };
+          } else {
+              this.max = Math.min(this.max, guess - 1);
+              this.message = { key: 'lower', params: { min: this.min, max: this.max } };
+          }
+      }
+  }
+
   handleWin() {
       this.gameState = 'WON';
       
+      this.attempts++;
       // Calculate Gain
       let gain = this.baseGains[this.attempts - 1] || 0;
 
@@ -398,62 +449,6 @@ export class Game {
 
       this.cash += gain;
       this.message = { key: 'won_round', params: { gain, cash: this.cash } };
-
-      // Unlock Trading after defeating Audit boss (month 1 of audit arc at week 3)
-      if (this.currentArc && this.currentArc.id === 'audit' && this.round === this.maxRounds) {
-          this.tradingUnlocked = true;
-      }
-  }
-
-  handleMiss(guess) {
-      this.nextGuessBonus = 0; // Reset hotfix bonus
-      // Update bounds (unless Boss prevents it)
-      if (this.bossEffect !== 'latency') {
-        if (guess < this.mysteryNumber) {
-            this.min = Math.max(this.min, guess + 1);
-        } else {
-            this.max = Math.min(this.max, guess - 1);
-        }
-      }
-
-      // Apply Joker Hooks: onMiss (Allows modifying bounds further)
-      this.triggerJokers('onMiss', guess);
-
-      // Boss Effect: Tax (Audit Arc)
-      if (this.bossEffect === 'tax') {
-          this.cash = Math.max(0, this.cash - 1);
-      }
-
-      if (this.attempts >= this.maxAttempts) {
-          this.gameState = 'LOST_ROUND';
-          this.message = { key: 'lost_round', params: { number: this.mysteryNumber } };
-      } else {
-          // Near miss check (unless Boss prevents it)
-          let isBurning = false;
-          // Boss Effect: Firewall (No Burning) or Meltdown (No Burning)
-          if (this.bossEffect !== 'firewall' && this.bossEffect !== 'meltdown') {
-            const diff = Math.abs(this.mysteryNumber - guess);
-            const rangeSize = this.max - this.min;
-            // Burning if within 10% of current range, or at least within 2 units if range is small
-            const threshold = Math.max(2, Math.ceil(rangeSize * 0.1));
-            isBurning = diff <= threshold;
-          }
-          
-          const direction = guess < this.mysteryNumber ? 'higher' : 'lower';
-          const key = isBurning ? `${direction}_burning` : direction;
-          const hideRange = this.bossEffect === 'blind' && this.attempts <= 3;
-          const displayMin = hideRange ? '???' : this.min;
-          const displayMax = hideRange ? '???' : this.max;
-          
-          this.message = { 
-              key: key, 
-              params: { 
-                  min: displayMin, 
-                  max: displayMax,
-                  attemptsLeft: this.maxAttempts - this.attempts
-              } 
-          };
-      }
   }
 
   nextAction() {
@@ -585,10 +580,12 @@ export class Game {
       this.shopInventory = [];
       this.rerollCost = 5;
       
-      // Filter out owned jokers
-      const ownedJokerIds = this.jokers.map(j => j.id);
-      // Filter available jokers (not owned)
-      let availableJokers = JOKERS.filter(j => !ownedJokerIds.includes(j.id));
+      // Filter available jokers (check maxQuantity)
+      let availableJokers = JOKERS.filter(j => {
+          const owned = this.jokers.find(oj => oj.id === j.id);
+          if (!owned) return true;
+          return owned.quantity < (j.maxQuantity || Infinity);
+      });
       
       // Shuffle available jokers
       availableJokers.sort(() => Math.random() - 0.5);
@@ -632,13 +629,24 @@ export class Game {
       
       if (this.cash >= item.price) {
           if (item.type === 'passive') {
-              const maxSlots = this.triggerJokers('getMaxJokerSlots', 5);
-              if (this.jokers.length < maxSlots) {
-                  this.cash -= item.price;
-                  this.jokers.push(item);
-                  this.shopInventory.splice(itemIndex, 1);
-                  this.triggerJokers('onBuy', item);
-                  return true;
+              const existingJoker = this.jokers.find(j => j.id === item.id);
+              if (existingJoker) {
+                  if (existingJoker.quantity < (existingJoker.maxQuantity || Infinity)) {
+                      this.cash -= item.price;
+                      existingJoker.quantity++;
+                      this.shopInventory.splice(itemIndex, 1);
+                      this.triggerJokers('onBuy', item);
+                      return true;
+                  }
+              } else {
+                  const maxSlots = this.triggerJokers('getMaxJokerSlots', 10);
+                  if (this.jokers.length < maxSlots) {
+                      this.cash -= item.price;
+                      this.jokers.push({ ...item, quantity: 1 });
+                      this.shopInventory.splice(itemIndex, 1);
+                      this.triggerJokers('onBuy', item);
+                      return true;
+                  }
               }
           } else if (item.type === 'consumable') {
               if (this.scripts.length < 3) {
@@ -731,7 +739,8 @@ export class Game {
       return { success: true, shares: sharesToSell, price, gained: proceeds };
   }
 
-  // --- ANTIVIRUS HELPERS ---
+// --- ANTIVIRUS HELPERS ---
+
   startAntivirusGame() {
       this.antivirusActive = true;
       this.antivirusScore = 0;
@@ -774,8 +783,13 @@ export class Game {
       if (type === 'joker') {
           item = this.jokers[index];
           if (item) {
+              // Credit half the price when selling a joker
               this.cash += Math.floor(item.price / 2);
-              this.jokers.splice(index, 1);
+              if (item.quantity && item.quantity > 1) {
+                  item.quantity--;
+              } else {
+                  this.jokers.splice(index, 1);
+              }
               this.triggerJokers('onSell', item);
               return true;
           }
@@ -791,7 +805,4 @@ export class Game {
       return false;
   }
 
-  getBoss() {
-      return BOSSES[Math.min(this.level - 1, BOSSES.length - 1)];
-  }
 }
