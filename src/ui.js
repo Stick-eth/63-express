@@ -546,6 +546,9 @@ export function updateGrid(game) {
     const cellCount = 100;
     const step = totalRange / cellCount;
 
+    const hasEvenFlow = game.jokers.some(j => j.id === 'even_flow');
+    const hasOddFlow = game.jokers.some(j => j.id === 'odd_flow');
+
     for (let i = 0; i < cellCount; i++) {
         const el = document.createElement('div');
         
@@ -559,8 +562,17 @@ export function updateGrid(game) {
 
         // Check validity
         // A cell is valid if its range overlaps with [game.min, game.max]
-        const isValid = (cellStart <= game.max && cellEnd >= game.min);
+        let isValid = (cellStart <= game.max && cellEnd >= game.min);
         
+        // Even Flow: Gray out odd numbers (only if cell represents a single number)
+        if (hasEvenFlow && cellStart === cellEnd && cellStart % 2 !== 0) {
+            isValid = false;
+        }
+        // Odd Flow: Gray out even numbers (only if cell represents a single number)
+        if (hasOddFlow && cellStart === cellEnd && cellStart % 2 === 0) {
+            isValid = false;
+        }
+
         // Check if fully valid (optional, for color intensity)
         const isFullyValid = (cellStart >= game.min && cellEnd <= game.max);
 

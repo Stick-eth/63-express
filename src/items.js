@@ -150,7 +150,27 @@ export const JOKERS = [
         price: 10,
         rarity: 'uncommon',
         trigger: 'rng_validation',
-        execute: (game, candidate) => candidate % 2 === 0
+        execute: (game, candidate) => candidate % 2 === 0,
+        hooks: {
+            onRoundStart: (game) => {
+                return { message: 'EVEN FLOW: Mystery Number is EVEN', logOnly: true };
+            }
+        }
+    }),
+    createJoker({
+        id: 'odd_flow',
+        name: { en: 'Odd Flow', fr: 'Odd Flow' },
+        icon: '🌊',
+        description: { en: 'Mystery numbers will ALWAYS be Odd.', fr: 'Les nombres mystères seront TOUJOURS Impairs.' },
+        price: 10,
+        rarity: 'uncommon',
+        trigger: 'rng_validation',
+        execute: (game, candidate) => candidate % 2 === 1,
+        hooks: {
+            onRoundStart: (game) => {
+                return { message: 'ODD FLOW: Mystery Number is ODD', logOnly: true };
+            }
+        }
     }),
     createJoker({
         id: 'lazy_dev',
@@ -464,18 +484,6 @@ export const JOKERS = [
         trigger: 'calculateRent',
         execute: (game, rent) => {
             return Math.floor(rent / 1.4);
-        }
-    }),
-    createJoker({
-        id: 'tricheur',
-        name: { en: 'Cheater', fr: 'Tricheur' },
-        icon: '🃏',
-        description: { en: 'You can hold 1 extra joker.', fr: 'Vous pouvez posséder 1 joker supplémentaire.' },
-        price: 30,
-        rarity: 'legendary',
-        trigger: 'getMaxJokerSlots',
-        execute: (game, slots) => {
-            return slots + 1;
         }
     }),
     createJoker({

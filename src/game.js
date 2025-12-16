@@ -493,7 +493,7 @@ export class Game {
   enterNewMonth() {
       this.level++;
       this.round = 1;
-      this.rent = Math.floor(this.rent * 2.5); // Exponential rent
+      this.rent = Math.floor(this.rent * 1.3); // Exponential rent
       this.newMonthStarted = true;
       this.monthBossPersistent = null;
       this.monthBossAnnounced = false;
@@ -632,7 +632,7 @@ export class Game {
       
       if (this.cash >= item.price) {
           if (item.type === 'passive') {
-              const maxSlots = this.triggerJokers('getMaxJokerSlots', 5);
+              const maxSlots = this.triggerJokers('getMaxJokerSlots', 6);
               if (this.jokers.length < maxSlots) {
                   this.cash -= item.price;
                   this.jokers.push(item);
