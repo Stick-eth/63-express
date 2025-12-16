@@ -67,3 +67,6 @@ Logique : GameConfig_[Param] += [Value]
 • Var 1 : Max Attempts +1
 • Var 2 : Max Attempts -2 (mais Gain x3)
 • Var 3 : Max Number = 150
+
+
+npx vitest -- --reporter=verbose --run

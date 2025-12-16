@@ -519,6 +519,9 @@ export class Game {
             if (this.currentArc.id === 'overclock') {
                 this.overclockFinishedLevel = this.level;
             }
+            if (this.currentArc.id === 'audit') {
+                this.tradingUnlocked = true;
+            }
 
             // Move to next Arc
             this.arcQueue.shift(); // Remove finished arc
@@ -754,6 +757,7 @@ export class Game {
         this.antivirusActive = true;
         this.antivirusScore = 0;
         this.antivirusTimeLeft = 10;
+        this.antivirusScansThisRound++;
         return { success: true };
     }
 
