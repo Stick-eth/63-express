@@ -1,69 +1,86 @@
 <!doctype html>
 <html lang="en" class="dark">
-  <head>
+
+<head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Binary Hustle</title>
-    </head>
-  <body class="bg-black text-green-500 antialiased min-h-screen flex items-center justify-center selection:bg-green-500 selection:text-black overflow-y-auto overflow-x-hidden">
-    
+    <title>Binary Hustle</title>
+</head>
+
+<body
+    class="bg-black text-green-500 antialiased min-h-screen flex items-center justify-center selection:bg-green-500 selection:text-black overflow-y-auto overflow-x-hidden">
+
     <!-- BOOT / LORE TERMINAL -->
-    <div id="boot-screen" class="fixed inset-0 z-[60] bg-black p-4 text-sm md:text-base overflow-auto flex flex-col justify-start items-start">
+    <div id="boot-screen"
+        class="fixed inset-0 z-[60] bg-black p-4 text-sm md:text-base overflow-auto flex flex-col justify-start items-start">
         <div id="boot-text" class="whitespace-pre-wrap text-green-500/80"></div>
         <span class="animate-pulse">_</span>
-        
-        <button id="boot-continue-btn" class="hidden absolute bottom-8 left-1/2 -translate-x-1/2 px-6 py-2 border border-green-500 text-green-500 hover:bg-green-500 hover:text-black transition-colors uppercase tracking-widest animate-pulse">
+
+        <button id="boot-continue-btn"
+            class="hidden absolute bottom-8 left-1/2 -translate-x-1/2 px-6 py-2 border border-green-500 text-green-500 hover:bg-green-500 hover:text-black transition-colors uppercase tracking-widest animate-pulse">
             [ CONTINUE ]
         </button>
     </div>
 
     <!-- HOME SCREEN -->
-    <div id="home-screen" class="hidden fixed inset-0 z-50 bg-black flex flex-col items-center justify-center p-4 overflow-auto">
+    <div id="home-screen"
+        class="hidden fixed inset-0 z-50 bg-black flex flex-col items-center justify-center p-4 overflow-auto">
         <div class="mb-8 text-center">
-            <h1 id="home-title" class="text-6xl md:text-8xl font-bold text-green-500 mb-2 tracking-tighter min-h-[1.2em]"></h1>
+            <h1 id="home-title"
+                class="text-6xl md:text-8xl font-bold text-green-500 mb-2 tracking-tighter min-h-[1.2em]"></h1>
             <p class="text-green-800 tracking-[0.5em] text-sm">V1.0.0 // TERMINAL_ACCESS</p>
         </div>
-        
+
         <div class="flex flex-col gap-4 w-full max-w-xs z-10">
-            <button id="home-start-btn" class="w-full py-4 border-2 border-green-500 text-green-500 font-bold hover:bg-green-500 hover:text-black transition-colors uppercase tracking-widest text-xl">
+            <button id="home-start-btn"
+                class="w-full py-4 border-2 border-green-500 text-green-500 font-bold hover:bg-green-500 hover:text-black transition-colors uppercase tracking-widest text-xl">
                 > INITIALIZE_RUN
             </button>
-            
-            <button id="settings-btn" class="w-full py-3 border border-green-700 text-green-700 hover:border-green-500 hover:text-green-500 transition-colors uppercase text-sm font-bold">
+
+            <button id="settings-btn"
+                class="w-full py-3 border border-green-700 text-green-700 hover:border-green-500 hover:text-green-500 transition-colors uppercase text-sm font-bold">
                 > CONFIGURATION
             </button>
         </div>
-        
+
         <!-- Background decoration -->
-        <div class="absolute inset-0 pointer-events-none opacity-10 bg-[linear-gradient(rgba(0,255,0,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,0,0.1)_1px,transparent_1px)] bg-[size:20px_20px]"></div>
+        <div
+            class="absolute inset-0 pointer-events-none opacity-10 bg-[linear-gradient(rgba(0,255,0,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,0,0.1)_1px,transparent_1px)] bg-[size:20px_20px]">
+        </div>
     </div>
 
     <!-- SETTINGS SCREEN -->
-    <div id="settings-screen" class="hidden fixed inset-0 z-50 bg-black flex flex-col items-center justify-center p-4 overflow-auto">
-        <h2 class="text-4xl font-bold text-green-500 mb-8 tracking-widest border-b-2 border-green-500 pb-2">CONFIGURATION</h2>
-        
+    <div id="settings-screen"
+        class="hidden fixed inset-0 z-50 bg-black flex flex-col items-center justify-center p-4 overflow-auto">
+        <h2 class="text-4xl font-bold text-green-500 mb-8 tracking-widest border-b-2 border-green-500 pb-2">
+            CONFIGURATION</h2>
+
         <div class="flex flex-col gap-6 w-full max-w-md">
             <!-- Language -->
             <div class="flex justify-between items-center border-b border-green-900 pb-2">
                 <span class="text-green-700" id="lbl-lang">LANGUAGE</span>
-                <button id="setting-lang-btn" class="text-green-400 hover:text-green-200 font-bold uppercase">EN</button>
+                <button id="setting-lang-btn"
+                    class="text-green-400 hover:text-green-200 font-bold uppercase">EN</button>
             </div>
 
             <!-- Theme -->
             <div class="flex justify-between items-center border-b border-green-900 pb-2">
                 <span class="text-green-700" id="lbl-theme">THEME</span>
-                <button id="setting-theme-btn" class="text-green-400 hover:text-green-200 font-bold uppercase">GREEN</button>
+                <button id="setting-theme-btn"
+                    class="text-green-400 hover:text-green-200 font-bold uppercase">GREEN</button>
             </div>
 
             <!-- Controls -->
             <div class="flex justify-between items-center border-b border-green-900 pb-2">
                 <span class="text-green-700" id="lbl-grid-key">GRID SHORTCUT</span>
-                <button id="setting-key-btn" class="text-green-400 hover:text-green-200 font-bold border border-green-900 px-4 py-1 min-w-[3rem] hover:bg-green-900/30 transition-colors">P</button>
+                <button id="setting-key-btn"
+                    class="text-green-400 hover:text-green-200 font-bold border border-green-900 px-4 py-1 min-w-[3rem] hover:bg-green-900/30 transition-colors">P</button>
             </div>
             <div class="flex justify-between items-center border-b border-green-900 pb-2">
                 <span class="text-green-700" id="lbl-numpad-key">NUMPAD SHORTCUT</span>
-                <button id="setting-numpad-key-btn" class="text-green-400 hover:text-green-200 font-bold border border-green-900 px-4 py-1 min-w-[3rem] hover:bg-green-900/30 transition-colors">O</button>
+                <button id="setting-numpad-key-btn"
+                    class="text-green-400 hover:text-green-200 font-bold border border-green-900 px-4 py-1 min-w-[3rem] hover:bg-green-900/30 transition-colors">O</button>
             </div>
 
             <!-- Dev Mode -->
@@ -72,130 +89,179 @@
                 <button id="setting-dev-btn" class="text-green-900 font-bold uppercase">OFF</button>
             </div>
 
-            <button id="settings-back-btn" class="mt-8 w-full py-3 border-2 border-green-500 text-green-500 font-bold hover:bg-green-500 hover:text-black transition-colors uppercase tracking-widest">
+            <button id="settings-back-btn"
+                class="mt-8 w-full py-3 border-2 border-green-500 text-green-500 font-bold hover:bg-green-500 hover:text-black transition-colors uppercase tracking-widest">
                 &lt; RETURN
             </button>
         </div>
     </div>
 
     <!-- DEV CONTROLS -->
-    <div id="dev-controls" class="hidden fixed bottom-0 left-0 right-0 bg-red-900/90 border-t border-red-500 p-2 flex justify-center gap-4 z-[100]">
-        <button id="dev-reveal-btn" class="bg-red-500 hover:bg-red-400 text-black px-4 py-1 font-bold text-xs uppercase">REVEAL NUMBER</button>
-        <button id="dev-attempt-btn" class="bg-red-500 hover:bg-red-400 text-black px-4 py-1 font-bold text-xs uppercase">+1 ATTEMPT</button>
-        <button id="dev-auto-guess-btn" class="bg-red-500 hover:bg-red-400 text-black px-4 py-1 font-bold text-xs uppercase">AUTO GUESS</button>
-        <button id="dev-cash-btn" class="bg-red-500 hover:bg-red-400 text-black px-4 py-1 font-bold text-xs uppercase">+100 CASH</button>
-        <button id="dev-unlock-apps-btn" class="bg-red-500 hover:bg-red-400 text-black px-4 py-1 font-bold text-xs uppercase">UNLOCK APPS</button>
-        <button id="dev-skip-boot-btn" class="bg-red-500 hover:bg-red-400 text-black px-4 py-1 font-bold text-xs uppercase">SKIP BOOT</button>
+    <div id="dev-controls"
+        class="hidden fixed bottom-0 left-0 right-0 bg-red-900/90 border-t border-red-500 p-2 flex justify-center gap-4 z-[100]">
+        <button id="dev-reveal-btn"
+            class="bg-red-500 hover:bg-red-400 text-black px-4 py-1 font-bold text-xs uppercase">REVEAL NUMBER</button>
+        <button id="dev-attempt-btn"
+            class="bg-red-500 hover:bg-red-400 text-black px-4 py-1 font-bold text-xs uppercase">+1 ATTEMPT</button>
+        <button id="dev-auto-guess-btn"
+            class="bg-red-500 hover:bg-red-400 text-black px-4 py-1 font-bold text-xs uppercase">AUTO GUESS</button>
+        <button id="dev-cash-btn"
+            class="bg-red-500 hover:bg-red-400 text-black px-4 py-1 font-bold text-xs uppercase">+100 CASH</button>
+        <button id="dev-unlock-apps-btn"
+            class="bg-red-500 hover:bg-red-400 text-black px-4 py-1 font-bold text-xs uppercase">UNLOCK APPS</button>
+        <button id="dev-skip-boot-btn"
+            class="bg-red-500 hover:bg-red-400 text-black px-4 py-1 font-bold text-xs uppercase">SKIP BOOT</button>
     </div>
 
     <!-- NUMPAD OVERLAY -->
-    <div id="numpad-overlay" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div id="numpad-overlay"
+        class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-black border-2 border-green-500 p-4 shadow-[0_0_20px_rgba(0,255,0,0.2)]">
             <div class="grid grid-cols-3 gap-2 mb-2">
-                <button class="numpad-key w-16 h-16 border border-green-700 text-green-500 text-2xl font-bold hover:bg-green-900/50 hover:text-green-300 transition-colors" data-key="1">1</button>
-                <button class="numpad-key w-16 h-16 border border-green-700 text-green-500 text-2xl font-bold hover:bg-green-900/50 hover:text-green-300 transition-colors" data-key="2">2</button>
-                <button class="numpad-key w-16 h-16 border border-green-700 text-green-500 text-2xl font-bold hover:bg-green-900/50 hover:text-green-300 transition-colors" data-key="3">3</button>
-                <button class="numpad-key w-16 h-16 border border-green-700 text-green-500 text-2xl font-bold hover:bg-green-900/50 hover:text-green-300 transition-colors" data-key="4">4</button>
-                <button class="numpad-key w-16 h-16 border border-green-700 text-green-500 text-2xl font-bold hover:bg-green-900/50 hover:text-green-300 transition-colors" data-key="5">5</button>
-                <button class="numpad-key w-16 h-16 border border-green-700 text-green-500 text-2xl font-bold hover:bg-green-900/50 hover:text-green-300 transition-colors" data-key="6">6</button>
-                <button class="numpad-key w-16 h-16 border border-green-700 text-green-500 text-2xl font-bold hover:bg-green-900/50 hover:text-green-300 transition-colors" data-key="7">7</button>
-                <button class="numpad-key w-16 h-16 border border-green-700 text-green-500 text-2xl font-bold hover:bg-green-900/50 hover:text-green-300 transition-colors" data-key="8">8</button>
-                <button class="numpad-key w-16 h-16 border border-green-700 text-green-500 text-2xl font-bold hover:bg-green-900/50 hover:text-green-300 transition-colors" data-key="9">9</button>
-                <button class="numpad-key w-16 h-16 border border-green-700 text-green-500 text-2xl font-bold hover:bg-green-900/50 hover:text-green-300 transition-colors" data-key="Backspace">←</button>
-                <button class="numpad-key w-16 h-16 border border-green-700 text-green-500 text-2xl font-bold hover:bg-green-900/50 hover:text-green-300 transition-colors" data-key="0">0</button>
-                <button class="numpad-key w-16 h-16 border border-green-500 bg-green-900/20 text-green-400 text-xl font-bold hover:bg-green-500 hover:text-black transition-colors" data-key="Enter">↵</button>
+                <button
+                    class="numpad-key w-16 h-16 border border-green-700 text-green-500 text-2xl font-bold hover:bg-green-900/50 hover:text-green-300 transition-colors"
+                    data-key="1">1</button>
+                <button
+                    class="numpad-key w-16 h-16 border border-green-700 text-green-500 text-2xl font-bold hover:bg-green-900/50 hover:text-green-300 transition-colors"
+                    data-key="2">2</button>
+                <button
+                    class="numpad-key w-16 h-16 border border-green-700 text-green-500 text-2xl font-bold hover:bg-green-900/50 hover:text-green-300 transition-colors"
+                    data-key="3">3</button>
+                <button
+                    class="numpad-key w-16 h-16 border border-green-700 text-green-500 text-2xl font-bold hover:bg-green-900/50 hover:text-green-300 transition-colors"
+                    data-key="4">4</button>
+                <button
+                    class="numpad-key w-16 h-16 border border-green-700 text-green-500 text-2xl font-bold hover:bg-green-900/50 hover:text-green-300 transition-colors"
+                    data-key="5">5</button>
+                <button
+                    class="numpad-key w-16 h-16 border border-green-700 text-green-500 text-2xl font-bold hover:bg-green-900/50 hover:text-green-300 transition-colors"
+                    data-key="6">6</button>
+                <button
+                    class="numpad-key w-16 h-16 border border-green-700 text-green-500 text-2xl font-bold hover:bg-green-900/50 hover:text-green-300 transition-colors"
+                    data-key="7">7</button>
+                <button
+                    class="numpad-key w-16 h-16 border border-green-700 text-green-500 text-2xl font-bold hover:bg-green-900/50 hover:text-green-300 transition-colors"
+                    data-key="8">8</button>
+                <button
+                    class="numpad-key w-16 h-16 border border-green-700 text-green-500 text-2xl font-bold hover:bg-green-900/50 hover:text-green-300 transition-colors"
+                    data-key="9">9</button>
+                <button
+                    class="numpad-key w-16 h-16 border border-green-700 text-green-500 text-2xl font-bold hover:bg-green-900/50 hover:text-green-300 transition-colors"
+                    data-key="Backspace">←</button>
+                <button
+                    class="numpad-key w-16 h-16 border border-green-700 text-green-500 text-2xl font-bold hover:bg-green-900/50 hover:text-green-300 transition-colors"
+                    data-key="0">0</button>
+                <button
+                    class="numpad-key w-16 h-16 border border-green-500 bg-green-900/20 text-green-400 text-xl font-bold hover:bg-green-500 hover:text-black transition-colors"
+                    data-key="Enter">↵</button>
             </div>
             <div class="text-center text-xs text-green-800 uppercase tracking-widest mt-2">SECURE_INPUT_PAD</div>
         </div>
     </div>
 
     <!-- PAUSE OVERLAY -->
-    <div id="pause-overlay" class="hidden fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-sm overflow-auto">
-        <h2 class="text-4xl font-bold text-green-500 mb-8 tracking-widest border-b-2 border-green-500 pb-2">SYSTEM PAUSED</h2>
-        
+    <div id="pause-overlay"
+        class="hidden fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-sm overflow-auto">
+        <h2 class="text-4xl font-bold text-green-500 mb-8 tracking-widest border-b-2 border-green-500 pb-2">SYSTEM
+            PAUSED</h2>
+
         <div class="flex flex-col gap-4 w-full max-w-xs">
-            <button id="resume-btn" class="w-full py-3 border-2 border-green-500 text-green-500 font-bold hover:bg-green-500 hover:text-black transition-colors uppercase tracking-widest">
+            <button id="resume-btn"
+                class="w-full py-3 border-2 border-green-500 text-green-500 font-bold hover:bg-green-500 hover:text-black transition-colors uppercase tracking-widest">
                 > RESUME_SESSION
             </button>
-            <button id="quit-btn" class="w-full py-3 border border-red-500 text-red-500 font-bold hover:bg-red-500 hover:text-black transition-colors uppercase tracking-widest">
+            <button id="quit-btn"
+                class="w-full py-3 border border-red-500 text-red-500 font-bold hover:bg-red-500 hover:text-black transition-colors uppercase tracking-widest">
                 > ABORT_RUN
             </button>
         </div>
     </div>
 
     <!-- TRADING SCREEN (OVERLAY) -->
-    <div id="trading-screen" class="hidden fixed inset-0 z-40 bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-sm overflow-auto">
-        <div class="w-full max-w-4xl bg-black border-2 border-cyan-500 p-6 flex flex-col min-h-[600px] shadow-[0_0_20px_rgba(0,255,255,0.2)]">
+    <div id="trading-screen"
+        class="hidden fixed inset-0 z-40 bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-sm overflow-auto">
+        <div
+            class="w-full max-w-4xl bg-black border-2 border-cyan-500 p-6 flex flex-col min-h-[600px] shadow-[0_0_20px_rgba(0,255,255,0.2)]">
             <!-- Header -->
             <header class="flex justify-between items-center mb-4 border-b border-cyan-900 pb-3">
-              <div>
-                  <h2 class="text-2xl font-bold text-cyan-400">/// EQUITY_TRADER ///</h2>
-                  <p class="text-xs text-cyan-700 uppercase tracking-widest">Synthetic ticker: BHZ</p>
-              </div>
-              <button id="trading-back-btn" class="px-4 py-2 bg-black hover:bg-cyan-900/30 text-cyan-400 border border-cyan-500 text-sm transition-colors">&lt; BACK</button>
+                <div>
+                    <h2 class="text-2xl font-bold text-cyan-400">/// EQUITY_TRADER ///</h2>
+                    <p class="text-xs text-cyan-700 uppercase tracking-widest">Synthetic ticker: BHZ</p>
+                </div>
+                <button id="trading-back-btn"
+                    class="px-4 py-2 bg-black hover:bg-cyan-900/30 text-cyan-400 border border-cyan-500 text-sm transition-colors">&lt;
+                    BACK</button>
             </header>
 
             <!-- Content -->
             <div class="flex flex-col gap-4 flex-1">
-              
-              <!-- Top: Price -->
-              <div class="flex flex-col items-center justify-center py-4 border-b border-cyan-900/50">
-                  <div class="text-xs uppercase text-cyan-600 tracking-[0.3em] mb-1">Current Price</div>
-                  <div id="trading-price" class="text-5xl font-bold text-cyan-300 drop-shadow-[0_0_10px_rgba(0,255,255,0.3)]">$0.00</div>
-              </div>
 
-              <!-- Middle: Chart & Holdings -->
-              <div class="flex flex-col md:flex-row gap-4 flex-1 min-h-0">
-                  <!-- Chart -->
-                  <div class="flex-1 border border-cyan-900 bg-black/50 p-3 flex flex-col min-h-[200px]">
-                      <div class="text-xs text-cyan-600 mb-1 uppercase tracking-[0.2em]">Market Activity (3s)</div>
-                      <div id="trading-chart" class="flex-1 w-full bg-black/40 relative overflow-hidden"></div>
-                  </div>
-                  
-                  <!-- Holdings Info -->
-                  <div class="w-full md:w-48 flex flex-col gap-2">
-                      <div class="bg-black/40 border border-cyan-900 px-3 py-2 flex-1 flex flex-col justify-center">
-                          <div class="text-[10px] uppercase text-cyan-600 tracking-[0.2em]">Shares</div>
-                          <div id="trading-holdings" class="text-xl font-bold text-cyan-300">0</div>
-                      </div>
-                      <div class="bg-black/40 border border-cyan-900 px-3 py-2 flex-1 flex flex-col justify-center">
-                          <div class="text-[10px] uppercase text-cyan-600 tracking-[0.2em]">Value</div>
-                          <div class="flex items-baseline gap-2 flex-wrap">
-                              <div id="trading-holdings-value" class="text-xl font-bold text-cyan-300">$0</div>
-                              <div id="trading-profit-percent" class="text-xs font-bold text-gray-500">(0%)</div>
-                          </div>
-                      </div>
-                  </div>
-              </div>
+                <!-- Top: Price -->
+                <div class="flex flex-col items-center justify-center py-4 border-b border-cyan-900/50">
+                    <div class="text-xs uppercase text-cyan-600 tracking-[0.3em] mb-1">Current Price</div>
+                    <div id="trading-price"
+                        class="text-5xl font-bold text-cyan-300 drop-shadow-[0_0_10px_rgba(0,255,255,0.3)]">$0.00</div>
+                </div>
 
-              <!-- Bottom: Controls -->
-              <div class="mt-auto flex flex-col gap-3 border-t border-cyan-900 pt-4">
-                  <div class="flex justify-between items-center px-2">
-                      <div class="text-xs uppercase text-cyan-600 tracking-[0.2em]">Available Funds</div>
-                      <div id="trading-cash" class="text-2xl font-bold text-green-400">$0</div>
-                  </div>
-                  
-                  <div class="flex gap-2">
-                      <input id="trading-buy-input" type="number" min="0" step="1" placeholder="Amount ($)" class="w-32 bg-black border-2 border-cyan-700 px-3 py-3 text-cyan-200 focus:outline-none focus:border-cyan-400 text-center font-bold" />
-                      <button id="trading-buy-btn" class="flex-1 py-3 bg-cyan-900/30 hover:bg-cyan-500 hover:text-black text-cyan-300 border-2 border-cyan-500 font-bold uppercase tracking-wider transition-all">BUY</button>
-                      <button id="trading-sell-btn" class="flex-1 py-3 bg-red-900/30 hover:bg-red-500 hover:text-black text-red-200 border-2 border-red-500 font-bold uppercase tracking-wider transition-all">SELL</button>
-                  </div>
-                  <div id="trading-status" class="text-xs text-cyan-500 h-6 leading-6 text-center"></div>
-              </div>
+                <!-- Middle: Chart & Holdings -->
+                <div class="flex flex-col md:flex-row gap-4 flex-1 min-h-0">
+                    <!-- Chart -->
+                    <div class="flex-1 border border-cyan-900 bg-black/50 p-3 flex flex-col min-h-[200px]">
+                        <div class="text-xs text-cyan-600 mb-1 uppercase tracking-[0.2em]">Market Activity (3s)</div>
+                        <div id="trading-chart" class="flex-1 w-full bg-black/40 relative overflow-hidden"></div>
+                    </div>
+
+                    <!-- Holdings Info -->
+                    <div class="w-full md:w-48 flex flex-col gap-2">
+                        <div class="bg-black/40 border border-cyan-900 px-3 py-2 flex-1 flex flex-col justify-center">
+                            <div class="text-[10px] uppercase text-cyan-600 tracking-[0.2em]">Shares</div>
+                            <div id="trading-holdings" class="text-xl font-bold text-cyan-300">0</div>
+                        </div>
+                        <div class="bg-black/40 border border-cyan-900 px-3 py-2 flex-1 flex flex-col justify-center">
+                            <div class="text-[10px] uppercase text-cyan-600 tracking-[0.2em]">Value</div>
+                            <div class="flex items-baseline gap-2 flex-wrap">
+                                <div id="trading-holdings-value" class="text-xl font-bold text-cyan-300">$0</div>
+                                <div id="trading-profit-percent" class="text-xs font-bold text-gray-500">(0%)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom: Controls -->
+                <div class="mt-auto flex flex-col gap-3 border-t border-cyan-900 pt-4">
+                    <div class="flex justify-between items-center px-2">
+                        <div class="text-xs uppercase text-cyan-600 tracking-[0.2em]">Available Funds</div>
+                        <div id="trading-cash" class="text-2xl font-bold text-green-400">$0</div>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <input id="trading-buy-input" type="number" min="0" step="1" placeholder="Amount ($)"
+                            class="w-32 bg-black border-2 border-cyan-700 px-3 py-3 text-cyan-200 focus:outline-none focus:border-cyan-400 text-center font-bold" />
+                        <button id="trading-buy-btn"
+                            class="flex-1 py-3 bg-cyan-900/30 hover:bg-cyan-500 hover:text-black text-cyan-300 border-2 border-cyan-500 font-bold uppercase tracking-wider transition-all">BUY</button>
+                        <button id="trading-sell-btn"
+                            class="flex-1 py-3 bg-red-900/30 hover:bg-red-500 hover:text-black text-red-200 border-2 border-red-500 font-bold uppercase tracking-wider transition-all">SELL</button>
+                    </div>
+                    <div id="trading-status" class="text-xs text-cyan-500 h-6 leading-6 text-center"></div>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- ANTIVIRUS SCREEN (OVERLAY) -->
-    <div id="antivirus-screen" class="hidden fixed inset-0 z-40 bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-sm overflow-auto">
-        <div class="w-full max-w-4xl bg-black border-2 border-blue-500 p-6 flex flex-col min-h-[600px] shadow-[0_0_20px_rgba(0,0,255,0.2)]">
+    <div id="antivirus-screen"
+        class="hidden fixed inset-0 z-40 bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-sm overflow-auto">
+        <div
+            class="w-full max-w-4xl bg-black border-2 border-blue-500 p-6 flex flex-col min-h-[600px] shadow-[0_0_20px_rgba(0,0,255,0.2)]">
             <!-- Header -->
             <header class="flex justify-between items-center mb-4 border-b border-blue-900 pb-3">
-              <div>
-                  <h2 class="text-2xl font-bold text-blue-400">/// SYSTEM_CLEANER ///</h2>
-                  <p class="text-xs text-blue-700 uppercase tracking-widest">Threat Detection Module</p>
-              </div>
-              <button id="antivirus-back-btn" class="px-4 py-2 bg-black hover:bg-blue-900/30 text-blue-400 border border-blue-500 text-sm transition-colors">&lt; BACK</button>
+                <div>
+                    <h2 class="text-2xl font-bold text-blue-400">/// SYSTEM_CLEANER ///</h2>
+                    <p class="text-xs text-blue-700 uppercase tracking-widest">Threat Detection Module</p>
+                </div>
+                <button id="antivirus-back-btn"
+                    class="px-4 py-2 bg-black hover:bg-blue-900/30 text-blue-400 border border-blue-500 text-sm transition-colors">&lt;
+                    BACK</button>
             </header>
 
             <!-- Content -->
@@ -213,10 +279,13 @@
                 </div>
 
                 <!-- Game Area -->
-                <div id="antivirus-game-area" class="relative flex-1 border-2 border-blue-900 bg-black/80 overflow-hidden cursor-crosshair min-h-[400px]">
+                <div id="antivirus-game-area"
+                    class="relative flex-1 border-2 border-blue-900 bg-black/80 overflow-hidden cursor-crosshair min-h-[400px]">
                     <!-- Start Overlay -->
-                    <div id="antivirus-start-overlay" class="absolute inset-0 flex items-center justify-center bg-black/60 z-10">
-                        <button id="antivirus-start-btn" class="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-black font-bold text-xl uppercase tracking-widest border-2 border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all transform hover:scale-105">
+                    <div id="antivirus-start-overlay"
+                        class="absolute inset-0 flex items-center justify-center bg-black/60 z-10">
+                        <button id="antivirus-start-btn"
+                            class="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-black font-bold text-xl uppercase tracking-widest border-2 border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all transform hover:scale-105">
                             > INITIATE_CLEANUP
                         </button>
                     </div>
@@ -227,52 +296,72 @@
     </div>
 
     <!-- SYSTEM MONITOR SCREEN (OVERLAY) -->
-    <div id="system-screen" class="hidden fixed inset-0 z-40 bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-sm overflow-auto">
-        <div class="w-full max-w-2xl h-full max-h-[600px] border-2 border-orange-500 bg-black flex flex-col shadow-[0_0_30px_rgba(249,115,22,0.3)] relative">
+    <div id="system-screen"
+        class="hidden fixed inset-0 z-40 bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-sm overflow-auto">
+        <div
+            class="w-full max-w-2xl h-full max-h-[600px] border-2 border-orange-500 bg-black flex flex-col shadow-[0_0_30px_rgba(249,115,22,0.3)] relative">
             <!-- Header -->
             <header class="flex justify-between items-center p-4 border-b border-orange-900 bg-orange-950/30">
-              <div>
-                  <h2 class="text-2xl font-bold text-orange-400">/// SYSTEM_MONITOR ///</h2>
-                  <p class="text-xs text-orange-700 uppercase tracking-widest">Thermal Regulation Unit</p>
-              </div>
-              <button id="system-back-btn" class="px-4 py-2 bg-black hover:bg-orange-900/30 text-orange-400 border border-orange-500 text-sm transition-colors">&lt; BACK</button>
+                <div>
+                    <h2 class="text-2xl font-bold text-orange-400">/// SYSTEM_MONITOR ///</h2>
+                    <p class="text-xs text-orange-700 uppercase tracking-widest">Thermal Regulation Unit</p>
+                </div>
+                <button id="system-back-btn"
+                    class="px-4 py-2 bg-black hover:bg-orange-900/30 text-orange-400 border border-orange-500 text-sm transition-colors">&lt;
+                    BACK</button>
             </header>
 
             <!-- Content -->
             <div class="flex flex-col gap-6 flex-1 p-8 items-center justify-center">
-                
+
                 <div class="w-full flex justify-between items-center mb-4">
                     <div class="text-orange-500 uppercase tracking-widest text-sm">Core Temperature</div>
                     <div id="system-temp-display" class="text-2xl font-bold text-orange-300">0%</div>
                 </div>
 
-                <div class="text-[10px] text-orange-800 mb-2 w-full text-center uppercase tracking-widest">Align levels with target zones</div>
+                <div class="text-[10px] text-orange-800 mb-2 w-full text-center uppercase tracking-widest">Align levels
+                    with target zones</div>
 
                 <!-- Sliders Container -->
                 <div class="flex gap-8 justify-center w-full h-auto">
                     <!-- Slider 1 -->
                     <div class="flex flex-col items-center gap-2">
-                        <div id="slider-container-0" class="relative w-16 h-64 bg-gray-900 border border-gray-700 rounded-full overflow-hidden cursor-ns-resize touch-none">
-                            <div id="slider-target-0" class="absolute w-full h-8 bg-green-500/30 border-y border-green-500 z-10 pointer-events-none transition-all duration-500" style="bottom: 50%; transform: translateY(50%);"></div>
-                            <div id="slider-fill-0" class="absolute bottom-0 w-full bg-orange-500 transition-all duration-75 pointer-events-none" style="height: 50%"></div>
+                        <div id="slider-container-0"
+                            class="relative w-16 h-64 bg-gray-900 border border-gray-700 rounded-full overflow-hidden cursor-ns-resize touch-none">
+                            <div id="slider-target-0"
+                                class="absolute w-full h-8 bg-green-500/30 border-y border-green-500 z-10 pointer-events-none transition-all duration-500"
+                                style="bottom: 50%; transform: translateY(50%);"></div>
+                            <div id="slider-fill-0"
+                                class="absolute bottom-0 w-full bg-orange-500 transition-all duration-75 pointer-events-none"
+                                style="height: 50%"></div>
                         </div>
                         <div id="slider-value-0" class="text-orange-500 font-mono text-xl font-bold">50</div>
                     </div>
 
                     <!-- Slider 2 -->
                     <div class="flex flex-col items-center gap-2">
-                        <div id="slider-container-1" class="relative w-16 h-64 bg-gray-900 border border-gray-700 rounded-full overflow-hidden cursor-ns-resize touch-none">
-                            <div id="slider-target-1" class="absolute w-full h-8 bg-green-500/30 border-y border-green-500 z-10 pointer-events-none transition-all duration-500" style="bottom: 50%; transform: translateY(50%);"></div>
-                            <div id="slider-fill-1" class="absolute bottom-0 w-full bg-orange-500 transition-all duration-75 pointer-events-none" style="height: 50%"></div>
+                        <div id="slider-container-1"
+                            class="relative w-16 h-64 bg-gray-900 border border-gray-700 rounded-full overflow-hidden cursor-ns-resize touch-none">
+                            <div id="slider-target-1"
+                                class="absolute w-full h-8 bg-green-500/30 border-y border-green-500 z-10 pointer-events-none transition-all duration-500"
+                                style="bottom: 50%; transform: translateY(50%);"></div>
+                            <div id="slider-fill-1"
+                                class="absolute bottom-0 w-full bg-orange-500 transition-all duration-75 pointer-events-none"
+                                style="height: 50%"></div>
                         </div>
                         <div id="slider-value-1" class="text-orange-500 font-mono text-xl font-bold">50</div>
                     </div>
 
                     <!-- Slider 3 -->
                     <div class="flex flex-col items-center gap-2">
-                        <div id="slider-container-2" class="relative w-16 h-64 bg-gray-900 border border-gray-700 rounded-full overflow-hidden cursor-ns-resize touch-none">
-                            <div id="slider-target-2" class="absolute w-full h-8 bg-green-500/30 border-y border-green-500 z-10 pointer-events-none transition-all duration-500" style="bottom: 50%; transform: translateY(50%);"></div>
-                            <div id="slider-fill-2" class="absolute bottom-0 w-full bg-orange-500 transition-all duration-75 pointer-events-none" style="height: 50%"></div>
+                        <div id="slider-container-2"
+                            class="relative w-16 h-64 bg-gray-900 border border-gray-700 rounded-full overflow-hidden cursor-ns-resize touch-none">
+                            <div id="slider-target-2"
+                                class="absolute w-full h-8 bg-green-500/30 border-y border-green-500 z-10 pointer-events-none transition-all duration-500"
+                                style="bottom: 50%; transform: translateY(50%);"></div>
+                            <div id="slider-fill-2"
+                                class="absolute bottom-0 w-full bg-orange-500 transition-all duration-75 pointer-events-none"
+                                style="height: 50%"></div>
                         </div>
                         <div id="slider-value-2" class="text-orange-500 font-mono text-xl font-bold">50</div>
                     </div>
@@ -280,7 +369,8 @@
 
                 <div id="system-status-msg" class="text-orange-400 font-bold text-lg h-8">CALIBRATION REQUIRED</div>
 
-                <button id="system-calibrate-btn" class="mt-4 px-8 py-3 bg-orange-900/20 hover:bg-orange-500 hover:text-black text-orange-400 border border-orange-500 font-bold uppercase tracking-wider transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                <button id="system-calibrate-btn"
+                    class="mt-4 px-8 py-3 bg-orange-900/20 hover:bg-orange-500 hover:text-black text-orange-400 border border-orange-500 font-bold uppercase tracking-wider transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                     CONFIRM CALIBRATION
                 </button>
             </div>
@@ -288,172 +378,209 @@
     </div>
 
     <div id="app" class="hidden w-full max-w-4xl p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-      
-      <!-- LEFT COLUMN: STATS & INVENTORY -->
-      <div class="lg:col-span-1 flex flex-col gap-4">
-          <!-- Header -->
-          <header class="text-center lg:text-left mb-4 border-b-2 border-green-500 pb-2">
-            <h1 class="text-4xl font-bold tracking-tighter mb-1 text-green-500 uppercase">Binary Hustle</h1>
-            <p class="text-green-700 text-sm uppercase tracking-widest">v1.0.0 // TERMINAL_ACCESS</p>
-          </header>
 
-          <!-- Stats Panel -->
-          <div class="bg-black border-2 border-green-500 p-4 grid grid-cols-2 gap-4 shadow-[0_0_10px_rgba(0,255,0,0.2)]">
-            <div class="flex flex-col">
-                <span class="text-xs text-green-700 uppercase tracking-wider">[ CASH ]</span>
-                <span id="cash-display" class="text-2xl font-bold text-green-400">$100</span>
-            </div>
-            <div class="flex flex-col">
-                <span class="text-xs text-green-700 uppercase tracking-wider">[ RENT ]</span>
-                <span id="rent-display" class="text-2xl font-bold text-red-500">$50</span>
-            </div>
-            <div class="flex flex-col">
-                <span class="text-xs text-green-700 uppercase tracking-wider">[ MONTH ]</span>
-                <span id="level-display" class="text-xl text-green-400">1</span>
-            </div>
-            <div class="flex flex-col">
-                <span class="text-xs text-green-700 uppercase tracking-wider">[ WEEK ]</span>
-                <span id="round-display" class="text-xl text-green-400">1</span>
-            </div>
-          </div>
+        <!-- LEFT COLUMN: STATS & INVENTORY -->
+        <div class="lg:col-span-1 flex flex-col gap-4">
+            <!-- Header -->
+            <header class="text-center lg:text-left mb-4 border-b-2 border-green-500 pb-2">
+                <h1 class="text-4xl font-bold tracking-tighter mb-1 text-green-500 uppercase">Binary Hustle</h1>
+                <p class="text-green-700 text-sm uppercase tracking-widest">v1.0.0 // TERMINAL_ACCESS</p>
+            </header>
 
-          <!-- Inventory: Jokers -->
-          <div class="bg-black border-2 border-green-500 p-4 flex-1 relative">
-              <h3 class="text-xs text-green-700 uppercase tracking-wider mb-3 absolute -top-2.5 left-4 bg-black px-2">Jokers.sys</h3>
-              <div id="jokers-list" class="space-y-2 mt-2">
-                  <!-- Populated by JS -->
-                  <div class="text-green-800 text-sm italic">No active jokers</div>
-              </div>
-          </div>
-
-          <!-- Inventory: Scripts -->
-          <div class="bg-black border-2 border-green-500 p-4 relative">
-              <h3 class="text-xs text-green-700 uppercase tracking-wider mb-3 absolute -top-2.5 left-4 bg-black px-2">Scripts.exe</h3>
-              <div id="scripts-list" class="grid grid-cols-2 gap-2 mt-2">
-                  <!-- Populated by JS -->
-                  <div class="col-span-2 text-green-800 text-sm italic">No scripts loaded</div>
-              </div>
-          </div>
-      </div>
-
-      <!-- CENTER/RIGHT COLUMN: GAME AREA -->
-      <div class="lg:col-span-2 flex flex-col gap-4">
-          
-          <!-- MAIN GAME SCREEN -->
-          <main id="game-screen" class="flex-1 bg-black border-2 border-green-500 p-6 relative min-h-[500px] flex flex-col shadow-[0_0_15px_rgba(0,255,0,0.1)]">
-            
-            <!-- Help / Grid Toggle -->
-            <div class="absolute top-4 right-4 flex gap-2 z-40">
-                <button id="pause-btn" class="p-2 text-green-700 hover:text-green-400 hover:bg-green-900/30 border border-green-700 transition-colors">
-                    [||]
-                </button>
-                <button id="numpad-btn" class="p-2 text-green-700 hover:text-green-400 hover:bg-green-900/30 border border-green-700 transition-colors">
-                    [#]
-                </button>
-                <button id="help-btn" class="p-2 text-green-700 hover:text-green-400 hover:bg-green-900/30 border border-green-700 transition-colors">
-                    [?]
-                </button>
+            <!-- Stats Panel -->
+            <div
+                class="bg-black border-2 border-green-500 p-4 grid grid-cols-2 gap-4 shadow-[0_0_10px_rgba(0,255,0,0.2)]">
+                <div class="flex flex-col">
+                    <span class="text-xs text-green-700 uppercase tracking-wider">[ CASH ]</span>
+                    <span id="cash-display" class="text-2xl font-bold text-green-400">$100</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-xs text-green-700 uppercase tracking-wider">[ RENT ]</span>
+                    <span id="rent-display" class="text-2xl font-bold text-red-500">$50</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-xs text-green-700 uppercase tracking-wider">[ MONTH ]</span>
+                    <span id="level-display" class="text-xl text-green-400">1</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-xs text-green-700 uppercase tracking-wider">[ WEEK ]</span>
+                    <span id="round-display" class="text-xl text-green-400">1</span>
+                </div>
             </div>
 
-            <!-- Grid Overlay -->
-            <div id="grid-overlay" class="absolute inset-0 bg-black/95 z-30 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
-                <div id="number-grid" class="grid grid-cols-10 gap-1 p-4 w-full max-w-lg border border-green-500">
+            <!-- Inventory: Jokers -->
+            <div class="bg-black border-2 border-green-500 p-4 flex-1 relative">
+                <h3 class="text-xs text-green-700 uppercase tracking-wider mb-3 absolute -top-2.5 left-4 bg-black px-2">
+                    Jokers.sys</h3>
+                <div id="jokers-list" class="space-y-2 mt-2">
                     <!-- Populated by JS -->
+                    <div class="text-green-800 text-sm italic">No active jokers</div>
                 </div>
             </div>
 
-            <!-- Message Area -->
-            <div id="message-area" class="text-center mt-8 mb-4 min-h-[4rem] flex items-center justify-center flex-col px-8 border-b border-green-900 pb-4">
-              <p id="message-text" class="text-2xl font-medium text-green-400 animate-pulse">System Initialized.</p>
-            </div>
-
-            <!-- History / Visualization -->
-            <div id="history-wheel" class="flex flex-col justify-end items-center mb-6 space-y-2 flex-1 overflow-y-auto max-h-[300px] w-full">
-                <!-- History items -->
-            </div>
-
-            <!-- Controls -->
-            <div id="controls-area" class="mt-auto w-full max-w-md mx-auto">
-                <!-- Start Button -->
-                <button id="start-btn" class="w-full bg-green-900/20 hover:bg-green-500 hover:text-black border-2 border-green-500 text-green-500 font-bold py-4 transition-all uppercase tracking-wider">
-                    > EXECUTE_RUN.BAT
-                </button>
-
-                <!-- Guess Input -->
-                <div id="game-input" class="hidden flex gap-2">
-                    <input type="number" id="guess-input" placeholder="0-99" class="flex-1 bg-black border-2 border-green-500 px-4 py-3 text-center text-2xl text-green-400 focus:outline-none focus:bg-green-900/20 placeholder-green-900">
-                    <button id="guess-btn" class="whitespace-nowrap bg-green-900/20 hover:bg-green-500 hover:text-black border-2 border-green-500 text-green-500 font-bold px-8 transition-all uppercase tracking-wider">[ ENTER ]</button>
+            <!-- Inventory: Scripts -->
+            <div class="bg-black border-2 border-green-500 p-4 relative">
+                <h3 class="text-xs text-green-700 uppercase tracking-wider mb-3 absolute -top-2.5 left-4 bg-black px-2">
+                    Scripts.exe</h3>
+                <div id="scripts-list" class="grid grid-cols-2 gap-2 mt-2">
+                    <!-- Populated by JS -->
+                    <div class="col-span-2 text-green-800 text-sm italic">No scripts loaded</div>
                 </div>
-                
-                <!-- Next Action Button (Next Round / Shop) -->
-                <button id="next-btn" class="hidden w-full bg-purple-900/20 hover:bg-purple-500 hover:text-black border-2 border-purple-500 text-purple-500 font-bold py-4 transition-all uppercase tracking-wider">
-                    > CONTINUE
+            </div>
+        </div>
+
+        <!-- CENTER/RIGHT COLUMN: GAME AREA -->
+        <div class="lg:col-span-2 flex flex-col gap-4">
+
+            <!-- MAIN GAME SCREEN -->
+            <main id="game-screen"
+                class="flex-1 bg-black border-2 border-green-500 p-6 relative min-h-[500px] flex flex-col shadow-[0_0_15px_rgba(0,255,0,0.1)]">
+
+                <!-- Help / Grid Toggle -->
+                <div class="absolute top-4 right-4 flex gap-2 z-40">
+                    <button id="pause-btn"
+                        class="p-2 text-green-700 hover:text-green-400 hover:bg-green-900/30 border border-green-700 transition-colors">
+                        [||]
+                    </button>
+                    <button id="numpad-btn"
+                        class="p-2 text-green-700 hover:text-green-400 hover:bg-green-900/30 border border-green-700 transition-colors">
+                        [#]
+                    </button>
+                    <button id="help-btn"
+                        class="p-2 text-green-700 hover:text-green-400 hover:bg-green-900/30 border border-green-700 transition-colors">
+                        [?]
+                    </button>
+                </div>
+
+                <!-- Grid Overlay -->
+                <div id="grid-overlay"
+                    class="absolute inset-0 bg-black/95 z-30 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+                    <div id="number-grid" class="grid grid-cols-10 gap-1 p-4 w-full max-w-lg border border-green-500">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Message Area -->
+                <div id="message-area"
+                    class="text-center mt-8 mb-4 min-h-[4rem] flex items-center justify-center flex-col px-8 border-b border-green-900 pb-4">
+                    <p id="message-text" class="text-2xl font-medium text-green-400 animate-pulse">System Initialized.
+                    </p>
+                </div>
+
+                <!-- History / Visualization -->
+                <div id="history-wheel"
+                    class="flex flex-col justify-end items-center mb-6 space-y-2 flex-1 overflow-y-auto max-h-[300px] w-full">
+                    <!-- History items -->
+                </div>
+
+                <!-- Controls -->
+                <div id="controls-area" class="mt-auto w-full max-w-md mx-auto">
+                    <!-- Start Button -->
+                    <button id="start-btn"
+                        class="w-full bg-green-900/20 hover:bg-green-500 hover:text-black border-2 border-green-500 text-green-500 font-bold py-4 transition-all uppercase tracking-wider">
+                        > EXECUTE_RUN.BAT
+                    </button>
+
+                    <!-- Guess Input -->
+                    <div id="game-input" class="hidden flex gap-2">
+                        <input type="number" id="guess-input" placeholder="0-99"
+                            class="flex-1 bg-black border-2 border-green-500 px-4 py-3 text-center text-2xl text-green-400 focus:outline-none focus:bg-green-900/20 placeholder-green-900">
+                        <button id="guess-btn"
+                            class="whitespace-nowrap bg-green-900/20 hover:bg-green-500 hover:text-black border-2 border-green-500 text-green-500 font-bold px-8 transition-all uppercase tracking-wider">[
+                            ENTER ]</button>
+                    </div>
+
+                    <!-- Next Action Button (Next Round / Shop) -->
+                    <button id="next-btn"
+                        class="hidden w-full bg-purple-900/20 hover:bg-purple-500 hover:text-black border-2 border-purple-500 text-purple-500 font-bold py-4 transition-all uppercase tracking-wider">
+                        > CONTINUE
+                    </button>
+                </div>
+            </main>
+
+            <!-- BROWSER SCREEN -->
+            <div id="browser-screen"
+                class="hidden flex-1 bg-black border-2 border-blue-500 p-6 min-h-[500px] flex flex-col">
+                <header class="flex justify-between items-center mb-6 border-b border-blue-900 pb-4">
+                    <h2 class="text-2xl font-bold text-blue-500">/// NETSCAPE_NAVIGATOR ///</h2>
+                    <span class="text-blue-800 text-sm">CONNECTED</span>
+                </header>
+
+                <div class="grid grid-cols-3 gap-4 flex-1 content-start">
+                    <!-- Shop App -->
+                    <button id="app-shop-btn"
+                        class="flex flex-col items-center gap-2 p-4 border border-blue-900 hover:bg-blue-900/20 hover:border-blue-500 transition-all group">
+                        <div
+                            class="w-12 h-12 border-2 border-purple-500 flex items-center justify-center text-purple-500 font-bold text-xl group-hover:bg-purple-500 group-hover:text-black transition-colors">
+                            $</div>
+                        <span class="text-xs text-blue-400 uppercase tracking-wider">DARK_MARKET</span>
+                    </button>
+
+                    <button id="app-trading-btn"
+                        class="flex flex-col items-center gap-2 p-4 border border-blue-900/30 bg-blue-950/20 text-blue-900 cursor-not-allowed transition-all group">
+                        <div
+                            class="w-12 h-12 border-2 border-blue-900 flex items-center justify-center font-bold text-xl">
+                            📈</div>
+                        <span class="text-xs uppercase tracking-wider">LOCKED</span>
+                    </button>
+
+                    <button id="app-antivirus-btn"
+                        class="flex flex-col items-center gap-2 p-4 border border-blue-900/30 bg-blue-950/20 text-blue-900 cursor-not-allowed transition-all group">
+                        <div
+                            class="w-12 h-12 border-2 border-blue-900 flex items-center justify-center font-bold text-xl">
+                            🛡️</div>
+                        <span class="text-xs uppercase tracking-wider">LOCKED</span>
+                    </button>
+
+                    <button id="app-system-btn"
+                        class="flex flex-col items-center gap-2 p-4 border border-blue-900/30 bg-blue-950/20 text-blue-900 cursor-not-allowed transition-all group">
+                        <div
+                            class="w-12 h-12 border-2 border-blue-900 flex items-center justify-center font-bold text-xl">
+                            ⚙️</div>
+                        <span class="text-xs uppercase tracking-wider">LOCKED</span>
+                    </button>
+
+                    <!-- Placeholder Apps -->
+                    <div
+                        class="flex flex-col items-center gap-2 p-4 border border-blue-900/30 opacity-50 cursor-not-allowed">
+                        <div
+                            class="w-12 h-12 border-2 border-blue-900 flex items-center justify-center text-blue-900 font-bold text-xl">
+                            ?</div>
+                        <span class="text-xs text-blue-900 uppercase tracking-wider">LOCKED</span>
+                    </div>
+                </div>
+
+                <button id="browser-continue-btn"
+                    class="mt-6 w-full bg-black hover:bg-blue-500 hover:text-black text-blue-500 font-bold py-4 border-2 border-blue-500 transition-all uppercase tracking-wider">
+                    > CONTINUE_RUN
                 </button>
             </div>
-          </main>
 
-          <!-- BROWSER SCREEN -->
-          <div id="browser-screen" class="hidden flex-1 bg-black border-2 border-blue-500 p-6 min-h-[500px] flex flex-col">
-              <header class="flex justify-between items-center mb-6 border-b border-blue-900 pb-4">
-                  <h2 class="text-2xl font-bold text-blue-500">/// NETSCAPE_NAVIGATOR ///</h2>
-                  <span class="text-blue-800 text-sm">CONNECTED</span>
-              </header>
-              
-              <div class="grid grid-cols-3 gap-4 flex-1 content-start">
-                  <!-- Shop App -->
-                  <button id="app-shop-btn" class="flex flex-col items-center gap-2 p-4 border border-blue-900 hover:bg-blue-900/20 hover:border-blue-500 transition-all group">
-                      <div class="w-12 h-12 border-2 border-purple-500 flex items-center justify-center text-purple-500 font-bold text-xl group-hover:bg-purple-500 group-hover:text-black transition-colors">$</div>
-                      <span class="text-xs text-blue-400 uppercase tracking-wider">DARK_MARKET</span>
-                  </button>
+            <!-- SHOP SCREEN (Overlay or Replacement) -->
+            <div id="shop-screen"
+                class="hidden flex-1 bg-black border-2 border-purple-500 p-6 min-h-[500px] flex flex-col">
+                <header class="flex justify-between items-center mb-6 border-b border-purple-900 pb-4">
+                    <h2 class="text-2xl font-bold text-purple-500">/// DARK_WEB_MARKET ///</h2>
+                    <button id="reroll-btn"
+                        class="px-4 py-2 bg-black hover:bg-purple-900/30 text-purple-500 border border-purple-500 text-sm transition-colors">
+                        REROLL (<span id="reroll-cost">5</span>$)
+                    </button>
+                </header>
 
-                  <button id="app-trading-btn" class="flex flex-col items-center gap-2 p-4 border border-blue-900/30 bg-blue-950/20 text-blue-900 cursor-not-allowed transition-all group">
-                      <div class="w-12 h-12 border-2 border-blue-900 flex items-center justify-center font-bold text-xl">📈</div>
-                      <span class="text-xs uppercase tracking-wider">TRADING (LOCKED)</span>
-                  </button>
+                <div id="shop-items" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 flex-1 content-start">
+                    <!-- Shop Items -->
+                </div>
 
-                  <button id="app-antivirus-btn" class="flex flex-col items-center gap-2 p-4 border border-blue-900/30 bg-blue-950/20 text-blue-900 cursor-not-allowed transition-all group">
-                      <div class="w-12 h-12 border-2 border-blue-900 flex items-center justify-center font-bold text-xl">🛡️</div>
-                      <span class="text-xs uppercase tracking-wider">ANTIVIRUS (LOCKED)</span>
-                  </button>
-
-                  <button id="app-system-btn" class="flex flex-col items-center gap-2 p-4 border border-blue-900/30 bg-blue-950/20 text-blue-900 cursor-not-allowed transition-all group">
-                      <div class="w-12 h-12 border-2 border-blue-900 flex items-center justify-center font-bold text-xl">⚙️</div>
-                      <span class="text-xs uppercase tracking-wider">SYS_MONITOR (LOCKED)</span>
-                  </button>
-                  
-                  <!-- Placeholder Apps -->
-                  <div class="flex flex-col items-center gap-2 p-4 border border-blue-900/30 opacity-50 cursor-not-allowed">
-                      <div class="w-12 h-12 border-2 border-blue-900 flex items-center justify-center text-blue-900 font-bold text-xl">?</div>
-                      <span class="text-xs text-blue-900 uppercase tracking-wider">LOCKED</span>
-                  </div>
-              </div>
-
-              <button id="browser-continue-btn" class="mt-6 w-full bg-black hover:bg-blue-500 hover:text-black text-blue-500 font-bold py-4 border-2 border-blue-500 transition-all uppercase tracking-wider">
-                  > CONTINUE_RUN
-              </button>
-          </div>
-
-          <!-- SHOP SCREEN (Overlay or Replacement) -->
-          <div id="shop-screen" class="hidden flex-1 bg-black border-2 border-purple-500 p-6 min-h-[500px] flex flex-col">
-              <header class="flex justify-between items-center mb-6 border-b border-purple-900 pb-4">
-                  <h2 class="text-2xl font-bold text-purple-500">/// DARK_WEB_MARKET ///</h2>
-                  <button id="reroll-btn" class="px-4 py-2 bg-black hover:bg-purple-900/30 text-purple-500 border border-purple-500 text-sm transition-colors">
-                      REROLL (<span id="reroll-cost">5</span>$)
-                  </button>
-              </header>
-              
-              <div id="shop-items" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 flex-1 content-start">
-                  <!-- Shop Items -->
-              </div>
-
-              <button id="leave-shop-btn" class="mt-6 w-full bg-black hover:bg-purple-500 hover:text-black text-purple-500 font-bold py-4 border-2 border-purple-500 transition-all uppercase tracking-wider">
-                  &lt; BACK_TO_BROWSER
-              </button>
-          </div>
+                <button id="leave-shop-btn"
+                    class="mt-6 w-full bg-black hover:bg-purple-500 hover:text-black text-purple-500 font-bold py-4 border-2 border-purple-500 transition-all uppercase tracking-wider">
+                    &lt; BACK_TO_BROWSER
+                </button>
+            </div>
 
 
-      </div>
+        </div>
     </div>
     <script type="module" src="/src/main.js"></script>
-  </body>
+</body>
+
 </html>

@@ -66,13 +66,13 @@ function render() {
     if (game.gameState === 'ARC_INTRO') {
         elements.app.classList.add('hidden');
         elements.bootScreen.classList.remove('hidden');
-        
+
         const lore = game.currentArc.introSequence(currentLang);
-        
+
         Animations.runTerminalSequence(lore, () => {
             elements.bootScreen.classList.add('hidden');
             elements.app.classList.remove('hidden');
-            
+
             // Proceed to Browser/Shop after Arc Intro
             game.generateShop();
             game.gameState = 'BROWSER';
@@ -91,13 +91,13 @@ function render() {
             game.bossIntroPlayed = true;
             elements.app.classList.add('hidden');
             elements.bootScreen.classList.remove('hidden');
-            
+
             const lore = monthEvents.intro(currentLang);
-            
+
             Animations.runTerminalSequence(lore, () => {
                 elements.bootScreen.classList.add('hidden');
                 elements.app.classList.remove('hidden');
-                render(); 
+                render();
             }, 40, true); // Wait for click if it's a long text, or auto? Let's say true (wait)
             return;
         }
@@ -105,7 +105,7 @@ function render() {
 
     UI.updateStats(game);
     UI.updateMessage(game, currentLang);
-    
+
     // Update Visual Effects based on Arc/Progress
     Animations.updateVisualEffects(game);
 
@@ -121,7 +121,7 @@ function render() {
     }
 
     refreshBrowserApps();
-    
+
     // Dev Mode UI
     if (game.devMode) {
         elements.devControls.classList.remove('hidden');
@@ -134,18 +134,18 @@ function render() {
     } else if (game.gameState === 'TRADING') {
         UI.renderTrading(game);
     }
-    
+
     // Force Boss Message Update if in Boss Round
     if (game.gameState === 'PLAYING' && game.round === game.maxRounds && game.bossEffect) {
         if (game.message.key === 'round_start') {
-             const boss = game.getBoss();
-             if (boss) {
-                 game.message = { key: 'boss_round', params: { name: boss.name, desc: boss.description } };
-                 UI.updateMessage(game, currentLang);
-             }
+            const boss = game.getBoss();
+            if (boss) {
+                game.message = { key: 'boss_round', params: { name: boss.name, desc: boss.description } };
+                UI.updateMessage(game, currentLang);
+            }
         }
     }
-    
+
     UI.updateStaticTexts(currentLang, currentTheme, themes);
 }
 
@@ -156,9 +156,9 @@ function handleStart() {
         // Game Over Cutscene
         elements.app.classList.add('hidden');
         elements.bootScreen.classList.remove('hidden');
-        
+
         const lore = currentLang === 'fr' ? Localization.gameOverLoreFr : Localization.gameOverLoreEn;
-        
+
         Animations.runTerminalSequence(lore, () => {
             // Return to Home Screen
             sessionStorage.setItem('skipBoot', 'true');
@@ -170,7 +170,7 @@ function handleStart() {
     game.startRun();
     game.bossIntroPlayed = false;
     game.bossOutroPlayed = false;
-    
+
     // Trigger First Arc Intro
     game.gameState = 'ARC_INTRO';
     render();
@@ -204,21 +204,21 @@ function handleNext() {
         if (monthEvents && monthEvents.outro) {
             game.bossOutroPlayed = true;
             Animations.stopVisualEffects();
-            
+
             elements.app.classList.add('hidden');
             elements.bootScreen.classList.remove('hidden');
-            
+
             const lore = monthEvents.outro(currentLang);
-            
+
             Animations.runTerminalSequence(lore, () => {
                 elements.bootScreen.classList.add('hidden');
                 elements.app.classList.remove('hidden');
-                
+
                 // Proceed to Browser
                 game.nextAction();
-                render(); 
+                render();
             }, 40, true);
-            return; 
+            return;
         }
     }
 
@@ -238,13 +238,13 @@ function handleNext() {
         Animations.stopVisualEffects();
         elements.app.classList.add('hidden');
         elements.bootScreen.classList.remove('hidden');
-        
+
         const bootLore = currentLang === 'fr' ? Localization.monthlyBootSequenceFr : Localization.monthlyBootSequenceEn;
-        
+
         Animations.runTerminalSequence(bootLore, () => {
             elements.bootScreen.classList.add('hidden');
             elements.app.classList.remove('hidden');
-            
+
             game.enterNewMonth();
             render();
         }, 40, true);
@@ -263,14 +263,14 @@ function handleNext() {
 function triggerGameOverCutscene() {
     elements.app.classList.add('hidden');
     elements.bootScreen.classList.remove('hidden');
-    
+
     const lore = currentLang === 'fr' ? Localization.gameOverLoreFr : Localization.gameOverLoreEn;
-    
+
     Animations.runTerminalSequence(lore, () => {
         // Sequence finished. Wait for reading.
         setTimeout(() => {
             // Clear screen (Black)
-            if (elements.bootText) elements.bootText.innerHTML = ''; 
+            if (elements.bootText) elements.bootText.innerHTML = '';
             // Wait again
             setTimeout(() => {
                 // Reload
@@ -283,7 +283,7 @@ function triggerGameOverCutscene() {
 
 function handleBuy(id) {
     if (game.buyItem(id)) {
-        render(); 
+        render();
     } else {
         // Shake effect or error sound?
     }
@@ -365,10 +365,10 @@ let antivirusSpawnInterval = null;
 
 function handleStartAntivirus() {
     if (game.antivirusActive) return;
-    
+
     game.startAntivirusGame();
     UI.renderAntivirus(game);
-    
+
     // Timer Loop
     antivirusTimerInterval = setInterval(() => {
         game.antivirusTimeLeft--;
@@ -377,7 +377,7 @@ function handleStartAntivirus() {
         }
         UI.renderAntivirus(game);
     }, 1000);
-    
+
     // Spawn Loop
     antivirusSpawnInterval = setInterval(() => {
         if (game.antivirusActive) {
@@ -446,18 +446,18 @@ function handleCalibrate() {
     if (allAligned) {
         game.systemCalibratedThisRound = true;
         game.systemOverheatLevel = Math.max(0, game.systemOverheatLevel - 30); // Cool down significantly
-        
+
         UI.renderSystemMonitor(game);
-        
+
         // Visual feedback
         const btn = document.getElementById('system-calibrate-btn');
-        if(btn) {
+        if (btn) {
             btn.textContent = "SYSTEM STABILIZED";
             btn.classList.add('bg-green-500', 'text-black');
         }
 
         setTimeout(() => {
-             handleLeaveSystem();
+            handleLeaveSystem();
         }, 800);
     }
 }
@@ -473,7 +473,7 @@ function setupSystemSlider(index) {
         let y = e.clientY;
         let percentage = ((rect.bottom - y) / rect.height) * 100;
         percentage = Math.max(0, Math.min(100, percentage));
-        
+
         game.systemSliders[index] = percentage;
         UI.renderSystemMonitor(game);
     };
@@ -483,11 +483,11 @@ function setupSystemSlider(index) {
         if (game.systemCalibratedThisRound) return; // Prevent interaction if already calibrated
         container.setPointerCapture(e.pointerId);
         updateFromEvent(e);
-        
+
         container.onpointermove = (e) => {
             updateFromEvent(e);
         };
-        
+
         container.onpointerup = (e) => {
             container.onpointermove = null;
             container.onpointerup = null;
@@ -532,23 +532,35 @@ if (systemCalibrateBtn) systemCalibrateBtn.addEventListener('click', handleCalib
 
 // Update trading app button state on render
 function refreshBrowserApps() {
-    if (elements.appTradingBtn && game.tradingUnlocked) {
-        elements.appTradingBtn.classList.remove('cursor-not-allowed', 'bg-blue-950/20', 'text-blue-900');
-        elements.appTradingBtn.classList.add('hover:bg-blue-900/20', 'hover:border-blue-500', 'border-blue-500', 'text-blue-400');
+    if (elements.appTradingBtn) {
         const label = elements.appTradingBtn.querySelector('span');
-        if (label) label.textContent = 'TRADING DESK';
+        if (game.tradingUnlocked) {
+            elements.appTradingBtn.classList.remove('cursor-not-allowed', 'bg-blue-950/20', 'text-blue-900');
+            elements.appTradingBtn.classList.add('hover:bg-blue-900/20', 'hover:border-blue-500', 'border-blue-500', 'text-blue-400');
+            if (label) label.textContent = 'TRADING DESK';
+        } else {
+            if (label) label.textContent = 'LOCKED';
+        }
     }
-    if (elements.appAntivirusBtn && game.antivirusUnlocked) {
-        elements.appAntivirusBtn.classList.remove('cursor-not-allowed', 'bg-blue-950/20', 'text-blue-900');
-        elements.appAntivirusBtn.classList.add('hover:bg-blue-900/20', 'hover:border-blue-500', 'border-blue-500', 'text-blue-400');
+    if (elements.appAntivirusBtn) {
         const label = elements.appAntivirusBtn.querySelector('span');
-        if (label) label.textContent = 'ANTIVIRUS';
+        if (game.antivirusUnlocked) {
+            elements.appAntivirusBtn.classList.remove('cursor-not-allowed', 'bg-blue-950/20', 'text-blue-900');
+            elements.appAntivirusBtn.classList.add('hover:bg-blue-900/20', 'hover:border-blue-500', 'border-blue-500', 'text-blue-400');
+            if (label) label.textContent = 'ANTIVIRUS';
+        } else {
+            if (label) label.textContent = 'LOCKED';
+        }
     }
-    if (appSystemBtn && game.systemMonitorUnlocked) {
-        appSystemBtn.classList.remove('cursor-not-allowed', 'bg-blue-950/20', 'text-blue-900');
-        appSystemBtn.classList.add('hover:bg-orange-900/20', 'hover:border-orange-500', 'border-orange-500', 'text-orange-400');
+    if (appSystemBtn) {
         const label = appSystemBtn.querySelector('span');
-        if (label) label.textContent = 'SYSTEM MONITOR';
+        if (game.systemMonitorUnlocked) {
+            appSystemBtn.classList.remove('cursor-not-allowed', 'bg-blue-950/20', 'text-blue-900');
+            appSystemBtn.classList.add('hover:bg-orange-900/20', 'hover:border-orange-500', 'border-orange-500', 'text-orange-400');
+            if (label) label.textContent = 'SYSTEM MONITOR';
+        } else {
+            if (label) label.textContent = 'LOCKED';
+        }
     }
 }
 
@@ -725,9 +737,9 @@ if (elements.homeStartBtn) {
     elements.homeStartBtn.onclick = () => {
         elements.homeScreen.classList.add('hidden');
         elements.bootScreen.classList.remove('hidden');
-        
+
         const lore = currentLang === 'fr' ? Localization.loreSequenceFr : Localization.loreSequenceEn;
-        
+
         Animations.runTerminalSequence(lore, () => {
             elements.bootScreen.classList.add('hidden');
             elements.app.classList.remove('hidden');
@@ -758,14 +770,14 @@ if (elements.quitBtn) {
         elements.pauseOverlay.classList.add('hidden');
         elements.app.classList.add('hidden');
         elements.bootScreen.classList.remove('hidden');
-        
+
         const shutdownText = [
             "ABORTING SESSION...",
             "SAVING LOGS... ERROR (DISK FULL)",
             "TERMINATING PROCESSES...",
             "SYSTEM HALTED."
         ];
-        
+
         Animations.runTerminalSequence(shutdownText, () => {
             sessionStorage.setItem('skipBoot', 'true');
             window.location.reload();
@@ -778,9 +790,9 @@ if (elements.themeBtn) {
         const currentIndex = themeKeys.indexOf(currentTheme);
         const nextIndex = (currentIndex + 1) % themeKeys.length;
         currentTheme = themeKeys[nextIndex];
-        
+
         document.body.style.filter = themes[currentTheme].filter;
-        
+
         UI.updateStaticTexts(currentLang, currentTheme, themes);
     };
 }
