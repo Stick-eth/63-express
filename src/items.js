@@ -102,18 +102,35 @@ export const JOKERS = [
         id: 'root_access',
         name: { en: 'Root Access', fr: 'Root Access' },
         icon: '#️⃣',
-        description: { en: 'At round start, automatically halves the interval.', fr: 'Au début du round, réduit automatiquement l\'intervalle de moitié.' },
+        description: { en: 'At round start, reduces interval range by 1.5x.', fr: 'Au début du round, réduit la taille de l\'intervalle de 1.5x.' },
         price: 12,
         rarity: 'uncommon',
         trigger: 'onRoundStart',
         execute: (game) => {
-            const mid = Math.floor((game.min + game.max) / 2);
-            if (game.mysteryNumber <= mid) {
-                game.max = mid;
-            } else {
-                game.min = mid + 1;
+            const currentRange = game.max - game.min;
+            const targetSize = Math.floor(currentRange / 1.5);
+
+            // Determine possible start positions for the new window
+            // The window must contain the mysteryNumber
+            // Window Start <= mysteryNumber
+            // Window End >= mysteryNumber -> Window Start + targetSize >= mysteryNumber -> Window Start >= mysteryNumber - targetSize
+
+            // Also must be within game bounds
+            // Window Start >= game.min
+            // Window Start + targetSize <= game.max -> Window Start <= game.max - targetSize
+
+            const minPossibleStart = Math.max(game.min, game.mysteryNumber - targetSize);
+            const maxPossibleStart = Math.min(game.mysteryNumber, game.max - targetSize);
+
+            // If range is valid (should be unless targetSize > currentRange which shouldn't happen with divisor > 1)
+            if (minPossibleStart <= maxPossibleStart) {
+                const newMin = Math.floor(Math.random() * (maxPossibleStart - minPossibleStart + 1)) + minPossibleStart;
+                const newMax = newMin + targetSize;
+
+                game.min = newMin;
+                game.max = newMax;
+                return { message: `ROOT: Range reduced to [${newMin}-${newMax}]`, logOnly: true };
             }
-            return { message: `ROOT: Zone restreinte à [${game.min}-${game.max}]`, logOnly: true };
         }
     }),
     createJoker({
@@ -188,10 +205,9 @@ export const JOKERS = [
         price: 10,
         rarity: 'rare',
         maxQuantity: 1,
-        trigger: 'onWin',
-        execute: (game) => {
-            game.cash += 100;
-            return { message: 'SPAGHETTI: +100$', logOnly: true };
+        trigger: 'calculateGain',
+        execute: (game, baseGain) => {
+            return baseGain + 1000;
         }
     }),
     createJoker({
@@ -204,7 +220,7 @@ export const JOKERS = [
         hooks: {
             calculateGain: (game, baseGain) => baseGain * 3,
             onRoundStart: (game) => {
-                 game.maxAttempts = Math.max(3, game.maxAttempts - (game.memoryLeakStacks || 0));
+                game.maxAttempts = Math.max(3, game.maxAttempts - (game.memoryLeakStacks || 0));
             },
             onWin: (game) => {
                 game.memoryLeakStacks = (game.memoryLeakStacks || 0) + 1;
@@ -463,6 +479,54 @@ export const JOKERS = [
             return { message: `Batman: +$${bonus}`, logOnly: true };
         }
     }),
+    createJoker({
+        id: 'bug_bounty',
+        name: { en: 'Bug Bounty', fr: 'Bug Bounty' },
+        icon: '🐛',
+        description: { en: 'Receive $2 for each Max Attempt instantly.', fr: 'Recevez 2$ pour chaque Essai Max instantanément.' },
+        price: 8,
+        rarity: 'common',
+        execute: (game) => {
+            const reward = game.maxAttempts * 2;
+            game.cash += reward;
+            return { message: `BOUNTY: +$${reward}`, logOnly: true };
+        }
+    }),
+    createJoker({
+        id: 'dark_web',
+        name: { en: 'Dark Web', fr: 'Dark Web' },
+        icon: '🕸️',
+        description: { en: 'Earn 2% daily interest (capped at $50).', fr: 'Gagnez 2% d\'intérêts quotidiens (max 50$).' },
+        price: 15,
+        rarity: 'rare',
+        trigger: 'onRoundStart',
+        execute: (game) => {
+            const interest = Math.min(50, Math.floor(game.cash * 0.02));
+            if (interest > 0) {
+                game.cash += interest;
+                return { message: `DARK WEB: +$${interest}`, logOnly: true };
+            }
+        }
+    }),
+    createJoker({
+        id: 'neural_network',
+        name: { en: 'Neural Network', fr: 'Reseau Neuronal' },
+        icon: '🧠',
+        description: { en: 'Gain multiplier increases by 0.1 each round.', fr: 'Le multiplicateur de gain augmente de 0.1 chaque round.' },
+        price: 12,
+        rarity: 'rare',
+        modifier: 1,
+        trigger: 'onRoundStart',
+        execute: (game, val, joker) => {
+            joker.modifier = (joker.modifier || 1) + 0.1;
+            return { message: `NEURAL: Learning... x${joker.modifier.toFixed(1)}` };
+        },
+        hooks: {
+            calculateGain: (game, baseGain, joker) => {
+                return Math.floor(baseGain * (joker.modifier || 1));
+            }
+        }
+    }),
     // --- NEW COMMON JOKERS ---
     createJoker({
         id: 'bug_bounty',
@@ -661,7 +725,7 @@ export const JOKERS = [
         price: 20,
         rarity: 'rare',
         trigger: 'none',
-        execute: () => {}
+        execute: () => { }
     }),
     createJoker({
         id: 'firewall',
@@ -671,7 +735,7 @@ export const JOKERS = [
         price: 18,
         rarity: 'rare',
         trigger: 'none', // Handled in handleMiss
-        execute: () => {}
+        execute: () => { }
     }),
     createJoker({
         id: 'script_kiddie',
@@ -681,7 +745,7 @@ export const JOKERS = [
         price: 12,
         rarity: 'uncommon',
         trigger: 'none', // Handled in useScript
-        execute: () => {}
+        execute: () => { }
     }),
     createJoker({
         id: 'garbage_collector',

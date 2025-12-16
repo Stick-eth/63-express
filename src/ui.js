@@ -11,10 +11,10 @@ function getLoc(obj, lang) {
 
 export function updateStaticTexts(currentLang, currentTheme, themes) {
     const t = staticTexts[currentLang];
-    
+
     if (elements.homeStartBtn) elements.homeStartBtn.textContent = t.start;
     if (elements.settingsBtn) elements.settingsBtn.textContent = t.settings;
-    
+
     if (elements.lblLang) elements.lblLang.textContent = t.lang;
     if (elements.lblTheme) elements.lblTheme.textContent = t.theme;
     if (elements.lblGridKey) elements.lblGridKey.textContent = t.gridKey;
@@ -26,21 +26,21 @@ export function updateStaticTexts(currentLang, currentTheme, themes) {
 
     if (elements.resumeBtn) elements.resumeBtn.textContent = t.resume;
     if (elements.quitBtn) elements.quitBtn.textContent = t.quit;
-    
+
     const pauseTitle = elements.pauseOverlay.querySelector('h2');
     if (pauseTitle) pauseTitle.textContent = t.paused;
-    
+
     if (elements.guessBtn) elements.guessBtn.textContent = t.enter;
     if (elements.leaveShopBtn) elements.leaveShopBtn.textContent = t.exitShop;
     if (elements.nextBtn) elements.nextBtn.textContent = t.continue;
 }
 
 export function updateStats(game) {
-    elements.cashDisplay.textContent = `$${game.cash}`;
+    elements.cashDisplay.textContent = `$${Math.floor(game.cash)}`;
     elements.rentDisplay.textContent = `$${game.rent}`;
     elements.levelDisplay.textContent = game.level;
     elements.roundDisplay.textContent = `${game.round}/${game.maxRounds}`;
-    
+
     // Visual alert for rent
     if (game.cash < game.rent && game.round === game.maxRounds) {
         elements.rentDisplay.classList.add('animate-pulse', 'text-red-500');
@@ -59,7 +59,7 @@ function renderAttempts(game) {
         attemptsContainer = document.createElement('div');
         attemptsContainer.id = 'large-attempts-display';
         attemptsContainer.className = 'text-center mb-2 py-2 border-b border-green-900/30';
-        
+
         // Insert before message area
         const messageArea = elements.messageArea || document.getElementById('message-area');
         if (messageArea) {
@@ -87,19 +87,19 @@ function renderLogs(game) {
         logsDiv = document.createElement('div');
         logsDiv.id = 'system-logs';
         logsDiv.className = 'mt-2 w-full max-w-md mx-auto bg-black border border-green-900 p-2 text-xs text-green-600 max-h-32 overflow-y-auto hidden';
-        
+
         // Insert after message area
         const messageArea = elements.messageArea || document.getElementById('message-area'); // Fallback if not in dom.js yet
         if (messageArea) {
             messageArea.parentNode.insertBefore(logsDiv, messageArea.nextSibling);
         }
     }
-    
+
     if (!game.roundLogs || game.roundLogs.length === 0) {
         logsDiv.classList.add('hidden');
     } else {
         logsDiv.classList.remove('hidden');
-        logsDiv.innerHTML = '<div class="text-green-500 text-[10px] uppercase tracking-widest mb-1 border-b border-green-900 pb-1">System Logs</div>' + 
+        logsDiv.innerHTML = '<div class="text-green-500 text-[10px] uppercase tracking-widest mb-1 border-b border-green-900 pb-1">System Logs</div>' +
             game.roundLogs.map(log => `<div class="mb-1 last:mb-0">> ${log}</div>`).join('');
         logsDiv.scrollTop = logsDiv.scrollHeight;
     }
@@ -109,29 +109,35 @@ function renderLogs(game) {
 
 export function updateMessage(game, currentLang) {
     if (!game.message) return;
-    
+
     const { key, params } = game.message;
     let text = '';
 
     // Check for Spaghetti Code (Hide Min/Max)
     const hasSpaghetti = game.jokers.some(j => j.id === 'spaghetti_code');
-    let displayParams = { ...params }; 
-    
+    let displayParams = { ...params };
+
     // Resolve localized params
     if (displayParams) {
         Object.keys(displayParams).forEach(k => {
+            // Round cash in messages
+            if (k === 'cash' || k === 'gain' || k === 'rent') {
+                if (typeof displayParams[k] === 'number') {
+                    displayParams[k] = Math.floor(displayParams[k]);
+                }
+            }
             displayParams[k] = getLoc(displayParams[k], currentLang);
         });
     }
-    
+
     if (hasSpaghetti && (key.includes('higher') || key.includes('lower'))) {
         displayParams.min = '???';
         displayParams.max = '???';
     }
-    
+
     const messages = translations[currentLang] || translations.en;
     const msgEntry = messages[key];
-    
+
     if (typeof msgEntry === 'function') {
         text = msgEntry(displayParams);
     } else {
@@ -139,7 +145,7 @@ export function updateMessage(game, currentLang) {
     }
 
     elements.messageText.textContent = text;
-    
+
     // Color coding
     elements.messageText.className = 'text-xl font-medium transition-colors duration-300 ';
     if (key.includes('won')) elements.messageText.classList.add('text-green-400');
@@ -181,12 +187,12 @@ function moveTooltip(e) {
     if (tooltip && !tooltip.classList.contains('hidden')) {
         const x = e.clientX + 15;
         const y = e.clientY + 15;
-        
+
         // Basic boundary check to prevent overflow
         const rect = tooltip.getBoundingClientRect();
         let finalX = x;
         let finalY = y;
-        
+
         if (x + rect.width > window.innerWidth) finalX = e.clientX - rect.width - 10;
         if (y + rect.height > window.innerHeight) finalY = e.clientY - rect.height - 10;
 
@@ -202,7 +208,7 @@ function hideTooltip() {
 
 export function renderInventory(game, handlers, currentLang) {
     // Ensure lists are grids
-    elements.jokersList.className = 'grid grid-cols-5 gap-2 p-2 content-start'; 
+    elements.jokersList.className = 'grid grid-cols-5 gap-2 p-2 content-start';
     elements.scriptsList.className = 'grid grid-cols-5 gap-2 p-2 content-start';
 
     // Jokers
@@ -214,7 +220,7 @@ export function renderInventory(game, handlers, currentLang) {
             const el = document.createElement('div');
             el.className = 'aspect-square bg-black border border-green-700 flex items-center justify-center text-2xl cursor-help hover:bg-green-900/40 hover:border-green-400 transition-all relative group select-none';
             el.textContent = joker.icon || '🃏';
-            
+
             // Add quantity indicator
             if (joker.quantity && joker.quantity > 1) {
                 const qty = document.createElement('div');
@@ -222,7 +228,7 @@ export function renderInventory(game, handlers, currentLang) {
                 qty.textContent = `x${joker.quantity}`;
                 el.appendChild(qty);
             }
-            
+
             // Tooltip events
             el.onmouseenter = (e) => showTooltip(e, getLoc(joker.name, currentLang), getLoc(joker.description, currentLang), joker.rarity, joker.price);
             el.onmousemove = moveTooltip;
@@ -231,9 +237,9 @@ export function renderInventory(game, handlers, currentLang) {
             // Sell interaction
             if (game.gameState === 'SHOP') {
                 el.classList.add('cursor-pointer', 'hover:border-red-500');
-                el.onclick = (e) => { 
-                    e.stopPropagation(); 
-                    handlers.handleSell('joker', index); 
+                el.onclick = (e) => {
+                    e.stopPropagation();
+                    handlers.handleSell('joker', index);
                     hideTooltip();
                 };
                 const sellInd = document.createElement('div');
@@ -252,7 +258,7 @@ export function renderInventory(game, handlers, currentLang) {
     } else {
         game.scripts.forEach((script, index) => {
             const canUse = game.gameState === 'PLAYING';
-            const el = document.createElement('div'); 
+            const el = document.createElement('div');
             el.className = `aspect-square bg-black border border-cyan-900 flex items-center justify-center text-2xl transition-all relative group select-none ${canUse ? 'cursor-pointer hover:bg-cyan-900/40 hover:border-cyan-400' : 'opacity-50 cursor-not-allowed'}`;
             el.textContent = script.icon || '📜';
 
@@ -260,19 +266,19 @@ export function renderInventory(game, handlers, currentLang) {
             el.onmouseenter = (e) => showTooltip(e, getLoc(script.name, currentLang), getLoc(script.description, currentLang), 'CONSUMABLE', script.price);
             el.onmousemove = moveTooltip;
             el.onmouseleave = hideTooltip;
-            
+
             if (canUse) {
-                el.onclick = () => { 
-                    handlers.useScript(index); 
+                el.onclick = () => {
+                    handlers.useScript(index);
                     hideTooltip();
                 };
             }
 
             if (game.gameState === 'SHOP') {
                 el.classList.add('hover:border-red-500');
-                el.onclick = (e) => { 
-                    e.stopPropagation(); 
-                    handlers.handleSell('script', index); 
+                el.onclick = (e) => {
+                    e.stopPropagation();
+                    handlers.handleSell('script', index);
                     hideTooltip();
                 };
                 const sellInd = document.createElement('div');
@@ -288,14 +294,14 @@ export function renderInventory(game, handlers, currentLang) {
 export function renderShop(game, handlers, currentLang) {
     elements.shopItems.innerHTML = '';
     elements.rerollCostSpan.textContent = game.rerollCost;
-    
+
     game.shopInventory.forEach(item => {
         const el = document.createElement('div');
         el.className = 'bg-black border border-purple-700 p-4 flex flex-col gap-2 hover:border-purple-500 transition-colors shadow-[0_0_5px_rgba(168,85,247,0.1)]';
-        
+
         const isAffordable = game.cash >= item.price;
         const typeColor = item.type === 'passive' ? 'text-green-400' : 'text-cyan-400';
-        
+
         el.innerHTML = `
             <div class="flex justify-between items-start">
                 <h4 class="font-bold ${typeColor}">${getLoc(item.name, currentLang)}</h4>
@@ -306,9 +312,9 @@ export function renderShop(game, handlers, currentLang) {
                 [ BUY ]
             </button>
         `;
-        
+
         el.querySelector('button').onclick = () => handlers.handleBuy(item.uniqueId);
-        
+
         elements.shopItems.appendChild(el);
     });
 }
@@ -320,14 +326,14 @@ export function renderTrading(game) {
     const value = game.tradingHoldings * price;
     if (elements.tradingHoldings) elements.tradingHoldings.textContent = game.tradingHoldings.toFixed(3);
     if (elements.tradingHoldingsValue) elements.tradingHoldingsValue.textContent = `$${value.toFixed(2)}`;
-    
+
     if (elements.tradingProfitPercent) {
         if (game.tradingInvested > 0 && game.tradingHoldings > 0) {
             const profit = value - game.tradingInvested;
             const percent = (profit / game.tradingInvested) * 100;
             const sign = percent >= 0 ? '+' : '';
             elements.tradingProfitPercent.textContent = `(${sign}${percent.toFixed(1)}%)`;
-            
+
             elements.tradingProfitPercent.className = `text-xs font-bold ${percent >= 0 ? 'text-green-500' : 'text-red-500'}`;
         } else {
             elements.tradingProfitPercent.textContent = '(0%)';
@@ -426,10 +432,10 @@ export function renderTrading(game) {
 
 export function renderAntivirus(game) {
     if (!elements.antivirusScreen) return;
-    
+
     if (elements.antivirusTimer) elements.antivirusTimer.textContent = `${game.antivirusTimeLeft}s`;
     if (elements.antivirusScore) elements.antivirusScore.textContent = game.antivirusScore;
-    
+
     if (game.antivirusActive) {
         elements.antivirusStartOverlay.classList.add('hidden');
     } else {
@@ -439,36 +445,58 @@ export function renderAntivirus(game) {
             const earned = game.antivirusScore * 2;
             elements.antivirusStartBtn.innerHTML = `<div class="flex flex-col items-center gap-1"><span class="text-green-400 font-bold text-lg">SCAN COMPLETE: +$${earned}</span><span class="text-xs opacity-70">> RESTART_SYSTEM</span></div>`;
             elements.antivirusStartBtn.className = "px-8 py-2 bg-black/80 hover:bg-blue-900/30 text-blue-300 border border-blue-500/50 transition-all text-sm backdrop-blur-sm";
+            elements.antivirusStartBtn.disabled = false;
         } else {
-            elements.antivirusStartBtn.textContent = '> INITIATE_CLEANUP';
-            elements.antivirusStartBtn.className = "px-8 py-4 bg-blue-600 hover:bg-blue-500 text-black font-bold text-xl uppercase tracking-widest border-2 border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all transform hover:scale-105";
+            const scansLeft = Math.max(0, game.maxAntivirusScans - game.antivirusScansThisRound);
+
+            // Add counter display if not exists
+            let counterEl = document.getElementById('antivirus-counter');
+            if (!counterEl && elements.antivirusScreen) {
+                counterEl = document.createElement('div');
+                counterEl.id = 'antivirus-counter';
+                counterEl.className = 'absolute top-2 right-2 p-2 text-xs font-mono text-blue-400 bg-black/50 border border-blue-900/30 rounded z-50';
+                elements.antivirusScreen.appendChild(counterEl);
+            }
+            if (counterEl) {
+                counterEl.textContent = `LICENSES_REMAINING: ${scansLeft}/${game.maxAntivirusScans}`;
+            }
+
+            if (scansLeft <= 0) {
+                elements.antivirusStartBtn.innerHTML = '<div class="flex flex-col items-center"><span class="text-red-400">LICENSE LIMIT EXCEEDED</span><span class="text-[10px] opacity-70">PLEASE RENEW SUBSCRIPTION NEXT ROUND</span></div>';
+                elements.antivirusStartBtn.className = "px-8 py-4 bg-gray-800 text-gray-500 font-bold text-xl uppercase tracking-widest border-2 border-gray-600 cursor-not-allowed";
+                elements.antivirusStartBtn.disabled = true;
+            } else {
+                elements.antivirusStartBtn.textContent = '> INITIATE_CLEANUP';
+                elements.antivirusStartBtn.className = "px-8 py-4 bg-blue-600 hover:bg-blue-500 text-black font-bold text-xl uppercase tracking-widest border-2 border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all transform hover:scale-105";
+                elements.antivirusStartBtn.disabled = false;
+            }
         }
     }
 }
 
 export function spawnAntivirusTarget(game, onClick) {
     if (!elements.antivirusGameArea) return;
-    
+
     const target = document.createElement('div');
     // Random position
     const area = elements.antivirusGameArea;
     const targetSize = 56; // Increased size (w-14)
-    const maxX = area.clientWidth - targetSize; 
+    const maxX = area.clientWidth - targetSize;
     const maxY = area.clientHeight - targetSize;
-    
+
     const x = Math.floor(Math.random() * maxX);
     const y = Math.floor(Math.random() * maxY);
-    
+
     target.className = 'absolute w-14 h-14 bg-red-500 rounded-full border-2 border-red-300 cursor-pointer hover:bg-red-400 transition-transform active:scale-90 shadow-[0_0_10px_rgba(239,68,68,0.8)] flex items-center justify-center animate-in-slide';
     target.style.left = `${x}px`;
     target.style.top = `${y}px`;
-    
+
     // Icon inside removed
-    
+
     target.onmousedown = (e) => {
         e.stopPropagation(); // Prevent bubbling
         onClick();
-        
+
         // Floating text feedback
         const floatText = document.createElement('div');
         floatText.textContent = '+$2';
@@ -476,17 +504,17 @@ export function spawnAntivirusTarget(game, onClick) {
         floatText.style.left = `${target.offsetLeft + 10}px`;
         floatText.style.top = `${target.offsetTop}px`;
         elements.antivirusGameArea.appendChild(floatText);
-        
+
         setTimeout(() => floatText.remove(), 800);
 
         target.remove();
-        
+
         // Spawn particle effect?
         // For now just remove
     };
-    
+
     elements.antivirusGameArea.appendChild(target);
-    
+
     // Auto remove after short time (Increased duration: 1s - 1.5s)
     setTimeout(() => {
         if (target.parentNode) target.remove();
@@ -500,10 +528,10 @@ export function updateHistory(game) {
         const el = document.createElement('div');
         const reverseIndex = game.history.length - 1 - index;
         let opacity = Math.max(0.4, 1 - (reverseIndex * 0.15));
-        
+
         let hint = '';
         let colorClass = 'text-green-700';
-        
+
         if (game.mysteryNumber !== null) {
             let isLower = guess < game.mysteryNumber;
             let isHigher = guess > game.mysteryNumber;
@@ -534,22 +562,22 @@ export function updateHistory(game) {
 
         el.className = `flex justify-between items-center border-b border-green-900/30 p-2 w-full`;
         el.style.opacity = opacity;
-        
+
         el.innerHTML = `
             <span class="text-green-300">#${index + 1}: ${guess}</span>
             <span class="text-xs font-bold ${colorClass}">${hint}</span>
         `;
-        elements.historyWheel.prepend(el); 
+        elements.historyWheel.prepend(el);
     });
 }
 
 export function updateGrid(game) {
     elements.numberGrid.innerHTML = '';
-    
+
     const start = game.absoluteMin !== undefined ? game.absoluteMin : 0;
     const end = game.absoluteMax !== undefined ? game.absoluteMax : 99;
     const totalRange = end - start + 1;
-    
+
     // Always 100 cells
     const cellCount = 100;
     const step = totalRange / cellCount;
@@ -559,11 +587,11 @@ export function updateGrid(game) {
 
     for (let i = 0; i < cellCount; i++) {
         const el = document.createElement('div');
-        
+
         // Calculate range for this cell
         const cellStart = Math.floor(start + (i * step));
         const cellEnd = Math.floor(start + ((i + 1) * step)) - 1;
-        
+
         el.textContent = cellStart;
         el.className = 'text-[0.7rem] flex items-center justify-center h-8 transition-colors cursor-help overflow-hidden select-none';
         el.title = `${cellStart} - ${cellEnd}`;
@@ -571,7 +599,7 @@ export function updateGrid(game) {
         // Check validity
         // A cell is valid if its range overlaps with [game.min, game.max]
         let isValid = (cellStart <= game.max && cellEnd >= game.min);
-        
+
         // Even Flow: Gray out odd numbers (only if cell represents a single number)
         if (hasEvenFlow && cellStart === cellEnd && cellStart % 2 !== 0) {
             isValid = false;
@@ -587,14 +615,14 @@ export function updateGrid(game) {
         if (isValid) {
             el.classList.add('text-green-400', 'bg-green-900/20', 'font-bold', 'border', 'border-green-500/30');
             if (!isFullyValid) {
-                 // Partial match style (edges of the valid range)
-                 el.classList.remove('bg-green-900/20');
-                 el.classList.add('bg-green-900/50');
+                // Partial match style (edges of the valid range)
+                el.classList.remove('bg-green-900/20');
+                el.classList.add('bg-green-900/50');
             }
         } else {
             el.classList.add('text-green-900', 'opacity-20');
         }
-        
+
         elements.numberGrid.appendChild(el);
     }
 }
@@ -617,7 +645,7 @@ export function setupNumpadListeners(elements) {
             elements.guessInput.focus();
         });
     });
-    
+
     // Close numpad when clicking outside the box
     if (elements.numpadOverlay) {
         elements.numpadOverlay.addEventListener('click', (e) => {
@@ -690,9 +718,9 @@ export function renderSystemMonitor(game) {
     // Overheat Effects
     if (systemScreen) {
         if (game.systemOverheatLevel > 80) {
-             systemScreen.classList.add('animate-pulse');
+            systemScreen.classList.add('animate-pulse');
         } else {
-             systemScreen.classList.remove('animate-pulse');
+            systemScreen.classList.remove('animate-pulse');
         }
     }
 
@@ -723,7 +751,7 @@ export function renderSystemMonitor(game) {
         // Check alignment (tolerance +/- 5)
         const diff = Math.abs(val - target);
         const isAligned = diff <= 5;
-        
+
         if (!isAligned) allAligned = false;
 
         if (sliderFill) {
@@ -735,9 +763,9 @@ export function renderSystemMonitor(game) {
                 sliderFill.classList.remove('bg-green-500');
             }
         }
-        
+
         if (sliderValue) {
-             if (isAligned) {
+            if (isAligned) {
                 sliderValue.classList.remove('text-orange-500');
                 sliderValue.classList.add('text-green-500');
             } else {
@@ -762,10 +790,10 @@ export function renderSystemMonitor(game) {
             statusMsg.classList.remove('text-orange-400', 'text-red-500');
             statusMsg.classList.add('text-green-400');
         } else if (game.systemOverheatLevel > 70 && Math.random() > 0.7) {
-             // Glitch text
-             const chars = "SYSTEM ERROR WARNING FAILURE 010101";
-             statusMsg.textContent = chars.split('').sort(() => 0.5 - Math.random()).join('').substring(0, 20);
-             statusMsg.classList.add('text-red-500');
+            // Glitch text
+            const chars = "SYSTEM ERROR WARNING FAILURE 010101";
+            statusMsg.textContent = chars.split('').sort(() => 0.5 - Math.random()).join('').substring(0, 20);
+            statusMsg.classList.add('text-red-500');
         } else if (allAligned) {
             statusMsg.textContent = "SYSTEM STABLE - READY TO CALIBRATE";
             statusMsg.classList.remove('text-orange-400');
@@ -788,7 +816,7 @@ export function renderSystemMonitor(game) {
             calibrateBtn.textContent = "CONFIRM CALIBRATION";
             calibrateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
             calibrateBtn.classList.add('hover:bg-orange-500', 'hover:text-black');
-            
+
             if (allAligned) {
                 calibrateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 calibrateBtn.classList.add('animate-pulse');

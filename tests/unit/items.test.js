@@ -107,4 +107,62 @@ describe('Item Logic', () => {
         expect(game.maxAttempts).toBe(initialMaxAttempts - 1);
         expect(game.scripts.length).toBe(0); // Consumed
     });
+
+    it('should apply Root Access effect (1.5x reduction, randomized)', () => {
+        const root = JOKERS.find(j => j.id === 'root_access');
+
+        // Mock game state
+        game.min = 0;
+        game.max = 100;
+        game.mysteryNumber = 50;
+
+        // Run logic
+        root.execute(game);
+
+        const newRange = game.max - game.min;
+        // Expected reduction: 100 / 1.5 = 66.6 -> floor 66
+        const expectedSize = Math.floor(100 / 1.5);
+
+        expect(newRange).toBe(expectedSize);
+        expect(game.min).toBeLessThan(game.max);
+        expect(game.mysteryNumber).toBeGreaterThanOrEqual(game.min);
+        expect(game.mysteryNumber).toBeLessThanOrEqual(game.max);
+    });
+
+    it('should update Neural Network modifier', () => {
+        const neural = JOKERS.find(j => j.id === 'neural_network');
+        game.jokers.push({ ...neural }); // Clone to avoid modifying global singleton state if mutated (though factory usually handles this)
+        const instance = game.jokers[0];
+
+        // x0.1 per round
+        instance.execute(game, null, instance);
+        expect(instance.modifier).toBeCloseTo(1.1);
+
+        instance.execute(game, null, instance);
+        expect(instance.modifier).toBeCloseTo(1.2);
+    });
+
+    it('should apply Bug Bounty effect', () => {
+        const bugBounty = JOKERS.find(j => j.id === 'bug_bounty');
+        game.maxAttempts = 10;
+
+        // $2 per max attempt
+        const result = bugBounty.execute(game);
+        expect(game.cash).toBe(100 + 20); // Initial 100 + 2*10
+    });
+
+    it('should apply Dark Web effect (Interest)', () => {
+        const darkWeb = JOKERS.find(j => j.id === 'dark_web');
+        // 2% per $10, capped at $50
+
+        game.cash = 200; // Expected: 4
+        let result = darkWeb.execute(game);
+        expect(game.cash).toBe(204);
+
+        // Cap check
+        game.cash = 10000; // Expected 200 -> but capped at 50
+        const cashBefore = game.cash;
+        result = darkWeb.execute(game);
+        expect(game.cash).toBe(cashBefore + 50);
+    });
 });
