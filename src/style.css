@@ -9,6 +9,7 @@ body {
     opacity: 0;
     transform: translateY(20px) scale(0.8);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -20,9 +21,17 @@ body {
 }
 
 @keyframes rainbow {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .text-rainbow {
@@ -35,8 +44,15 @@ body {
 }
 
 @keyframes flame {
-  0%, 100% { text-shadow: 0 -2px 4px #f97316, 0 -4px 8px #ef4444; }
-  50% { text-shadow: 0 -4px 8px #f97316, 0 -8px 16px #ef4444; }
+
+  0%,
+  100% {
+    text-shadow: 0 -2px 4px #f97316, 0 -4px 8px #ef4444;
+  }
+
+  50% {
+    text-shadow: 0 -4px 8px #f97316, 0 -8px 16px #ef4444;
+  }
 }
 
 .text-flame {
@@ -45,17 +61,43 @@ body {
 }
 
 @keyframes terminalPulse {
-  0%, 100% { opacity: 1; text-shadow: 0 0 8px currentColor; }
-  50% { opacity: 0.85; text-shadow: 0 0 2px currentColor; }
+
+  0%,
+  100% {
+    opacity: 1;
+    text-shadow: 0 0 8px currentColor;
+  }
+
+  50% {
+    opacity: 0.85;
+    text-shadow: 0 0 2px currentColor;
+  }
 }
 
 @keyframes glitch {
-  0% { transform: translate(0); }
-  20% { transform: translate(-2px, 2px); }
-  40% { transform: translate(-2px, -2px); }
-  60% { transform: translate(2px, 2px); }
-  80% { transform: translate(2px, -2px); }
-  100% { transform: translate(0); }
+  0% {
+    transform: translate(0);
+  }
+
+  20% {
+    transform: translate(-2px, 2px);
+  }
+
+  40% {
+    transform: translate(-2px, -2px);
+  }
+
+  60% {
+    transform: translate(2px, 2px);
+  }
+
+  80% {
+    transform: translate(2px, -2px);
+  }
+
+  100% {
+    transform: translate(0);
+  }
 }
 
 .animate-glitch {
@@ -67,17 +109,49 @@ body {
 }
 
 @keyframes shake {
-  0% { transform: translate(1px, 1px) rotate(0deg); }
-  10% { transform: translate(-1px, -2px) rotate(-1deg); }
-  20% { transform: translate(-3px, 0px) rotate(1deg); }
-  30% { transform: translate(3px, 2px) rotate(0deg); }
-  40% { transform: translate(1px, -1px) rotate(1deg); }
-  50% { transform: translate(-1px, 2px) rotate(-1deg); }
-  60% { transform: translate(-3px, 1px) rotate(0deg); }
-  70% { transform: translate(3px, 1px) rotate(-1deg); }
-  80% { transform: translate(-1px, -1px) rotate(1deg); }
-  90% { transform: translate(1px, 2px) rotate(0deg); }
-  100% { transform: translate(1px, -2px) rotate(-1deg); }
+  0% {
+    transform: translate(1px, 1px) rotate(0deg);
+  }
+
+  10% {
+    transform: translate(-1px, -2px) rotate(-1deg);
+  }
+
+  20% {
+    transform: translate(-3px, 0px) rotate(1deg);
+  }
+
+  30% {
+    transform: translate(3px, 2px) rotate(0deg);
+  }
+
+  40% {
+    transform: translate(1px, -1px) rotate(1deg);
+  }
+
+  50% {
+    transform: translate(-1px, 2px) rotate(-1deg);
+  }
+
+  60% {
+    transform: translate(-3px, 1px) rotate(0deg);
+  }
+
+  70% {
+    transform: translate(3px, 1px) rotate(-1deg);
+  }
+
+  80% {
+    transform: translate(-1px, -1px) rotate(1deg);
+  }
+
+  90% {
+    transform: translate(1px, 2px) rotate(0deg);
+  }
+
+  100% {
+    transform: translate(1px, -2px) rotate(-1deg);
+  }
 }
 
 .animate-shake {
@@ -86,8 +160,15 @@ body {
 }
 
 @keyframes pulseRed {
-  0%, 100% { box-shadow: inset 0 0 0px rgba(255, 0, 0, 0); }
-  50% { box-shadow: inset 0 0 50px rgba(255, 0, 0, 0.5); }
+
+  0%,
+  100% {
+    box-shadow: inset 0 0 0px rgba(255, 0, 0, 0);
+  }
+
+  50% {
+    box-shadow: inset 0 0 50px rgba(255, 0, 0, 0.5);
+  }
 }
 
 .animate-pulse-red {
@@ -101,27 +182,148 @@ body {
 
 /* Hide scrollbar for IE, Edge and Firefox */
 #history-wheel {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 @keyframes candleTerminalIn {
- 0% { opacity: 0; transform: scaleY(0); }
- 100% { opacity: 1; transform: scaleY(1); }
+  0% {
+    opacity: 0;
+    transform: scaleY(0);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
 }
 
 .candle-new {
- transform-origin: bottom; /* Or center? */
- animation: candleTerminalIn 0.3s steps(5) forwards;
+  transform-origin: bottom;
+  /* Or center? */
+  animation: candleTerminalIn 0.3s steps(5) forwards;
 }
 
 
 @keyframes floatUpFade {
- 0% { opacity: 1; transform: translateY(0); }
- 100% { opacity: 0; transform: translateY(-20px); }
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
 }
 
 .animate-float-up {
- animation: floatUpFade 0.8s ease-out forwards;
+  animation: floatUpFade 0.8s ease-out forwards;
 }
 
+/* ========================================
+   CRT / PAL MONITOR EFFECT
+   ======================================== */
+
+/* Main CRT container - wraps the entire app */
+.crt-container {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+}
+
+/* CRT Scanlines overlay */
+.crt-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  /* Allow clicks through */
+  z-index: 9999;
+
+  /* Scanlines using repeating gradient */
+  background:
+    repeating-linear-gradient(0deg,
+      rgba(0, 0, 0, 0) 0px,
+      rgba(0, 0, 0, 0) 2px,
+      rgba(0, 0, 0, 0.15) 2px,
+      rgba(0, 0, 0, 0.15) 4px);
+
+  /* Strong vignette for barrel distortion illusion */
+  box-shadow:
+    inset 0 0 100px rgba(0, 0, 0, 0.6),
+    inset 0 0 200px rgba(0, 0, 0, 0.4),
+    inset 0 0 300px rgba(0, 0, 0, 0.2);
+
+  /* Subtle animation for rolling effect */
+  animation: crtScanline 8s linear infinite;
+}
+
+/* Scanline rolling animation */
+@keyframes crtScanline {
+  0% {
+    background-position-y: 0px;
+  }
+
+  100% {
+    background-position-y: 4px;
+  }
+}
+
+/* 50Hz Flicker effect (subtle) */
+@keyframes crtFlicker {
+
+  0%,
+  100% {
+    opacity: 0.97;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+.crt-flicker {
+  animation: crtFlicker 0.05s steps(2) infinite;
+}
+
+/* Phosphor bloom effect on text */
+.crt-bloom {
+  text-shadow:
+    0 0 2px currentColor,
+    0 0 5px currentColor,
+    0 0 10px rgba(74, 222, 128, 0.3);
+}
+
+/* Apply bloom to terminal text */
+.crt-container .text-green-500,
+.crt-container .text-green-400,
+.crt-container .text-green-300 {
+  text-shadow:
+    0 0 2px currentColor,
+    0 0 8px rgba(74, 222, 128, 0.4);
+}
+
+/* Subtle color bleeding effect */
+.crt-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 9998;
+  mix-blend-mode: overlay;
+  opacity: 0.03;
+  background:
+    linear-gradient(90deg,
+      rgba(255, 0, 0, 0.5) 0%,
+      rgba(0, 255, 0, 0.5) 50%,
+      rgba(0, 0, 255, 0.5) 100%);
+}

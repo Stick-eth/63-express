@@ -34,7 +34,7 @@
 </head>
 
 <body
-    class="bg-black text-green-500 antialiased min-h-screen flex items-center justify-center selection:bg-green-500 selection:text-black overflow-y-auto overflow-x-hidden">
+    class="crt-container crt-flicker bg-black text-green-500 antialiased min-h-screen flex items-center justify-center selection:bg-green-500 selection:text-black overflow-y-auto overflow-x-hidden">
 
     <!-- BOOT / LORE TERMINAL -->
     <div id="boot-screen"
@@ -765,6 +765,9 @@
 
         </div>
     </div>
+    <!-- CRT Effect Overlay -->
+    <div class="crt-overlay" aria-hidden="true"></div>
+
     <script type="module" src="/src/main.js"></script>
 </body>
 
