@@ -1,21 +1,22 @@
 
+import { StorageUtils } from '../utils/StorageUtils.js';
+
 const TOKENS_KEY = 'binary_hustle_tokens';
 const TOKENS_UNLOCKED_KEY = 'binary_hustle_tokens_unlocked';
 
 export class TokenManager {
     static getTokens() {
-        const tokens = localStorage.getItem(TOKENS_KEY);
-        return tokens ? parseInt(tokens, 10) : 0;
+        return StorageUtils.getValue(TOKENS_KEY, 0);
     }
 
     static hasEverEarnedToken() {
-        return localStorage.getItem(TOKENS_UNLOCKED_KEY) === 'true';
+        return StorageUtils.getValue(TOKENS_UNLOCKED_KEY, false) === true;
     }
 
     static addToken(amount = 1) {
         const current = this.getTokens();
-        localStorage.setItem(TOKENS_KEY, (current + amount).toString());
-        localStorage.setItem(TOKENS_UNLOCKED_KEY, 'true'); // Mark as unlocked forever
+        StorageUtils.setValue(TOKENS_KEY, current + amount);
+        StorageUtils.setValue(TOKENS_UNLOCKED_KEY, true);
         this.updateTokenDisplay();
     }
 
