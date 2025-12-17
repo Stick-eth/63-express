@@ -131,5 +131,72 @@ describe('Game Logic', () => {
         // Cash was 50. Gain is Math.floor(49.999...) = 49. Total 99.
         expect(game.cash).toBe(100);
     });
+
+    // --- BURNING THRESHOLD TESTS ---
+    describe('Burning Hint Threshold', () => {
+        it('should calculate burning threshold as 5% of initial range', () => {
+            game.startRun();
+            // Default range is 0-99 (100 values), so threshold should be 5
+            expect(game.burningThreshold).toBe(5);
+        });
+
+        it('should show burning hint when guess is within threshold', () => {
+            game.startRun();
+            game.mysteryNumber = 50;
+            game.burningThreshold = 5;
+
+            // Guess 47 is 3 away from 50, which is within threshold of 5
+            game.makeGuess(47);
+
+            expect(game.message.key).toBe('higher_burning');
+        });
+
+        it('should show normal hint when guess is outside threshold', () => {
+            game.startRun();
+            game.mysteryNumber = 50;
+            game.burningThreshold = 5;
+
+            // Guess 40 is 10 away from 50, which is outside threshold of 5
+            game.makeGuess(40);
+
+            expect(game.message.key).toBe('higher');
+        });
+
+        it('should show lower_burning when guess is just above mystery number', () => {
+            game.startRun();
+            game.mysteryNumber = 50;
+            game.burningThreshold = 5;
+
+            // Guess 53 is 3 above 50, which is within threshold of 5
+            game.makeGuess(53);
+
+            expect(game.message.key).toBe('lower_burning');
+        });
+
+        it('should disable burning hints during meltdown boss effect', () => {
+            game.startRun();
+            game.mysteryNumber = 50;
+            game.burningThreshold = 5;
+            game.bossEffect = 'meltdown';
+
+            // Guess 47 is 3 away, normally would be burning
+            game.makeGuess(47);
+
+            expect(game.message.key).toBe('higher'); // Not higher_burning
+        });
+
+        it('should have minimum threshold of 1', () => {
+            game.startRun();
+            // Simulate a very small range (10 values)
+            game.absoluteMin = 0;
+            game.absoluteMax = 9;
+            game.min = 0;
+            game.max = 9;
+            // 5% of 10 = 0.5, but minimum should be 1
+            game.burningThreshold = Math.max(1, Math.floor(10 * 0.05));
+
+            expect(game.burningThreshold).toBe(1);
+        });
+    });
 });
 

@@ -3,9 +3,34 @@
 
 <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Binary Hustle</title>
+
+    <!-- Primary Meta Tags -->
+    <title>Binary Hustle - Hacker Roguelike Game</title>
+    <meta name="title" content="Binary Hustle - Hacker Roguelike Game" />
+    <meta name="description"
+        content="Dive into the underground world of Binary Hustle. Guess numbers, earn cash, pay rent, and survive in this retro hacker-themed roguelike game." />
+    <meta name="keywords" content="binary hustle, hacker game, roguelike, number guessing, terminal game, retro game" />
+    <meta name="author" content="Stick" />
+    <meta name="theme-color" content="#00ff00" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/logo.ico" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Binary Hustle - Hacker Roguelike Game" />
+    <meta property="og:description"
+        content="Dive into the underground world of Binary Hustle. Guess numbers, earn cash, pay rent, and survive in this retro hacker-themed roguelike game." />
+    <meta property="og:image" content="/logo.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content="Binary Hustle - Hacker Roguelike Game" />
+    <meta property="twitter:description"
+        content="Dive into the underground world of Binary Hustle. Guess numbers, earn cash, pay rent, and survive in this retro hacker-themed roguelike game." />
+    <meta property="twitter:image" content="/logo.png" />
 </head>
 
 <body
@@ -22,6 +47,116 @@
             [ CONTINUE ]
         </button>
     </div>
+
+    <!-- TUTORIAL OVERLAY -->
+    <div id="tutorial-overlay"
+        class="hidden fixed inset-0 z-[70] bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-sm">
+        <div
+            class="w-full max-w-2xl bg-black border-2 border-green-500 p-6 flex flex-col max-h-[90vh] overflow-hidden shadow-[0_0_30px_rgba(0,255,0,0.2)]">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-4 border-b border-green-900 pb-2">
+                <h2 class="text-xl font-bold text-green-500 uppercase tracking-widest">HOW TO PLAY</h2>
+                <button id="tutorial-close-btn"
+                    class="text-green-700 hover:text-green-400 text-2xl leading-none">&times;</button>
+            </div>
+
+            <!-- Tutorial Pages Container -->
+            <div id="tutorial-pages" class="flex-1 overflow-hidden relative">
+                <!-- Page 1: Objective -->
+                <div class="tutorial-page hidden flex-col items-center gap-4" data-page="1">
+                    <div
+                        class="w-full bg-green-900/20 border border-green-800 flex items-center justify-center overflow-hidden">
+                        <img id="tutorial-img-1" src="/tutorial/tutorial-1.png" alt="Stats" class="w-full h-auto">
+                    </div>
+                    <div class="text-center">
+                        <h3 class="text-lg font-bold text-green-400 mb-2" data-i18n="tutorial_title_1">THE OBJECTIVE
+                        </h3>
+                        <p class="text-green-300 text-sm" data-i18n="tutorial_text_1">Earn enough CASH to pay your RENT
+                            at the end of each month. If you can't pay, you're evicted!</p>
+                    </div>
+                </div>
+
+                <!-- Page 2: Gameplay -->
+                <div class="tutorial-page hidden flex-col items-center gap-4" data-page="2">
+                    <div
+                        class="w-full bg-green-900/20 border border-green-800 flex items-center justify-center overflow-hidden">
+                        <img id="tutorial-img-2" src="/tutorial/tutorial-2.png" alt="Gameplay" class="w-full h-auto">
+                    </div>
+                    <div class="text-center">
+                        <h3 class="text-lg font-bold text-green-400 mb-2" data-i18n="tutorial_title_2">GUESS THE NUMBER
+                        </h3>
+                        <p class="text-green-300 text-sm" data-i18n="tutorial_text_2">Enter a number between the bounds.
+                            Hints tell you if you need to go HIGHER ↑ or LOWER ↓. Find the number before running out of
+                            attempts!</p>
+                    </div>
+                </div>
+
+                <!-- Page 3: Browser -->
+                <div class="tutorial-page hidden flex-col items-center gap-4" data-page="3">
+                    <div
+                        class="w-full bg-green-900/20 border border-green-800 flex items-center justify-center overflow-hidden">
+                        <img id="tutorial-img-3" src="/tutorial/tutorial-3.png" alt="Browser" class="w-full h-auto">
+                    </div>
+                    <div class="text-center">
+                        <h3 class="text-lg font-bold text-green-400 mb-2" data-i18n="tutorial_title_3">THE BROWSER</h3>
+                        <p class="text-green-300 text-sm" data-i18n="tutorial_text_3">After each round, access apps via
+                            the browser. Visit the DARK MARKET to buy upgrades. New apps unlock as you progress!</p>
+                    </div>
+                </div>
+
+                <!-- Page 4: Shop -->
+                <div class="tutorial-page hidden flex-col items-center gap-4" data-page="4">
+                    <div
+                        class="w-full bg-green-900/20 border border-green-800 flex items-center justify-center overflow-hidden">
+                        <img id="tutorial-img-4" src="/tutorial/tutorial-4.png" alt="Shop" class="w-full h-auto">
+                    </div>
+                    <div class="text-center">
+                        <h3 class="text-lg font-bold text-green-400 mb-2" data-i18n="tutorial_title_4">THE DARK MARKET
+                        </h3>
+                        <p class="text-green-300 text-sm" data-i18n="tutorial_text_4">Buy JOKERS and SCRIPTS to improve
+                            your chances. You can REROLL the shop for new items (costs $).</p>
+                    </div>
+                </div>
+
+                <!-- Page 5: Items -->
+                <div class="tutorial-page hidden flex-col items-center gap-4" data-page="5">
+                    <div
+                        class="w-full bg-green-900/20 border border-green-800 flex items-center justify-center overflow-hidden">
+                        <img id="tutorial-img-5" src="/tutorial/tutorial-5.png" alt="Inventory" class="w-full h-auto">
+                    </div>
+                    <div class="text-center">
+                        <h3 class="text-lg font-bold text-green-400 mb-2" data-i18n="tutorial_title_5">JOKERS &amp;
+                            SCRIPTS</h3>
+                        <p class="text-green-300 text-sm" data-i18n="tutorial_text_5">JOKERS are passive bonuses that
+                            stay with you. SCRIPTS are one-time consumables you activate during gameplay. Hover over
+                            items to see their effects!</p>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Navigation -->
+            <div class="flex justify-between items-center mt-4 pt-4 border-t border-green-900">
+                <button id="tutorial-prev-btn"
+                    class="px-4 py-2 text-green-700 hover:text-green-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">&lt;
+                    PREV</button>
+
+                <!-- Dots -->
+                <div id="tutorial-dots" class="flex gap-2">
+                    <span class="tutorial-dot w-2 h-2 rounded-full bg-green-500" data-dot="1"></span>
+                    <span class="tutorial-dot w-2 h-2 rounded-full bg-green-900" data-dot="2"></span>
+                    <span class="tutorial-dot w-2 h-2 rounded-full bg-green-900" data-dot="3"></span>
+                    <span class="tutorial-dot w-2 h-2 rounded-full bg-green-900" data-dot="4"></span>
+                    <span class="tutorial-dot w-2 h-2 rounded-full bg-green-900" data-dot="5"></span>
+                </div>
+
+                <button id="tutorial-next-btn"
+                    class="px-4 py-2 text-green-400 hover:text-green-200 transition-colors">NEXT
+                    &gt;</button>
+            </div>
+        </div>
+    </div>
+
 
     <!-- HOME SCREEN -->
     <div id="home-screen"
@@ -48,6 +183,12 @@
         <div
             class="absolute inset-0 pointer-events-none opacity-10 bg-[linear-gradient(rgba(0,255,0,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,0,0.1)_1px,transparent_1px)] bg-[size:20px_20px]">
         </div>
+
+        <!-- How To Play Button (more visible) -->
+        <button id="how-to-play-btn"
+            class="absolute bottom-6 left-1/2 -translate-x-1/2 text-green-600 hover:text-green-400 text-sm uppercase tracking-widest transition-colors px-4 py-2">
+            [ ? ] HOW TO PLAY
+        </button>
     </div>
 
     <!-- SETTINGS SCREEN -->

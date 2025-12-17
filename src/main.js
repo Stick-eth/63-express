@@ -888,7 +888,144 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.bootScreen) elements.bootScreen.classList.add('hidden');
     if (elements.homeScreen) elements.homeScreen.classList.remove('hidden');
     Animations.startTitleAnimation();
+
+    // --- TUTORIAL LOGIC ---
+    setupTutorial();
 });
+
+// --- TUTORIAL SYSTEM ---
+let currentTutorialPage = 1;
+const totalTutorialPages = 5;
+
+function setupTutorial() {
+    const howToPlayBtn = document.getElementById('how-to-play-btn');
+    const tutorialOverlay = document.getElementById('tutorial-overlay');
+    const tutorialCloseBtn = document.getElementById('tutorial-close-btn');
+    const tutorialPrevBtn = document.getElementById('tutorial-prev-btn');
+    const tutorialNextBtn = document.getElementById('tutorial-next-btn');
+
+    if (howToPlayBtn) {
+        howToPlayBtn.onclick = () => {
+            currentTutorialPage = 1;
+            showTutorialPage(1);
+            updateTutorialTexts();
+            if (tutorialOverlay) tutorialOverlay.classList.remove('hidden');
+        };
+    }
+
+    if (tutorialCloseBtn) {
+        tutorialCloseBtn.onclick = () => {
+            if (tutorialOverlay) tutorialOverlay.classList.add('hidden');
+        };
+    }
+
+    if (tutorialOverlay) {
+        tutorialOverlay.onclick = (e) => {
+            if (e.target === tutorialOverlay) {
+                tutorialOverlay.classList.add('hidden');
+            }
+        };
+    }
+
+    if (tutorialPrevBtn) {
+        tutorialPrevBtn.onclick = () => {
+            if (currentTutorialPage > 1) {
+                currentTutorialPage--;
+                showTutorialPage(currentTutorialPage);
+            }
+        };
+    }
+
+    if (tutorialNextBtn) {
+        tutorialNextBtn.onclick = () => {
+            if (currentTutorialPage < totalTutorialPages) {
+                currentTutorialPage++;
+                showTutorialPage(currentTutorialPage);
+            } else {
+                // Close tutorial on last page
+                if (tutorialOverlay) tutorialOverlay.classList.add('hidden');
+            }
+        };
+    }
+
+    // Dot navigation
+    const dots = document.querySelectorAll('.tutorial-dot');
+    dots.forEach(dot => {
+        dot.onclick = () => {
+            const page = parseInt(dot.dataset.dot);
+            currentTutorialPage = page;
+            showTutorialPage(page);
+        };
+        dot.style.cursor = 'pointer';
+    });
+}
+
+function showTutorialPage(pageNum) {
+    const pages = document.querySelectorAll('.tutorial-page');
+    const dots = document.querySelectorAll('.tutorial-dot');
+    const prevBtn = document.getElementById('tutorial-prev-btn');
+    const nextBtn = document.getElementById('tutorial-next-btn');
+
+    pages.forEach(page => {
+        page.classList.add('hidden');
+        page.classList.remove('flex');
+    });
+
+    const activePage = document.querySelector(`.tutorial-page[data-page="${pageNum}"]`);
+    if (activePage) {
+        activePage.classList.remove('hidden');
+        activePage.classList.add('flex');
+    }
+
+    dots.forEach(dot => {
+        if (parseInt(dot.dataset.dot) === pageNum) {
+            dot.classList.remove('bg-green-900');
+            dot.classList.add('bg-green-500');
+        } else {
+            dot.classList.remove('bg-green-500');
+            dot.classList.add('bg-green-900');
+        }
+    });
+
+    // Update button states
+    if (prevBtn) {
+        prevBtn.disabled = pageNum === 1;
+    }
+    if (nextBtn) {
+        const t = Localization.staticTexts[currentLang];
+        if (pageNum === totalTutorialPages) {
+            nextBtn.textContent = t.return || '< CLOSE';
+        } else {
+            nextBtn.textContent = t.tutorialNext || 'NEXT >';
+        }
+    }
+}
+
+function updateTutorialTexts() {
+    const t = Localization.staticTexts[currentLang];
+
+    // Update button text
+    const howToPlayBtn = document.getElementById('how-to-play-btn');
+    if (howToPlayBtn) howToPlayBtn.textContent = t.howToPlay;
+
+    const tutorialTitle = document.querySelector('#tutorial-overlay h2');
+    if (tutorialTitle) tutorialTitle.textContent = t.tutorialTitle;
+
+    const prevBtn = document.getElementById('tutorial-prev-btn');
+    if (prevBtn) prevBtn.textContent = t.tutorialPrev;
+
+    const nextBtn = document.getElementById('tutorial-next-btn');
+    if (nextBtn) nextBtn.textContent = t.tutorialNext;
+
+    // Update page content
+    for (let i = 1; i <= totalTutorialPages; i++) {
+        const titleEl = document.querySelector(`.tutorial-page[data-page="${i}"] h3`);
+        const textEl = document.querySelector(`.tutorial-page[data-page="${i}"] p`);
+
+        if (titleEl) titleEl.textContent = t[`tutorial_title_${i}`] || '';
+        if (textEl) textEl.textContent = t[`tutorial_text_${i}`] || '';
+    }
+}
 
 // Initial Render
 render();

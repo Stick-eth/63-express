@@ -144,12 +144,20 @@ describe('Item Logic', () => {
 
     it('should apply Bug Bounty effect', () => {
         const bugBounty = JOKERS.find(j => j.id === 'bug_bounty');
-        game.maxAttempts = 10;
+        game.rent = 200; // 2% of 200 = 4, but min is 5
 
-        // $2 per max attempt
-        const result = bugBounty.execute(game);
-        expect(game.cash).toBe(100 + 20); // Initial 100 + 2*10
+        // 2% of Rent on win (Min $5)
+        const initialCash = game.cash;
+        bugBounty.execute(game);
+        expect(game.cash).toBe(initialCash + 5); // Min $5
+
+        // Test with higher rent
+        game.rent = 500; // 2% of 500 = 10
+        const cashBefore = game.cash;
+        bugBounty.execute(game);
+        expect(game.cash).toBe(cashBefore + 10);
     });
+
 
     it('should apply Dark Web effect (Interest)', () => {
         const darkWeb = JOKERS.find(j => j.id === 'dark_web');

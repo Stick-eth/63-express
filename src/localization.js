@@ -429,7 +429,21 @@ export const staticTexts = {
         paused: 'SYSTEM PAUSED',
         enter: '[ ENTER ]',
         exitShop: '> EXIT_MARKET',
-        continue: '> CONTINUE'
+        continue: '> CONTINUE',
+        howToPlay: '[ ? ] HOW TO PLAY',
+        tutorialTitle: 'HOW TO PLAY',
+        tutorialPrev: '< PREV',
+        tutorialNext: 'NEXT >',
+        tutorial_title_1: 'THE OBJECTIVE',
+        tutorial_text_1: 'Earn enough CASH to pay your RENT at the end of each month. If you can\'t pay, you\'re evicted!',
+        tutorial_title_2: 'GUESS THE NUMBER',
+        tutorial_text_2: 'Enter a number between the bounds. Hints tell you if you need to go HIGHER ↑ or LOWER ↓. Find the number before running out of attempts!',
+        tutorial_title_3: 'THE BROWSER',
+        tutorial_text_3: 'After each round, access apps via the browser. Visit the DARK MARKET to buy upgrades. New apps unlock as you progress!',
+        tutorial_title_4: 'THE DARK MARKET',
+        tutorial_text_4: 'Buy JOKERS and SCRIPTS to improve your chances. You can REROLL the shop for new items (costs $).',
+        tutorial_title_5: 'JOKERS & SCRIPTS',
+        tutorial_text_5: 'JOKERS are passive bonuses that stay with you. SCRIPTS are one-time consumables you activate during gameplay. Hover over items to see their effects!'
     },
     fr: {
         start: '> INITIALISER_RUN',
@@ -443,6 +457,21 @@ export const staticTexts = {
         paused: 'SYSTÈME EN PAUSE',
         enter: '[ ENTRER ]',
         exitShop: '> QUITTER_MARCHÉ',
-        continue: '> CONTINUER'
+        continue: '> CONTINUER',
+        howToPlay: '[ ? ] COMMENT JOUER',
+        tutorialTitle: 'COMMENT JOUER',
+        tutorialPrev: '< PRÉC',
+        tutorialNext: 'SUIV >',
+        tutorial_title_1: 'L\'OBJECTIF',
+        tutorial_text_1: 'Gagnez assez de CASH pour payer votre LOYER à la fin de chaque mois. Si vous ne pouvez pas payer, vous êtes expulsé !',
+        tutorial_title_2: 'DEVINEZ LE NOMBRE',
+        tutorial_text_2: 'Entrez un nombre entre les bornes. Les indices vous disent si vous devez aller PLUS HAUT ↑ ou PLUS BAS ↓. Trouvez le nombre avant d\'épuiser vos essais !',
+        tutorial_title_3: 'LE NAVIGATEUR',
+        tutorial_text_3: 'Après chaque round, accédez aux apps via le navigateur. Visitez le DARK MARKET pour acheter des améliorations. De nouvelles apps se débloquent au fur et à mesure !',
+        tutorial_title_4: 'LE DARK MARKET',
+        tutorial_text_4: 'Achetez des JOKERS et des SCRIPTS pour améliorer vos chances. Vous pouvez RELANCER le shop pour de nouveaux objets (coûte $).',
+        tutorial_title_5: 'JOKERS & SCRIPTS',
+        tutorial_text_5: 'Les JOKERS sont des bonus passifs permanents. Les SCRIPTS sont des consommables à usage unique activables en jeu. Survolez les objets pour voir leurs effets !'
     }
 };
+

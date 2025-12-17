@@ -276,6 +276,9 @@ export class Game {
         this.absoluteMin = minStart;
         this.absoluteMax = minStart + rangeSize - 1;
 
+        // Calculate burning threshold (5% of initial range)
+        this.burningThreshold = Math.max(1, Math.floor(rangeSize * 0.05));
+
         this.max = this.absoluteMax;
         this.min = this.absoluteMin;
 
@@ -422,12 +425,27 @@ export class Game {
             this.gameState = 'LOST_ROUND';
             this.message = { key: 'lost_round', params: { number: this.mysteryNumber } };
         } else {
+            // Check if burning (close to mystery number)
+            const distance = Math.abs(guess - this.mysteryNumber);
+            const isBurning = distance <= this.burningThreshold;
+
+            // Check for meltdown boss effect (no burning hints)
+            const noBurningHint = this.bossEffect === 'meltdown';
+
             if (guess < this.mysteryNumber) {
                 this.min = Math.max(this.min, guess + 1);
-                this.message = { key: 'higher', params: { min: this.min, max: this.max } };
+                if (isBurning && !noBurningHint) {
+                    this.message = { key: 'higher_burning', params: { min: this.min, max: this.max } };
+                } else {
+                    this.message = { key: 'higher', params: { min: this.min, max: this.max } };
+                }
             } else {
                 this.max = Math.min(this.max, guess - 1);
-                this.message = { key: 'lower', params: { min: this.min, max: this.max } };
+                if (isBurning && !noBurningHint) {
+                    this.message = { key: 'lower_burning', params: { min: this.min, max: this.max } };
+                } else {
+                    this.message = { key: 'lower', params: { min: this.min, max: this.max } };
+                }
             }
         }
     }

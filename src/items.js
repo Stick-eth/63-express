@@ -99,6 +99,20 @@ export const JOKERS = [
         }
     }),
     createJoker({
+        id: 'checksum',
+        name: { en: 'Checksum', fr: 'Checksum' },
+        icon: '🔢',
+        description: { en: 'Reveals the sum of digits of the mystery number (e.g., 42 → 6).', fr: 'Révèle la somme des chiffres du nombre mystère (ex: 42 → 6).' },
+        price: 12,
+        rarity: 'uncommon',
+        maxQuantity: 1,
+        trigger: 'onRoundStart',
+        execute: (game) => {
+            const digitSum = game.mysteryNumber.toString().split('').reduce((sum, digit) => sum + parseInt(digit), 0);
+            return { message: `CHECKSUM: Digit sum = ${digitSum}`, logOnly: true };
+        }
+    }),
+    createJoker({
         id: 'root_access',
         name: { en: 'Root Access', fr: 'Root Access' },
         icon: '#️⃣',
@@ -477,19 +491,6 @@ export const JOKERS = [
             const bonus = game.jokers.length * 5;
             game.cash += bonus;
             return { message: `Batman: +$${bonus}`, logOnly: true };
-        }
-    }),
-    createJoker({
-        id: 'bug_bounty',
-        name: { en: 'Bug Bounty', fr: 'Bug Bounty' },
-        icon: '🐛',
-        description: { en: 'Receive $2 for each Max Attempt instantly.', fr: 'Recevez 2$ pour chaque Essai Max instantanément.' },
-        price: 8,
-        rarity: 'common',
-        execute: (game) => {
-            const reward = game.maxAttempts * 2;
-            game.cash += reward;
-            return { message: `BOUNTY: +$${reward}`, logOnly: true };
         }
     }),
     createJoker({
