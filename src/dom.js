@@ -70,6 +70,7 @@ export const elements = {
     devCashBtn: document.getElementById('dev-cash-btn'),
     devUnlockAppsBtn: document.getElementById('dev-unlock-apps-btn'),
     devSkipBootBtn: document.getElementById('dev-skip-boot-btn'),
+    devTokensBtn: document.getElementById('dev-tokens-btn'),
     settingsBackBtn: document.getElementById('settings-back-btn'),
     lblLang: document.getElementById('lbl-lang'),
     lblTheme: document.getElementById('lbl-theme'),

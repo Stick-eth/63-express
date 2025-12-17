@@ -1,6 +1,8 @@
 import { JOKERS, SCRIPTS, BOSSES } from './items.js';
 import { ARCS, STANDARD_ARC } from './arcs.js';
-import stockDataRaw from './assets/stock_prices.csv?raw';
+import { ShopSystem } from './systems/ShopSystem.js';
+import { TradingSystem } from './systems/TradingSystem.js';
+import { AntivirusSystem } from './systems/AntivirusSystem.js';
 
 export class Game {
     constructor() {
@@ -47,8 +49,7 @@ export class Game {
         this.currentTradingPrice = 100;
         this.tradingCandles = [];
 
-        this.tradingData = this.parseStockData(stockDataRaw);
-        this.tradingDataIndex = 0;
+        // tradingData moved to TradingSystem
         this.hasTradedThisRound = false;
 
         // Antivirus App State
@@ -72,28 +73,13 @@ export class Game {
 
         this.uniqueGuesses = new Set(); // For Blockchain Joker
         this.logs = []; // Persisted System Logs
+
+        // Initialize Systems
+        this.shopSystem = new ShopSystem(this);
+        this.tradingSystem = new TradingSystem(this);
+        this.antivirusSystem = new AntivirusSystem(this);
     }
 
-    parseStockData(csv) {
-        const lines = csv.split('\n');
-        const data = [];
-        // Skip header (line 0)
-        for (let i = 1; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line) continue;
-            const parts = line.split(',');
-            // Format: Date, Open, High, Low, Close
-            if (parts.length >= 5) {
-                data.push({
-                    open: parseFloat(parts[1]),
-                    high: parseFloat(parts[2]),
-                    low: parseFloat(parts[3]),
-                    close: parseFloat(parts[4])
-                });
-            }
-        }
-        return data;
-    }
 
     toggleDevMode(enabled) {
         this.devMode = enabled;
@@ -169,7 +155,8 @@ export class Game {
                     if (['calculateGain', 'rng_validation', 'getMaxRange', 'getMinRange', 'calculateRent', 'calculateShopPrice', 'getMaxJokerSlots'].includes(triggerName)) {
                         currentValue = result;
                     } else if (result && result.message) {
-                        if (!result.logOnly) {
+                        if
+                            (!result.logOnly) {
                             this.message = { key: 'script_effect', params: { text: result.message } };
                         }
                         if (this.roundLogs) this.roundLogs.push(result.message);
@@ -215,6 +202,8 @@ export class Game {
     startRound() {
         this.gameState = 'PLAYING';
         this.hasTradedThisRound = false;
+        this.antivirusScansThisRound = 0; // Reset antivirus scans for new round
+
 
         // System Monitor Logic
         if (this.systemMonitorUnlocked) {
@@ -605,89 +594,15 @@ export class Game {
     }
 
     generateShop() {
-        this.shopInventory = [];
-        this.rerollCost = 5;
-
-        // Filter available jokers (check maxQuantity)
-        let availableJokers = JOKERS.filter(j => {
-            const owned = this.jokers.find(oj => oj.id === j.id);
-            if (!owned) return true;
-            return owned.quantity < (j.maxQuantity || Infinity);
-        });
-
-        // Shuffle available jokers
-        availableJokers.sort(() => Math.random() - 0.5);
-
-        // Take up to 3 unique jokers
-        const jokersToSpawn = availableJokers.slice(0, 3);
-
-        jokersToSpawn.forEach(joker => {
-            let price = joker.price;
-            price = this.triggerJokers('calculateShopPrice', price);
-            this.shopInventory.push({ ...joker, price, uniqueId: Math.random() });
-        });
-
-        // Add 2 random Scripts (Unique in this shop batch)
-        const availableScripts = [...SCRIPTS];
-        availableScripts.sort(() => Math.random() - 0.5);
-        const scriptsToSpawn = availableScripts.slice(0, 2);
-
-        scriptsToSpawn.forEach(script => {
-            let price = script.price;
-            price = this.triggerJokers('calculateShopPrice', price);
-            this.shopInventory.push({ ...script, price, uniqueId: Math.random() });
-        });
+        this.shopSystem.generate();
     }
 
     rerollShop() {
-        if (this.cash >= this.rerollCost) {
-            this.cash -= this.rerollCost;
-            const nextCost = this.rerollCost + 5;
-            this.generateShop();
-            this.rerollCost = nextCost;
-            return true;
-        }
-        return false;
+        return this.shopSystem.reroll();
     }
 
     buyItem(uniqueId) {
-        const itemIndex = this.shopInventory.findIndex(i => i.uniqueId === uniqueId);
-        if (itemIndex === -1) return false;
-
-        const item = this.shopInventory[itemIndex];
-
-        if (this.cash >= item.price) {
-            if (item.type === 'passive') {
-                const existingJoker = this.jokers.find(j => j.id === item.id);
-                if (existingJoker) {
-                    if (existingJoker.quantity < (existingJoker.maxQuantity || Infinity)) {
-                        this.cash -= item.price;
-                        existingJoker.quantity++;
-                        this.shopInventory.splice(itemIndex, 1);
-                        this.triggerJokers('onBuy', item);
-                        return true;
-                    }
-                } else {
-                    const maxSlots = this.triggerJokers('getMaxJokerSlots', 10);
-                    if (this.jokers.length < maxSlots) {
-                        this.cash -= item.price;
-                        this.jokers.push({ ...item, quantity: 1 });
-                        this.shopInventory.splice(itemIndex, 1);
-                        this.triggerJokers('onBuy', item);
-                        return true;
-                    }
-                }
-            } else if (item.type === 'consumable') {
-                if (this.scripts.length < 3) {
-                    this.cash -= item.price;
-                    this.scripts.push(item);
-                    this.shopInventory.splice(itemIndex, 1);
-                    this.triggerJokers('onBuy', item);
-                    return true;
-                }
-            }
-        }
-        return false;
+        return this.shopSystem.buyItem(uniqueId);
     }
 
     getBoss() {
@@ -699,98 +614,35 @@ export class Game {
 
     // --- TRADING HELPERS ---
     getTradingPrice() {
-        return this.currentTradingPrice;
+        return this.tradingSystem.getPrice();
     }
 
     addTradingCandle() {
-        if (this.tradingData && this.tradingData.length > 0) {
-            const candle = this.tradingData[this.tradingDataIndex];
-            this.currentTradingPrice = candle.close;
-            this.tradingCandles.push(candle);
-
-            this.tradingDataIndex = (this.tradingDataIndex + 1) % this.tradingData.length;
-        } else {
-            // Fallback if no data
-            const t = Date.now();
-            const base = 100;
-            const amp = 25;
-            const speed = 3000;
-            const noise = (Math.random() - 0.5) * 2;
-            const newPrice = Math.max(1, base + amp * Math.sin(t / speed) + noise);
-
-            const open = this.currentTradingPrice;
-            const close = newPrice;
-            const high = Math.max(open, close) + Math.random() * 3;
-            const low = Math.min(open, close) - Math.random() * 3;
-
-            this.currentTradingPrice = close;
-            this.tradingCandles.push({ open, high, low, close });
-        }
-
-        if (this.tradingCandles.length > 50) this.tradingCandles.shift();
+        this.tradingSystem.addCandle();
     }
 
     buyTrading(amount) {
-        if (this.hasTradedThisRound) return { success: false, reason: 'limit_reached' };
-        const price = this.getTradingPrice();
-        const spend = Math.min(amount, this.cash);
-        if (spend <= 0) return { success: false, reason: 'limit' };
-
-        const shares = spend / price;
-        this.cash -= spend;
-        this.tradingHoldings += shares;
-        this.tradingInvested += spend;
-        this.hasTradedThisRound = true;
-        return { success: true, shares, price, spent: spend };
+        return this.tradingSystem.buy(amount);
     }
 
     sellTrading(amount) {
-        if (this.hasTradedThisRound) return { success: false, reason: 'limit_reached' };
-        const price = this.getTradingPrice();
-        const sharesToSell = amount > 0 ? Math.min(this.tradingHoldings, amount / price) : this.tradingHoldings;
-        if (sharesToSell <= 0) return { success: false, reason: 'no_holdings' };
-
-        // Calculate proportion of investment sold
-        const proportion = sharesToSell / this.tradingHoldings;
-        this.tradingInvested -= this.tradingInvested * proportion;
-
-        const proceeds = sharesToSell * price;
-        this.tradingHoldings -= sharesToSell;
-        this.cash += Math.floor(proceeds);
-
-        // Clean up small floating point errors
-        if (this.tradingHoldings < 0.0001) {
-            this.tradingHoldings = 0;
-            this.tradingInvested = 0;
-        }
-
-        this.hasTradedThisRound = true;
-        return { success: true, shares: sharesToSell, price, gained: proceeds };
+        return this.tradingSystem.sell(amount);
     }
 
     // --- ANTIVIRUS HELPERS ---
 
     startAntivirusGame() {
-        if (this.antivirusScansThisRound >= this.maxAntivirusScans) {
-            return { success: false };
-        }
-
-        this.antivirusActive = true;
-        this.antivirusScore = 0;
-        this.antivirusTimeLeft = 10;
-        this.antivirusScansThisRound++;
-        return { success: true };
+        return this.antivirusSystem.start();
     }
 
     hitAntivirusTarget() {
-        if (!this.antivirusActive) return;
-        this.antivirusScore++;
-        this.cash += 2;
+        this.antivirusSystem.hitTarget();
     }
 
     endAntivirusGame() {
-        this.antivirusActive = false;
+        this.antivirusSystem.end();
     }
+
 
     useScript(index) {
         if (this.gameState !== 'PLAYING') return;
@@ -891,7 +743,7 @@ export class Game {
             tradingHoldings: this.tradingHoldings,
             tradingInvested: this.tradingInvested,
             currentTradingPrice: this.currentTradingPrice,
-            tradingDataIndex: this.tradingDataIndex,
+            tradingDataIndex: this.tradingSystem ? this.tradingSystem.dataIndex : 0,
             hasTradedThisRound: this.hasTradedThisRound,
 
             // Antivirus App
@@ -995,7 +847,7 @@ export class Game {
         this.tradingHoldings = data.tradingHoldings || 0;
         this.tradingInvested = data.tradingInvested || 0;
         this.currentTradingPrice = data.currentTradingPrice || 100;
-        this.tradingDataIndex = data.tradingDataIndex || 0;
+        if (this.tradingSystem) this.tradingSystem.dataIndex = data.tradingDataIndex || 0;
         this.hasTradedThisRound = data.hasTradedThisRound || false;
 
         // Antivirus App

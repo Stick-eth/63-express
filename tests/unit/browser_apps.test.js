@@ -150,5 +150,31 @@ describe('Browser Apps', () => {
             const res = game.startAntivirusGame();
             expect(res.success).toBe(false);
         });
+
+        it('should reset antivirus scans at start of new round', () => {
+            game.antivirusUnlocked = true;
+            game.openApp('ANTIVIRUS');
+
+            // Use all 3 scans
+            game.startAntivirusGame();
+            game.endAntivirusGame();
+            game.startAntivirusGame();
+            game.endAntivirusGame();
+            game.startAntivirusGame();
+            game.endAntivirusGame();
+
+            // Should be exhausted
+            expect(game.startAntivirusGame().success).toBe(false);
+            expect(game.antivirusScansThisRound).toBe(3);
+
+            // Start a new round (simulates going to next round)
+            game.startRound();
+
+            // Scans should be reset
+            expect(game.antivirusScansThisRound).toBe(0);
+
+            // Should be able to scan again
+            expect(game.startAntivirusGame().success).toBe(true);
+        });
     });
 });

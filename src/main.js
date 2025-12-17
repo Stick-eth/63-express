@@ -4,127 +4,38 @@ import { elements } from './dom.js'
 import * as UI from './ui.js'
 import * as Animations from './animations.js'
 import * as Localization from './localization.js'
+import { SaveManager } from './managers/SaveManager.js'
+import { TokenManager } from './managers/TokenManager.js'
+import { settings, themes } from './managers/SettingsManager.js'
+import { inputManager } from './managers/InputManager.js'
 
 const game = new Game();
 
-let currentLang = 'en';
-let currentTheme = 'green';
-let gridKey = 'p';
-let numpadKey = 'o';
-let isListeningForKey = false;
-let isListeningForNumpadKey = false;
-
-const themes = {
-    'green': { filter: 'none', label: 'GREEN' },
-    'blue': { filter: 'hue-rotate(90deg)', label: 'BLUE' },
-    'amber': { filter: 'hue-rotate(260deg)', label: 'AMBER' },
-    'red': { filter: 'hue-rotate(220deg)', label: 'RED' },
-};
+// Settings Variables managed by SettingsManager
 const themeKeys = Object.keys(themes);
 
 // Initialize Numpad Listeners
-UI.setupNumpadListeners(elements);
+// Initialize Numpad Listeners
+// Delegated to InputManager
+
 
 // --- SETTINGS LOGIC ---
-function loadSettings() {
-    const saved = localStorage.getItem('binary_hustle_settings');
-    if (saved) {
-        const data = JSON.parse(saved);
-        currentLang = data.lang || 'en';
-        currentTheme = data.theme || 'green';
-        gridKey = data.gridKey || 'p';
-        numpadKey = data.numpadKey || 'o';
-    }
-    applySettings();
-}
+// Managed by SettingsManager
+// Need to re-declare listeners state as they were deleted above
+// Listeners state managed by InputManager
 
-function saveSettings() {
-    const data = {
-        lang: currentLang,
-        theme: currentTheme,
-        gridKey: gridKey,
-        numpadKey: numpadKey
-    };
-    localStorage.setItem('binary_hustle_settings', JSON.stringify(data));
-}
 
 // --- SAVE/LOAD GAME ---
-const SAVE_KEY = 'binary_hustle_save';
-const TOKENS_KEY = 'binary_hustle_tokens';
-
-function saveGame() {
-    const saveData = game.toSaveData();
-    localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
-}
-
-function loadGame() {
-    const saved = localStorage.getItem(SAVE_KEY);
-    if (saved) {
-        const data = JSON.parse(saved);
-        return game.loadFromSaveData(data);
-    }
-    return false;
-}
-
-function hasSavedGame() {
-    return localStorage.getItem(SAVE_KEY) !== null;
-}
-
-function clearSavedGame() {
-    localStorage.removeItem(SAVE_KEY);
-}
+// Delegate to SaveManager
 
 // --- TOKEN SYSTEM ---
-const TOKENS_UNLOCKED_KEY = 'binary_hustle_tokens_unlocked';
-
-function getTokens() {
-    const tokens = localStorage.getItem(TOKENS_KEY);
-    return tokens ? parseInt(tokens, 10) : 0;
-}
-
-function hasEverEarnedToken() {
-    return localStorage.getItem(TOKENS_UNLOCKED_KEY) === 'true';
-}
-
-function addToken(amount = 1) {
-    const current = getTokens();
-    localStorage.setItem(TOKENS_KEY, (current + amount).toString());
-    localStorage.setItem(TOKENS_UNLOCKED_KEY, 'true'); // Mark as unlocked forever
-    updateTokenDisplay();
-}
-
-function awardProgressiveTokens(level) {
-    // Formula: Sum of integers from 1 to semesters, where semester = floor(level / 6)
-    if (level < 6) return;
-    const semesters = Math.floor(level / 6);
-    const tokensToAward = (semesters * (semesters + 1)) / 2;
-
-    if (tokensToAward > 0) {
-        addToken(tokensToAward);
-    }
-}
-
-function updateTokenDisplay() {
-    const tokenEl = document.getElementById('token-display');
-    if (tokenEl) {
-        // Only show if player has ever earned a token
-        if (!hasEverEarnedToken()) {
-            tokenEl.classList.add('hidden');
-            return;
-        }
-
-        tokenEl.classList.remove('hidden');
-        const count = getTokens();
-        tokenEl.textContent = `🪙 ${count}`;
-        tokenEl.title = count === 1 ? '1 Token' : `${count} Tokens`;
-    }
-}
+// Delegate to TokenManager
 
 
 function updateContinueButton() {
     const continueBtn = document.getElementById('home-continue-btn');
     if (continueBtn) {
-        if (hasSavedGame()) {
+        if (SaveManager.hasSavedGame()) {
             continueBtn.classList.remove('hidden');
         } else {
             continueBtn.classList.add('hidden');
@@ -134,14 +45,14 @@ function updateContinueButton() {
 
 function applySettings() {
     // Apply Theme
-    if (themes[currentTheme]) {
-        document.body.style.filter = themes[currentTheme].filter;
+    if (themes[settings.currentTheme]) {
+        document.body.style.filter = themes[settings.currentTheme].filter;
     }
     // Update UI Texts
-    UI.updateStaticTexts(currentLang, currentTheme, themes);
+    UI.updateStaticTexts(settings.currentLang, settings.currentTheme, themes);
     // Update Key Button Text
-    if (elements.settingKeyBtn) elements.settingKeyBtn.textContent = gridKey.toUpperCase();
-    if (elements.settingNumpadKeyBtn) elements.settingNumpadKeyBtn.textContent = numpadKey.toUpperCase();
+    if (elements.settingKeyBtn) elements.settingKeyBtn.textContent = settings.gridKey.toUpperCase();
+    if (elements.settingNumpadKeyBtn) elements.settingNumpadKeyBtn.textContent = settings.numpadKey.toUpperCase();
 }
 
 // --- RENDER ---
@@ -151,7 +62,7 @@ function render() {
         elements.app.classList.add('hidden');
         elements.bootScreen.classList.remove('hidden');
 
-        const lore = game.currentArc.introSequence(currentLang);
+        const lore = game.currentArc.introSequence(settings.currentLang);
 
         Animations.runTerminalSequence(lore, () => {
             elements.bootScreen.classList.add('hidden');
@@ -176,7 +87,7 @@ function render() {
             elements.app.classList.add('hidden');
             elements.bootScreen.classList.remove('hidden');
 
-            const lore = monthEvents.intro(currentLang);
+            const lore = monthEvents.intro(settings.currentLang);
 
             Animations.runTerminalSequence(lore, () => {
                 elements.bootScreen.classList.add('hidden');
@@ -188,23 +99,19 @@ function render() {
     }
 
     UI.updateStats(game);
-    UI.updateMessage(game, currentLang);
+    UI.updateMessage(game, settings.currentLang);
 
     // Update Visual Effects based on Arc/Progress
     Animations.updateVisualEffects(game);
 
-    UI.renderInventory(game, { handleSell, useScript }, currentLang);
+    UI.renderInventory(game, { handleSell, useScript }, settings.currentLang);
     UI.updateHistory(game);
     UI.updateGrid(game);
     UI.updateScreenState(game);
 
-    if (game.gameState === 'TRADING') {
-        startTradingLoop();
-    } else {
-        stopTradingLoop();
-    }
+    // Trading loop runs continuously - no start/stop needed here
 
-    refreshBrowserApps();
+    UI.refreshBrowserApps(game);
 
     // Dev Mode UI
     if (game.devMode) {
@@ -214,7 +121,7 @@ function render() {
     }
 
     if (game.gameState === 'SHOP') {
-        UI.renderShop(game, { handleBuy }, currentLang);
+        UI.renderShop(game, { handleBuy }, settings.currentLang);
     } else if (game.gameState === 'TRADING') {
         UI.renderTrading(game);
     }
@@ -225,12 +132,12 @@ function render() {
             const boss = game.getBoss();
             if (boss) {
                 game.message = { key: 'boss_round', params: { name: boss.name, desc: boss.description } };
-                UI.updateMessage(game, currentLang);
+                UI.updateMessage(game, settings.currentLang);
             }
         }
     }
 
-    UI.updateStaticTexts(currentLang, currentTheme, themes);
+    UI.updateStaticTexts(settings.currentLang, settings.currentTheme, themes);
 }
 
 // --- ACTIONS ---
@@ -239,17 +146,17 @@ function handleStart() {
     if (game.gameState === 'GAME_OVER') {
         // Award progressive tokens if player survived at least one semester (6 months)
         if (game.level >= 6) {
-            awardProgressiveTokens(game.level);
+            TokenManager.awardProgressiveTokens(game.level);
         }
 
         // Clear saved game on game over
-        clearSavedGame();
+        SaveManager.clearSavedGame();
 
         // Game Over Cutscene
         elements.app.classList.add('hidden');
         elements.bootScreen.classList.remove('hidden');
 
-        const lore = currentLang === 'fr' ? Localization.gameOverLoreFr : Localization.gameOverLoreEn;
+        const lore = settings.currentLang === 'fr' ? Localization.gameOverLoreFr : Localization.gameOverLoreEn;
 
         Animations.runTerminalSequence(lore, () => {
             // Return to Home Screen
@@ -273,7 +180,7 @@ function handleGuess() {
     // Overheat Input Failure
     if (game.systemOverheatLevel > 60 && Math.random() < 0.2) {
         game.message = { key: 'script_effect', params: { text: 'SYSTEM ERROR: INPUT REJECTED (OVERHEAT)' } };
-        UI.updateMessage(game, currentLang);
+        UI.updateMessage(game, settings.currentLang);
         // Visual shake
         const app = document.getElementById('app');
         if (app) {
@@ -290,7 +197,7 @@ function handleGuess() {
 
     // Auto-save after each guess
     if (game.gameState !== 'GAME_OVER') {
-        saveGame();
+        SaveManager.saveGame(game);
     }
 
     render();
@@ -308,7 +215,7 @@ function handleNext() {
             elements.app.classList.add('hidden');
             elements.bootScreen.classList.remove('hidden');
 
-            const lore = monthEvents.outro(currentLang);
+            const lore = monthEvents.outro(settings.currentLang);
 
             Animations.runTerminalSequence(lore, () => {
                 elements.bootScreen.classList.add('hidden');
@@ -339,7 +246,7 @@ function handleNext() {
         elements.app.classList.add('hidden');
         elements.bootScreen.classList.remove('hidden');
 
-        const bootLore = currentLang === 'fr' ? Localization.monthlyBootSequenceFr : Localization.monthlyBootSequenceEn;
+        const bootLore = settings.currentLang === 'fr' ? Localization.monthlyBootSequenceFr : Localization.monthlyBootSequenceEn;
 
         Animations.runTerminalSequence(bootLore, () => {
             elements.bootScreen.classList.add('hidden');
@@ -364,7 +271,7 @@ function triggerGameOverCutscene() {
     elements.app.classList.add('hidden');
     elements.bootScreen.classList.remove('hidden');
 
-    const lore = currentLang === 'fr' ? Localization.gameOverLoreFr : Localization.gameOverLoreEn;
+    const lore = settings.currentLang === 'fr' ? Localization.gameOverLoreFr : Localization.gameOverLoreEn;
 
     Animations.runTerminalSequence(lore, () => {
         // Sequence finished. Wait for reading.
@@ -397,7 +304,7 @@ function handleReroll() {
 
 function handleLeaveShop() {
     game.closeApp();
-    saveGame();
+    SaveManager.saveGame(game);
     render();
 }
 
@@ -448,9 +355,11 @@ function handleOpenShop() {
 
 function handleOpenAntivirus() {
     game.openApp('ANTIVIRUS');
-    // Reset state for fresh view so it doesn't show previous round results
-    game.antivirusTimeLeft = 10;
-    game.antivirusScore = 0;
+    // Only reset state if player has scans available
+    if (game.antivirusScansThisRound < game.maxAntivirusScans) {
+        game.antivirusTimeLeft = 10;
+        game.antivirusScore = 0;
+    }
     UI.renderAntivirus(game);
     render();
 }
@@ -467,8 +376,23 @@ let antivirusSpawnInterval = null;
 function handleStartAntivirus() {
     if (game.antivirusActive) return;
 
-    game.startAntivirusGame();
+    const result = game.startAntivirusGame();
+    if (!result.success) {
+        UI.renderAntivirus(game);
+        return; // Can't start - no scans left
+    }
+
     UI.renderAntivirus(game);
+
+    // Clear any existing intervals first
+    if (antivirusTimerInterval) {
+        clearInterval(antivirusTimerInterval);
+        antivirusTimerInterval = null;
+    }
+    if (antivirusSpawnInterval) {
+        clearInterval(antivirusSpawnInterval);
+        antivirusSpawnInterval = null;
+    }
 
     // Timer Loop
     antivirusTimerInterval = setInterval(() => {
@@ -491,7 +415,10 @@ function handleStartAntivirus() {
 }
 
 function stopAntivirusGame() {
-    game.endAntivirusGame();
+    // Only end game and increment scan if game was actually active
+    if (game.antivirusActive) {
+        game.endAntivirusGame();
+    }
     if (antivirusTimerInterval) {
         clearInterval(antivirusTimerInterval);
         antivirusTimerInterval = null;
@@ -512,7 +439,8 @@ function stopAntivirusGame() {
 
 function handleBrowserContinue() {
     game.nextAction();
-    saveGame();
+    game.closeApp();
+    SaveManager.saveGame(game);
     render();
 }
 
@@ -564,42 +492,10 @@ function handleCalibrate() {
     }
 }
 
-// System Monitor Sliders Logic
-function setupSystemSlider(index) {
-    const container = document.getElementById(`slider-container-${index}`);
-    if (!container) return;
+// System Monitor Sliders Logic Delegated
 
-    const updateFromEvent = (e) => {
-        const rect = container.getBoundingClientRect();
-        // Calculate percentage from bottom
-        let y = e.clientY;
-        let percentage = ((rect.bottom - y) / rect.height) * 100;
-        percentage = Math.max(0, Math.min(100, percentage));
 
-        game.systemSliders[index] = percentage;
-        UI.renderSystemMonitor(game);
-    };
-
-    container.addEventListener('pointerdown', (e) => {
-        if (game.gameState !== 'SYSTEM_MONITOR') return;
-        if (game.systemCalibratedThisRound) return; // Prevent interaction if already calibrated
-        container.setPointerCapture(e.pointerId);
-        updateFromEvent(e);
-
-        container.onpointermove = (e) => {
-            updateFromEvent(e);
-        };
-
-        container.onpointerup = (e) => {
-            container.onpointermove = null;
-            container.onpointerup = null;
-            container.releasePointerCapture(e.pointerId);
-        };
-    });
-}
-
-// Initialize sliders
-[0, 1, 2].forEach(setupSystemSlider);
+// Initialize sliders and token display
 
 // --- EVENT LISTENERS ---
 
@@ -635,7 +531,7 @@ if (systemCalibrateBtn) systemCalibrateBtn.addEventListener('click', handleCalib
 // --- SAVE & QUIT ---
 if (elements.saveQuitBtn) {
     elements.saveQuitBtn.addEventListener('click', () => {
-        saveGame();
+        SaveManager.saveGame(game);
         // Return to home screen logic
         // For now, simpler to reload page as it checks for save on load
         // But better UX would be to transition manually. 
@@ -671,46 +567,13 @@ if (elements.abandonYesBtn) {
     elements.abandonYesBtn.addEventListener('click', () => {
         // Award tokens before wiping save
         if (game.level >= 6) {
-            awardProgressiveTokens(game.level);
+            TokenManager.awardProgressiveTokens(game.level);
         }
-        clearSavedGame();
+        SaveManager.clearSavedGame();
         window.location.reload();
     });
 }
 
-// Update trading app button state on render
-function refreshBrowserApps() {
-    if (elements.appTradingBtn) {
-        const label = elements.appTradingBtn.querySelector('span');
-        if (game.tradingUnlocked) {
-            elements.appTradingBtn.classList.remove('cursor-not-allowed', 'bg-blue-950/20', 'text-blue-900');
-            elements.appTradingBtn.classList.add('hover:bg-blue-900/20', 'hover:border-blue-500', 'border-blue-500', 'text-blue-400');
-            if (label) label.textContent = 'TRADING DESK';
-        } else {
-            if (label) label.textContent = 'LOCKED';
-        }
-    }
-    if (elements.appAntivirusBtn) {
-        const label = elements.appAntivirusBtn.querySelector('span');
-        if (game.antivirusUnlocked) {
-            elements.appAntivirusBtn.classList.remove('cursor-not-allowed', 'bg-blue-950/20', 'text-blue-900');
-            elements.appAntivirusBtn.classList.add('hover:bg-blue-900/20', 'hover:border-blue-500', 'border-blue-500', 'text-blue-400');
-            if (label) label.textContent = 'ANTIVIRUS';
-        } else {
-            if (label) label.textContent = 'LOCKED';
-        }
-    }
-    if (appSystemBtn) {
-        const label = appSystemBtn.querySelector('span');
-        if (game.systemMonitorUnlocked) {
-            appSystemBtn.classList.remove('cursor-not-allowed', 'bg-blue-950/20', 'text-blue-900');
-            appSystemBtn.classList.add('hover:bg-orange-900/20', 'hover:border-orange-500', 'border-orange-500', 'text-orange-400');
-            if (label) label.textContent = 'SYSTEM MONITOR';
-        } else {
-            if (label) label.textContent = 'LOCKED';
-        }
-    }
-}
 
 // Help / Grid
 if (elements.helpBtn) {
@@ -755,80 +618,8 @@ if (elements.pauseBtn) {
 }
 
 // Keyboard Shortcuts
-document.addEventListener('keydown', (e) => {
-    if (isListeningForKey) {
-        e.preventDefault();
-        gridKey = e.key.toLowerCase();
-        isListeningForKey = false;
-        elements.settingKeyBtn.classList.remove('animate-pulse', 'bg-green-900');
-        saveSettings();
-        applySettings();
-        return;
-    }
+// Keyboard Shortcuts delegated to InputManager
 
-    if (isListeningForNumpadKey) {
-        e.preventDefault();
-        numpadKey = e.key.toLowerCase();
-        isListeningForNumpadKey = false;
-        elements.settingNumpadKeyBtn.classList.remove('animate-pulse', 'bg-green-900');
-        saveSettings();
-        applySettings();
-        return;
-    }
-
-    // Pause Menu (Escape)
-    if (e.key === 'Escape') {
-        if (!elements.pauseOverlay.classList.contains('hidden')) {
-            elements.pauseOverlay.classList.add('hidden');
-        } else if (game.gameState === 'PLAYING') {
-            elements.pauseOverlay.classList.remove('hidden');
-        }
-        return;
-    }
-
-    if (game.gameState === 'PLAYING') {
-        // Grid Shortcut
-        if (e.key.toLowerCase() === gridKey.toLowerCase()) {
-            elements.gridOverlay.classList.remove('opacity-0', 'pointer-events-none');
-        }
-
-        // Numpad Shortcut
-        if (e.key.toLowerCase() === numpadKey.toLowerCase()) {
-            elements.numpadOverlay.classList.remove('hidden');
-        }
-
-        // Global Enter
-        if (e.key === 'Enter') {
-            if (!elements.numpadOverlay.classList.contains('hidden')) {
-                // If numpad is open, Enter validates the guess and closes it?
-                // Or just validates. Let's say it validates.
-                handleGuess();
-                elements.numpadOverlay.classList.add('hidden');
-            } else {
-                handleGuess();
-            }
-            return;
-        }
-
-        // Auto-focus Input on Number/Backspace
-        if (/^[0-9]$/.test(e.key) || e.key === 'Backspace') {
-            if (document.activeElement !== elements.guessInput) {
-                elements.guessInput.focus();
-            }
-        }
-    }
-});
-
-document.addEventListener('keyup', (e) => {
-    if (game.gameState === 'PLAYING') {
-        if (e.key.toLowerCase() === gridKey.toLowerCase()) {
-            elements.gridOverlay.classList.add('opacity-0', 'pointer-events-none');
-        }
-        if (e.key.toLowerCase() === numpadKey.toLowerCase()) {
-            elements.numpadOverlay.classList.add('hidden');
-        }
-    }
-});
 
 // Settings
 if (elements.settingsBtn) {
@@ -847,38 +638,34 @@ if (elements.settingsBackBtn) {
 
 if (elements.settingLangBtn) {
     elements.settingLangBtn.onclick = () => {
-        currentLang = currentLang === 'en' ? 'fr' : 'en';
-        saveSettings();
+        settings.currentLang = settings.currentLang === 'en' ? 'fr' : 'en';
+        settings.saveSettings();
         applySettings();
     };
 }
 
 if (elements.settingThemeBtn) {
     elements.settingThemeBtn.onclick = () => {
-        const currentIndex = themeKeys.indexOf(currentTheme);
+        const currentIndex = themeKeys.indexOf(settings.currentTheme);
         const nextIndex = (currentIndex + 1) % themeKeys.length;
-        currentTheme = themeKeys[nextIndex];
-        saveSettings();
+        settings.currentTheme = themeKeys[nextIndex];
+        settings.saveSettings();
         applySettings();
     };
 }
 
 if (elements.settingKeyBtn) {
     elements.settingKeyBtn.onclick = () => {
-        isListeningForKey = true;
-        isListeningForNumpadKey = false;
-        elements.settingKeyBtn.textContent = '...';
-        elements.settingKeyBtn.classList.add('animate-pulse', 'bg-green-900');
+        inputManager.startRebinding('grid');
     };
+
 }
 
 if (elements.settingNumpadKeyBtn) {
     elements.settingNumpadKeyBtn.onclick = () => {
-        isListeningForNumpadKey = true;
-        isListeningForKey = false;
-        elements.settingNumpadKeyBtn.textContent = '...';
-        elements.settingNumpadKeyBtn.classList.add('animate-pulse', 'bg-green-900');
+        inputManager.startRebinding('numpad');
     };
+
 }
 
 if (elements.homeStartBtn) {
@@ -886,7 +673,7 @@ if (elements.homeStartBtn) {
         elements.homeScreen.classList.add('hidden');
         elements.bootScreen.classList.remove('hidden');
 
-        const lore = currentLang === 'fr' ? Localization.loreSequenceFr : Localization.loreSequenceEn;
+        const lore = settings.currentLang === 'fr' ? Localization.loreSequenceFr : Localization.loreSequenceEn;
 
         Animations.runTerminalSequence(lore, () => {
             elements.bootScreen.classList.add('hidden');
@@ -935,13 +722,13 @@ if (elements.quitBtn) {
 
 if (elements.themeBtn) {
     elements.themeBtn.onclick = () => {
-        const currentIndex = themeKeys.indexOf(currentTheme);
+        const currentIndex = themeKeys.indexOf(settings.currentTheme);
         const nextIndex = (currentIndex + 1) % themeKeys.length;
-        currentTheme = themeKeys[nextIndex];
+        settings.currentTheme = themeKeys[nextIndex];
 
-        document.body.style.filter = themes[currentTheme].filter;
+        document.body.style.filter = themes[settings.currentTheme].filter;
 
-        UI.updateStaticTexts(currentLang, currentTheme, themes);
+        UI.updateStaticTexts(settings.currentLang, settings.currentTheme, themes);
     };
 }
 
@@ -949,36 +736,15 @@ if (elements.themeBtn) {
 /*
 if (elements.langBtn) {
     elements.langBtn.onclick = () => {
-        currentLang = currentLang === 'en' ? 'fr' : 'en';
-        UI.updateStaticTexts(currentLang, currentTheme, themes);
-        UI.updateMessage(game, currentLang);
+        settings.currentLang = settings.currentLang === 'en' ? 'fr' : 'en';
+        UI.updateStaticTexts(settings.currentLang, settings.currentTheme, themes);
+        UI.updateMessage(game, settings.currentLang);
     };
 }
 */
 
-// Dev Mode Listeners
-if (elements.settingDevBtn) {
-    elements.settingDevBtn.onclick = () => {
-        if (game.devMode) {
-            game.toggleDevMode(false);
-            elements.settingDevBtn.textContent = 'OFF';
-            elements.settingDevBtn.classList.remove('text-red-500');
-            elements.settingDevBtn.classList.add('text-green-900');
-        } else {
-            const code = prompt('ENTER DEV CODE:');
-            if (code === null) return;
-            if (code === '153624') {
-                game.toggleDevMode(true);
-                elements.settingDevBtn.textContent = 'ON';
-                elements.settingDevBtn.classList.remove('text-green-900');
-                elements.settingDevBtn.classList.add('text-red-500');
-            } else {
-                alert('ACCESS DENIED');
-            }
-        }
-        render();
-    };
-}
+// Dev Mode Listeners - Removed (secret code activation)
+
 
 if (elements.devRevealBtn) {
     elements.devRevealBtn.onclick = () => {
@@ -1016,7 +782,7 @@ if (elements.devUnlockAppsBtn) {
         game.tradingUnlocked = true;
         game.antivirusUnlocked = true;
         game.systemMonitorUnlocked = true;
-        refreshBrowserApps();
+        UI.refreshBrowserApps(game);
         render();
     };
 }
@@ -1029,6 +795,14 @@ if (elements.devSkipBootBtn) {
     };
 }
 
+if (elements.devTokensBtn) {
+    elements.devTokensBtn.onclick = () => {
+        TokenManager.addToken(10);
+        TokenManager.updateTokenDisplay();
+        render();
+    };
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const skipBoot = sessionStorage.getItem('skipBoot') === 'true';
     if (skipBoot) sessionStorage.removeItem('skipBoot');
@@ -1038,14 +812,25 @@ document.addEventListener('DOMContentLoaded', () => {
     Animations.startTitleAnimation();
 
     // --- SAVE/LOAD & TOKEN INITIALIZATION ---
-    updateTokenDisplay();
+    settings.loadSettings();
+    applySettings();
+    TokenManager.updateTokenDisplay();
+    UI.setupSystemSliders(game);
+
+    // Initialize InputManager
+    inputManager.init(game, elements, {
+        handleGuess,
+        applySettings
+    });
+
     updateContinueButton();
+
 
     // Continue button handler
     const continueBtn = document.getElementById('home-continue-btn');
     if (continueBtn) {
         continueBtn.onclick = () => {
-            if (loadGame()) {
+            if (SaveManager.loadGame(game)) {
                 elements.homeScreen.classList.add('hidden');
                 elements.app.classList.remove('hidden');
                 render();
@@ -1055,7 +840,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- TUTORIAL LOGIC ---
     setupTutorial();
+
+    // --- SECRET DEV MODE ACTIVATION ---
+    setupSecretDevMode();
 });
+
+// Secret Dev Mode: Type 'stickmou' on home screen to toggle
+let secretBuffer = '';
+const SECRET_CODE = 'stickmou';
+
+function setupSecretDevMode() {
+    document.addEventListener('keydown', (e) => {
+        // Only listen on home screen
+        if (!elements.homeScreen || elements.homeScreen.classList.contains('hidden')) {
+            secretBuffer = '';
+            return;
+        }
+
+        // Ignore modifier keys
+        if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+        // Add character to buffer
+        if (e.key.length === 1) {
+            secretBuffer += e.key.toLowerCase();
+
+            // Keep buffer at max length
+            if (secretBuffer.length > SECRET_CODE.length) {
+                secretBuffer = secretBuffer.slice(-SECRET_CODE.length);
+            }
+
+            // Check for match
+            if (secretBuffer === SECRET_CODE) {
+                game.toggleDevMode(!game.devMode);
+                secretBuffer = '';
+                render();
+
+                // Visual feedback
+                if (game.devMode) {
+                    console.log('%c DEV MODE ACTIVATED ', 'background: #00ff00; color: #000');
+                } else {
+                    console.log('%c DEV MODE DEACTIVATED ', 'background: #ff0000; color: #fff');
+                }
+            }
+        }
+    });
+}
+
 
 
 // --- TUTORIAL SYSTEM ---
@@ -1065,6 +895,9 @@ const totalTutorialPages = 5;
 function setupTutorial() {
     const howToPlayBtn = document.getElementById('how-to-play-btn');
     const tutorialOverlay = document.getElementById('tutorial-overlay');
+
+    // Force hide on init
+    if (tutorialOverlay) tutorialOverlay.classList.add('hidden');
     const tutorialCloseBtn = document.getElementById('tutorial-close-btn');
     const tutorialPrevBtn = document.getElementById('tutorial-prev-btn');
     const tutorialNextBtn = document.getElementById('tutorial-next-btn');
@@ -1157,7 +990,7 @@ function showTutorialPage(pageNum) {
         prevBtn.disabled = pageNum === 1;
     }
     if (nextBtn) {
-        const t = Localization.staticTexts[currentLang];
+        const t = Localization.staticTexts[settings.currentLang];
         if (pageNum === totalTutorialPages) {
             nextBtn.textContent = t.return || '< CLOSE';
         } else {
@@ -1167,7 +1000,7 @@ function showTutorialPage(pageNum) {
 }
 
 function updateTutorialTexts() {
-    const t = Localization.staticTexts[currentLang];
+    const t = Localization.staticTexts[settings.currentLang];
 
     // Update button text
     const howToPlayBtn = document.getElementById('how-to-play-btn');

@@ -110,8 +110,8 @@ describe('Game Logic', () => {
         game.tradingInvested = 0;
         game.hasTradedThisRound = false;
 
-        // Mock price
-        game.getTradingPrice = () => 10.5; // Fixed price for test
+        // Set fixed price for test
+        game.currentTradingPrice = 10.5;
 
         // BUY
         // Buy $50 worth. $50 / 10.5 = 4.7619 shares
