@@ -25,7 +25,20 @@ export function updateStaticTexts(currentLang, currentTheme, themes) {
     if (elements.settingThemeBtn) elements.settingThemeBtn.textContent = themes[currentTheme].label;
 
     if (elements.resumeBtn) elements.resumeBtn.textContent = t.resume;
-    if (elements.quitBtn) elements.quitBtn.textContent = t.quit;
+    if (elements.saveQuitBtn) elements.saveQuitBtn.textContent = t.save_and_quit;
+    // abandonBtn is an icon, rely on title attribute which is static for now, or update it here if needed
+    if (elements.abandonBtn) elements.abandonBtn.title = t.abandon_run;
+
+    // Abandon Run
+    if (elements.lblAbandonConfirm) elements.lblAbandonConfirm.textContent = t.abandon_confirm_text;
+    if (elements.abandonYesBtn) elements.abandonYesBtn.textContent = t.abandon_yes;
+    if (elements.abandonNoBtn) elements.abandonNoBtn.textContent = t.abandon_no;
+
+    // Title in Overlay
+    if (elements.abandonConfirmScreen) {
+        const title = elements.abandonConfirmScreen.querySelector('h3');
+        if (title) title.textContent = t.abandon_confirm_title;
+    }
 
     const pauseTitle = elements.pauseOverlay.querySelector('h2');
     if (pauseTitle) pauseTitle.textContent = t.paused;

@@ -86,11 +86,22 @@ function hasEverEarnedToken() {
     return localStorage.getItem(TOKENS_UNLOCKED_KEY) === 'true';
 }
 
-function addToken() {
+function addToken(amount = 1) {
     const current = getTokens();
-    localStorage.setItem(TOKENS_KEY, (current + 1).toString());
+    localStorage.setItem(TOKENS_KEY, (current + amount).toString());
     localStorage.setItem(TOKENS_UNLOCKED_KEY, 'true'); // Mark as unlocked forever
     updateTokenDisplay();
+}
+
+function awardProgressiveTokens(level) {
+    // Formula: Sum of integers from 1 to semesters, where semester = floor(level / 6)
+    if (level < 6) return;
+    const semesters = Math.floor(level / 6);
+    const tokensToAward = (semesters * (semesters + 1)) / 2;
+
+    if (tokensToAward > 0) {
+        addToken(tokensToAward);
+    }
 }
 
 function updateTokenDisplay() {
@@ -226,9 +237,9 @@ function render() {
 
 function handleStart() {
     if (game.gameState === 'GAME_OVER') {
-        // Award token if player reached level 6+
+        // Award progressive tokens if player survived at least one semester (6 months)
         if (game.level >= 6) {
-            addToken();
+            awardProgressiveTokens(game.level);
         }
 
         // Clear saved game on game over
@@ -620,6 +631,52 @@ const systemCalibrateBtn = document.getElementById('system-calibrate-btn');
 if (appSystemBtn) appSystemBtn.addEventListener('click', handleOpenSystem);
 if (systemBackBtn) systemBackBtn.addEventListener('click', handleLeaveSystem);
 if (systemCalibrateBtn) systemCalibrateBtn.addEventListener('click', handleCalibrate);
+
+// --- SAVE & QUIT ---
+if (elements.saveQuitBtn) {
+    elements.saveQuitBtn.addEventListener('click', () => {
+        saveGame();
+        // Return to home screen logic
+        // For now, simpler to reload page as it checks for save on load
+        // But better UX would be to transition manually. 
+        // Given existing flow, reload ensures clean state.
+        window.location.reload();
+    });
+}
+
+// --- ABANDON RUN ---
+if (elements.abandonBtn) {
+    elements.abandonBtn.addEventListener('click', () => {
+        // Hide Pause Menu
+        if (elements.pauseOverlay) elements.pauseOverlay.classList.add('hidden');
+        // Show Abandon Confirm
+        if (elements.abandonConfirmScreen) {
+            elements.abandonConfirmScreen.classList.remove('hidden');
+        }
+    });
+}
+
+if (elements.abandonNoBtn) {
+    elements.abandonNoBtn.addEventListener('click', () => {
+        if (elements.abandonConfirmScreen) {
+            elements.abandonConfirmScreen.classList.add('hidden');
+            // Re-open Pause Menu if we want, or just return to game? 
+            // Usually return to pause menu is better UX if you came from there.
+            if (elements.pauseOverlay) elements.pauseOverlay.classList.remove('hidden');
+        }
+    });
+}
+
+if (elements.abandonYesBtn) {
+    elements.abandonYesBtn.addEventListener('click', () => {
+        // Award tokens before wiping save
+        if (game.level >= 6) {
+            awardProgressiveTokens(game.level);
+        }
+        clearSavedGame();
+        window.location.reload();
+    });
+}
 
 // Update trading app button state on render
 function refreshBrowserApps() {
@@ -1134,6 +1191,8 @@ function updateTutorialTexts() {
         if (textEl) textEl.textContent = t[`tutorial_text_${i}`] || '';
     }
 }
+
+// Initial Render
 
 // Initial Render
 render();

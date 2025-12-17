@@ -34,7 +34,8 @@ export const elements = {
     langBtn: document.getElementById('lang-btn'),
     themeBtn: document.getElementById('theme-btn'),
     resumeBtn: document.getElementById('resume-btn'),
-    quitBtn: document.getElementById('quit-btn'),
+    saveQuitBtn: document.getElementById('save-quit-btn'),
+    abandonBtn: document.getElementById('abandon-btn'), // The Red Icon Button
     numpadBtn: document.getElementById('numpad-btn'),
     numpadOverlay: document.getElementById('numpad-overlay'),
     tradingChart: document.getElementById('trading-chart'),
@@ -54,7 +55,7 @@ export const elements = {
     bootContinueBtn: document.getElementById('boot-continue-btn'),
     homeTitle: document.getElementById('home-title'),
     messageArea: document.getElementById('message-area'),
-    
+
     // Settings
     settingsBtn: document.getElementById('settings-btn'),
     settingsScreen: document.getElementById('settings-screen'),
@@ -72,7 +73,12 @@ export const elements = {
     settingsBackBtn: document.getElementById('settings-back-btn'),
     lblLang: document.getElementById('lbl-lang'),
     lblTheme: document.getElementById('lbl-theme'),
+    lblTheme: document.getElementById('lbl-theme'),
     lblGridKey: document.getElementById('lbl-grid-key'),
+    abandonConfirmScreen: document.getElementById('abandon-confirm-screen'),
+    abandonYesBtn: document.getElementById('abandon-yes-btn'),
+    abandonNoBtn: document.getElementById('abandon-no-btn'),
+    lblAbandonConfirm: document.getElementById('lbl-abandon-confirm'),
 
     // Antivirus
     appAntivirusBtn: document.getElementById('app-antivirus-btn'),

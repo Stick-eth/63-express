@@ -428,7 +428,9 @@ export const staticTexts = {
         gridKey: 'GRID SHORTCUT',
         return: '< RETURN',
         resume: '> RESUME_SESSION',
-        quit: '> ABORT_RUN',
+        quit: '> ABANDON RUN', // Legacy
+        save_and_quit: '> SAVE & QUIT',
+        abandon_run: 'ABANDON RUN',
         paused: 'SYSTEM PAUSED',
         enter: '[ ENTER ]',
         exitShop: '> EXIT_MARKET',
@@ -446,7 +448,11 @@ export const staticTexts = {
         tutorial_title_4: 'THE DARK MARKET',
         tutorial_text_4: 'Buy JOKERS and SCRIPTS to improve your chances. You can REROLL the shop for new items (costs $).',
         tutorial_title_5: 'JOKERS & SCRIPTS',
-        tutorial_text_5: 'JOKERS are passive bonuses that stay with you. SCRIPTS are one-time consumables you activate during gameplay. Hover over items to see their effects!'
+        tutorial_text_5: 'JOKERS are passive bonuses that stay with you. SCRIPTS are one-time consumables you activate during gameplay. Hover over items to see their effects!',
+        abandon_confirm_title: 'WARNING',
+        abandon_confirm_text: 'ABANDON RUN? SAVE WILL BE DELETED.',
+        abandon_yes: 'YES, ABANDON',
+        abandon_no: 'NO, RETURN'
     },
     fr: {
         start: '> INITIALISER_RUN',
@@ -456,7 +462,9 @@ export const staticTexts = {
         gridKey: 'RACCOURCI GRILLE',
         return: '< RETOUR',
         resume: '> REPRENDRE',
-        quit: '> ABANDONNER',
+        quit: '> ABANDONNER RUN',
+        save_and_quit: '> SAUVEGARDER & QUITTER',
+        abandon_run: 'ABANDONNER RUN',
         paused: 'SYSTÈME EN PAUSE',
         enter: '[ ENTRER ]',
         exitShop: '> QUITTER_MARCHÉ',
@@ -474,7 +482,11 @@ export const staticTexts = {
         tutorial_title_4: 'LE DARK MARKET',
         tutorial_text_4: 'Achetez des JOKERS et des SCRIPTS pour améliorer vos chances. Vous pouvez RELANCER le shop pour de nouveaux objets (coûte $).',
         tutorial_title_5: 'JOKERS & SCRIPTS',
-        tutorial_text_5: 'Les JOKERS sont des bonus passifs permanents. Les SCRIPTS sont des consommables à usage unique activables en jeu. Survolez les objets pour voir leurs effets !'
+        tutorial_text_5: 'Les JOKERS sont des bonus passifs permanents. Les SCRIPTS sont des consommables à usage unique activables en jeu. Survolez les objets pour voir leurs effets !',
+        abandon_confirm_title: 'ATTENTION',
+        abandon_confirm_text: 'ABANDONNER ? LA SAUVEGARDE SERA EFFACÉE.',
+        abandon_yes: 'OUI, ABANDONNER',
+        abandon_no: 'NON, RETOUR'
     }
 };
 
