@@ -95,12 +95,12 @@ function renderLogs(game) {
         }
     }
 
-    if (!game.roundLogs || game.roundLogs.length === 0) {
+    if (!game.logs || game.logs.length === 0) {
         logsDiv.classList.add('hidden');
     } else {
         logsDiv.classList.remove('hidden');
         logsDiv.innerHTML = '<div class="text-green-500 text-[10px] uppercase tracking-widest mb-1 border-b border-green-900 pb-1">System Logs</div>' +
-            game.roundLogs.map(log => `<div class="mb-1 last:mb-0">> ${log}</div>`).join('');
+            game.logs.map(log => `<div class="mb-1 last:mb-0">> ${log}</div>`).join('');
         logsDiv.scrollTop = logsDiv.scrollHeight;
     }
 }

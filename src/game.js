@@ -71,6 +71,7 @@ export class Game {
         this.systemTargets = [50, 50, 50]; // Target values
 
         this.uniqueGuesses = new Set(); // For Blockchain Joker
+        this.logs = []; // Persisted System Logs
     }
 
     parseStockData(csv) {
@@ -172,6 +173,7 @@ export class Game {
                             this.message = { key: 'script_effect', params: { text: result.message } };
                         }
                         if (this.roundLogs) this.roundLogs.push(result.message);
+                        if (this.logs) this.logs.push(result.message);
                     }
                 }
 
@@ -185,6 +187,7 @@ export class Game {
                             this.message = { key: 'script_effect', params: { text: result.message } };
                         }
                         if (this.roundLogs) this.roundLogs.push(result.message);
+                        if (this.logs) this.logs.push(result.message);
                     }
                 }
             }
@@ -837,4 +840,193 @@ export class Game {
         return false;
     }
 
+    // --- SAVE/LOAD SYSTEM ---
+    toSaveData() {
+        return {
+            // Core state
+            cash: this.cash,
+            rent: this.rent,
+            level: this.level,
+            round: this.round,
+            maxRounds: this.maxRounds,
+            gameState: this.gameState,
+            mysteryNumber: this.mysteryNumber,
+            attempts: this.attempts,
+            maxAttempts: this.maxAttempts,
+            min: this.min,
+            max: this.max,
+            absoluteMin: this.absoluteMin,
+            absoluteMax: this.absoluteMax,
+            burningThreshold: this.burningThreshold,
+            history: this.history,
+            rerollCost: this.rerollCost,
+            bossEffect: this.bossEffect,
+
+            // Logs
+            logs: this.logs,
+
+            // Jokers & Scripts (save by id and quantity)
+            jokers: this.jokers.map(j => ({
+                id: j.id,
+                quantity: j.quantity || 1,
+                modifier: j.modifier // For Neural Network
+            })),
+            scripts: this.scripts.map(s => ({ id: s.id })),
+            shopInventory: this.shopInventory.map(item => ({
+                id: item.id,
+                type: item.type,
+                price: item.price,
+                uniqueId: item.uniqueId
+            })),
+
+            // Arc System
+            arcQueueIds: this.arcQueue.map(a => a.id),
+            currentArcId: this.currentArc ? this.currentArc.id : null,
+            monthInArc: this.monthInArc,
+            monthBossPersistent: this.monthBossPersistent,
+            monthBossAnnounced: this.monthBossAnnounced,
+
+            // Trading App
+            tradingUnlocked: this.tradingUnlocked,
+            tradingHoldings: this.tradingHoldings,
+            tradingInvested: this.tradingInvested,
+            currentTradingPrice: this.currentTradingPrice,
+            tradingDataIndex: this.tradingDataIndex,
+            hasTradedThisRound: this.hasTradedThisRound,
+
+            // Antivirus App
+            antivirusUnlocked: this.antivirusUnlocked,
+            ransomwareFinishedLevel: this.ransomwareFinishedLevel,
+            antivirusScansThisRound: this.antivirusScansThisRound,
+
+            // System Monitor App
+            systemMonitorUnlocked: this.systemMonitorUnlocked,
+            overclockFinishedLevel: this.overclockFinishedLevel,
+            systemOverheatLevel: this.systemOverheatLevel,
+            systemCalibratedThisRound: this.systemCalibratedThisRound,
+            systemSliders: this.systemSliders,
+            systemTargets: this.systemTargets,
+
+            // Misc
+            uniqueGuesses: Array.from(this.uniqueGuesses),
+            firewallUsedThisRound: this.firewallUsedThisRound,
+            reverseGuessed: this.reverseGuessed,
+            nextGuessBonus: this.nextGuessBonus,
+            memoryLeakStacks: this.memoryLeakStacks,
+
+            // Timestamp
+            savedAt: Date.now()
+        };
+    }
+
+    loadFromSaveData(data) {
+        if (!data) return false;
+
+        // Core state
+        this.cash = data.cash;
+        this.rent = data.rent;
+        this.level = data.level;
+        this.round = data.round;
+        this.maxRounds = data.maxRounds || 3;
+        this.gameState = data.gameState;
+        this.mysteryNumber = data.mysteryNumber;
+        this.attempts = data.attempts;
+        this.maxAttempts = data.maxAttempts;
+        this.min = data.min;
+        this.max = data.max;
+        this.absoluteMin = data.absoluteMin;
+        this.absoluteMax = data.absoluteMax;
+        this.burningThreshold = data.burningThreshold || 5;
+        this.history = data.history || [];
+        this.rerollCost = data.rerollCost || 5;
+        this.bossEffect = data.bossEffect;
+
+        // Restore Logs
+        this.logs = data.logs || [];
+
+        // Restore Jokers
+        this.jokers = data.jokers.map(savedJoker => {
+            const template = JOKERS.find(j => j.id === savedJoker.id);
+            if (template) {
+                return {
+                    ...template,
+                    quantity: savedJoker.quantity || 1,
+                    modifier: savedJoker.modifier
+                };
+            }
+            return null;
+        }).filter(Boolean);
+
+        // Restore Scripts
+        this.scripts = data.scripts.map(savedScript => {
+            const template = SCRIPTS.find(s => s.id === savedScript.id);
+            return template ? { ...template } : null;
+        }).filter(Boolean);
+
+        // Restore Shop Inventory
+        this.shopInventory = data.shopInventory.map(savedItem => {
+            const allItems = [...JOKERS, ...SCRIPTS];
+            const template = allItems.find(i => i.id === savedItem.id);
+            if (template) {
+                return {
+                    ...template,
+                    price: savedItem.price,
+                    uniqueId: savedItem.uniqueId
+                };
+            }
+            return null;
+        }).filter(Boolean);
+
+        // Restore Arc System
+        this.arcQueue = data.arcQueueIds.map(id => {
+            if (id === 'standard') return STANDARD_ARC;
+            return ARCS.find(a => a.id === id);
+        }).filter(Boolean);
+
+        this.currentArc = data.currentArcId === 'standard'
+            ? STANDARD_ARC
+            : (ARCS.find(a => a.id === data.currentArcId) || this.arcQueue[0] || STANDARD_ARC);
+        this.monthInArc = data.monthInArc || 1;
+        this.monthBossPersistent = data.monthBossPersistent;
+        this.monthBossAnnounced = data.monthBossAnnounced || false;
+
+        // Trading App
+        this.tradingUnlocked = data.tradingUnlocked || false;
+        this.tradingHoldings = data.tradingHoldings || 0;
+        this.tradingInvested = data.tradingInvested || 0;
+        this.currentTradingPrice = data.currentTradingPrice || 100;
+        this.tradingDataIndex = data.tradingDataIndex || 0;
+        this.hasTradedThisRound = data.hasTradedThisRound || false;
+
+        // Antivirus App
+        this.antivirusUnlocked = data.antivirusUnlocked || false;
+        this.ransomwareFinishedLevel = data.ransomwareFinishedLevel;
+        this.antivirusScansThisRound = data.antivirusScansThisRound || 0;
+
+        // System Monitor App
+        this.systemMonitorUnlocked = data.systemMonitorUnlocked || false;
+        this.overclockFinishedLevel = data.overclockFinishedLevel;
+        this.systemOverheatLevel = data.systemOverheatLevel || 0;
+        this.systemCalibratedThisRound = data.systemCalibratedThisRound || false;
+        this.systemSliders = data.systemSliders || [50, 50, 50];
+        this.systemTargets = data.systemTargets || [50, 50, 50];
+
+        // Misc
+        this.uniqueGuesses = new Set(data.uniqueGuesses || []);
+        this.firewallUsedThisRound = data.firewallUsedThisRound || false;
+        this.reverseGuessed = data.reverseGuessed || false;
+        this.nextGuessBonus = data.nextGuessBonus || 0;
+        this.memoryLeakStacks = data.memoryLeakStacks || 0;
+
+        // Restore message based on state
+        if (this.attempts === 0) {
+            this.message = { key: 'round_start', params: { level: this.level, round: this.round, min: this.min, max: this.max, rent: this.rent } };
+        } else {
+            this.message = { key: 'resume_game', params: { level: this.level, round: this.round, min: this.min, max: this.max, rent: this.rent } };
+        }
+
+        return true;
+    }
+
 }
+

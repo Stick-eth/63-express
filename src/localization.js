@@ -390,7 +390,8 @@ export const translations = {
         'insufficient_funds': 'Insufficient funds.',
         'inventory_full': 'Inventory full.',
         'script_effect': (p) => `> ${p?.text}`,
-        'firewall_blocked': 'Firewall blocked the error. Attempt saved.'
+        'firewall_blocked': 'Firewall blocked the error. Attempt saved.',
+        'resume_game': (p) => `> SYSTEM RESTORED. Month ${p?.level} - Week ${p?.round}. Range: [${p?.min} - ${p?.max}]. Rent Due: $${p?.rent}`
     },
     fr: {
         'welcome_hustle': 'Bienvenue dans le Binary Hustle. Craquez le code.',
@@ -412,8 +413,10 @@ export const translations = {
         'insufficient_funds': 'Fonds insuffisants.',
         'inventory_full': 'Inventaire plein.',
         'script_effect': (p) => `> ${p?.text}`,
-        'firewall_blocked': 'Pare-feu a bloqué l\'erreur. Essai économisé.'
+        'firewall_blocked': 'Pare-feu a bloqué l\'erreur. Essai économisé.',
+        'resume_game': (p) => `> SYSTÈME RESTAURÉ. Mois ${p?.level} - Semaine ${p?.round}. Intervalle: [${p?.min} - ${p?.max}]. Loyer: $${p?.rent}`
     }
+
 };
 
 export const staticTexts = {

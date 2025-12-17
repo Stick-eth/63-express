@@ -48,6 +48,79 @@ function saveSettings() {
     localStorage.setItem('binary_hustle_settings', JSON.stringify(data));
 }
 
+// --- SAVE/LOAD GAME ---
+const SAVE_KEY = 'binary_hustle_save';
+const TOKENS_KEY = 'binary_hustle_tokens';
+
+function saveGame() {
+    const saveData = game.toSaveData();
+    localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+}
+
+function loadGame() {
+    const saved = localStorage.getItem(SAVE_KEY);
+    if (saved) {
+        const data = JSON.parse(saved);
+        return game.loadFromSaveData(data);
+    }
+    return false;
+}
+
+function hasSavedGame() {
+    return localStorage.getItem(SAVE_KEY) !== null;
+}
+
+function clearSavedGame() {
+    localStorage.removeItem(SAVE_KEY);
+}
+
+// --- TOKEN SYSTEM ---
+const TOKENS_UNLOCKED_KEY = 'binary_hustle_tokens_unlocked';
+
+function getTokens() {
+    const tokens = localStorage.getItem(TOKENS_KEY);
+    return tokens ? parseInt(tokens, 10) : 0;
+}
+
+function hasEverEarnedToken() {
+    return localStorage.getItem(TOKENS_UNLOCKED_KEY) === 'true';
+}
+
+function addToken() {
+    const current = getTokens();
+    localStorage.setItem(TOKENS_KEY, (current + 1).toString());
+    localStorage.setItem(TOKENS_UNLOCKED_KEY, 'true'); // Mark as unlocked forever
+    updateTokenDisplay();
+}
+
+function updateTokenDisplay() {
+    const tokenEl = document.getElementById('token-display');
+    if (tokenEl) {
+        // Only show if player has ever earned a token
+        if (!hasEverEarnedToken()) {
+            tokenEl.classList.add('hidden');
+            return;
+        }
+
+        tokenEl.classList.remove('hidden');
+        const count = getTokens();
+        tokenEl.textContent = `🪙 ${count}`;
+        tokenEl.title = count === 1 ? '1 Token' : `${count} Tokens`;
+    }
+}
+
+
+function updateContinueButton() {
+    const continueBtn = document.getElementById('home-continue-btn');
+    if (continueBtn) {
+        if (hasSavedGame()) {
+            continueBtn.classList.remove('hidden');
+        } else {
+            continueBtn.classList.add('hidden');
+        }
+    }
+}
+
 function applySettings() {
     // Apply Theme
     if (themes[currentTheme]) {
@@ -153,6 +226,14 @@ function render() {
 
 function handleStart() {
     if (game.gameState === 'GAME_OVER') {
+        // Award token if player reached level 6+
+        if (game.level >= 6) {
+            addToken();
+        }
+
+        // Clear saved game on game over
+        clearSavedGame();
+
         // Game Over Cutscene
         elements.app.classList.add('hidden');
         elements.bootScreen.classList.remove('hidden');
@@ -166,6 +247,7 @@ function handleStart() {
         }, 40, false);
         return;
     }
+
 
     game.startRun();
     game.bossIntroPlayed = false;
@@ -194,8 +276,15 @@ function handleGuess() {
     if (val === '') return;
     game.makeGuess(val);
     elements.guessInput.value = '';
+
+    // Auto-save after each guess
+    if (game.gameState !== 'GAME_OVER') {
+        saveGame();
+    }
+
     render();
 }
+
 
 function handleNext() {
     // Check for Boss Defeated Cutscene (End of Month Outro)
@@ -297,6 +386,7 @@ function handleReroll() {
 
 function handleLeaveShop() {
     game.closeApp();
+    saveGame();
     render();
 }
 
@@ -411,6 +501,7 @@ function stopAntivirusGame() {
 
 function handleBrowserContinue() {
     game.nextAction();
+    saveGame();
     render();
 }
 
@@ -889,9 +980,26 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.homeScreen) elements.homeScreen.classList.remove('hidden');
     Animations.startTitleAnimation();
 
+    // --- SAVE/LOAD & TOKEN INITIALIZATION ---
+    updateTokenDisplay();
+    updateContinueButton();
+
+    // Continue button handler
+    const continueBtn = document.getElementById('home-continue-btn');
+    if (continueBtn) {
+        continueBtn.onclick = () => {
+            if (loadGame()) {
+                elements.homeScreen.classList.add('hidden');
+                elements.app.classList.remove('hidden');
+                render();
+            }
+        };
+    }
+
     // --- TUTORIAL LOGIC ---
     setupTutorial();
 });
+
 
 // --- TUTORIAL SYSTEM ---
 let currentTutorialPage = 1;
