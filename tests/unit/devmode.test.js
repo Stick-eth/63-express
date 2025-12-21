@@ -1,4 +1,15 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+// Mock SkillTreeManager before importing Game
+vi.mock('../../src/managers/SkillTreeManager.js', () => ({
+    SkillTreeManager: {
+        getEffectValue: vi.fn(() => 0),
+        hasEffect: vi.fn(() => false),
+        hasSkill: vi.fn(() => false),
+        getUnlockedSkills: vi.fn(() => [])
+    }
+}));
+
 import { Game } from '../../src/game.js';
 
 describe('Secret Dev Mode', () => {

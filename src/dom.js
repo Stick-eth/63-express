@@ -81,6 +81,13 @@ export const elements = {
     abandonNoBtn: document.getElementById('abandon-no-btn'),
     lblAbandonConfirm: document.getElementById('lbl-abandon-confirm'),
 
+    // Reset Data
+    resetDataBtn: document.getElementById('reset-data-btn'),
+    resetConfirmModal: document.getElementById('reset-confirm-modal'),
+    resetConfirmInput: document.getElementById('reset-confirm-input'),
+    resetCancelBtn: document.getElementById('reset-cancel-btn'),
+    resetConfirmBtn: document.getElementById('reset-confirm-btn'),
+
     // Antivirus
     appAntivirusBtn: document.getElementById('app-antivirus-btn'),
     antivirusScreen: document.getElementById('antivirus-screen'),

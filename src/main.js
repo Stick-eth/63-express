@@ -8,6 +8,7 @@ import { SaveManager } from './managers/SaveManager.js'
 import { TokenManager } from './managers/TokenManager.js'
 import { settings, themes } from './managers/SettingsManager.js'
 import { inputManager } from './managers/InputManager.js'
+import { initSkillTreeUI } from './ui/screens/SkillTreeUI.js'
 
 const game = new Game();
 
@@ -41,6 +42,43 @@ function updateContinueButton() {
             continueBtn.classList.add('hidden');
         }
     }
+}
+
+/**
+ * Soft reset - return to home screen without full page reload
+ * This avoids CSS flash and provides smoother UX
+ */
+function softReset() {
+    // Hide all screens
+    elements.app.classList.add('hidden');
+    elements.bootScreen.classList.add('hidden');
+    elements.shopScreen?.classList.add('hidden');
+    elements.tradingScreen?.classList.add('hidden');
+    elements.browserScreen?.classList.add('hidden');
+    elements.pauseOverlay?.classList.add('hidden');
+    elements.abandonConfirmScreen?.classList.add('hidden');
+    elements.settingsScreen?.classList.add('hidden');
+    elements.resetConfirmModal?.classList.add('hidden');
+
+    // Reset game to fresh state
+    game.gameState = 'IDLE';
+    game.jokers = [];
+    game.scripts = [];
+    game.skillJokers = [];
+    game.cash = 100;
+    game.level = 1;
+    game.round = 1;
+    game.rent = 50;
+    game.bossIntroPlayed = false;
+    game.bossOutroPlayed = false;
+
+    // Update UI
+    updateContinueButton();
+    TokenManager.updateTokenDisplay();
+    applySettings();
+
+    // Show home screen
+    elements.homeScreen.classList.remove('hidden');
 }
 
 function applySettings() {
@@ -160,8 +198,7 @@ function handleStart() {
 
         Animations.runTerminalSequence(lore, () => {
             // Return to Home Screen
-            sessionStorage.setItem('skipBoot', 'true');
-            window.location.reload();
+            softReset();
         }, 40, false);
         return;
     }
@@ -280,9 +317,8 @@ function triggerGameOverCutscene() {
             if (elements.bootText) elements.bootText.innerHTML = '';
             // Wait again
             setTimeout(() => {
-                // Reload
-                sessionStorage.setItem('skipBoot', 'true');
-                window.location.reload();
+                // Soft reset to home
+                softReset();
             }, 2000);
         }, 3000);
     }, 40, false);
@@ -532,11 +568,8 @@ if (systemCalibrateBtn) systemCalibrateBtn.addEventListener('click', handleCalib
 if (elements.saveQuitBtn) {
     elements.saveQuitBtn.addEventListener('click', () => {
         SaveManager.saveGame(game);
-        // Return to home screen logic
-        // For now, simpler to reload page as it checks for save on load
-        // But better UX would be to transition manually. 
-        // Given existing flow, reload ensures clean state.
-        window.location.reload();
+        // For now, simpler to softReset as it checks for save on load
+        softReset();
     });
 }
 
@@ -570,7 +603,7 @@ if (elements.abandonYesBtn) {
             TokenManager.awardProgressiveTokens(game.level);
         }
         SaveManager.clearSavedGame();
-        window.location.reload();
+        softReset();
     });
 }
 
@@ -665,7 +698,55 @@ if (elements.settingNumpadKeyBtn) {
     elements.settingNumpadKeyBtn.onclick = () => {
         inputManager.startRebinding('numpad');
     };
+}
 
+// Reset Data Button
+if (elements.resetDataBtn) {
+    elements.resetDataBtn.onclick = () => {
+        elements.resetConfirmModal.classList.remove('hidden');
+        // Reset input each time modal opens
+        if (elements.resetConfirmInput) {
+            elements.resetConfirmInput.value = '';
+            elements.resetConfirmBtn.disabled = true;
+            elements.resetConfirmBtn.classList.add('bg-gray-700', 'text-gray-500', 'cursor-not-allowed');
+            elements.resetConfirmBtn.classList.remove('bg-red-600', 'text-white', 'hover:bg-red-700');
+        }
+    };
+}
+
+// Input validation for reset confirmation
+if (elements.resetConfirmInput) {
+    elements.resetConfirmInput.oninput = () => {
+        const isMatch = elements.resetConfirmInput.value.toUpperCase() === 'DELETE';
+        elements.resetConfirmBtn.disabled = !isMatch;
+        if (isMatch) {
+            elements.resetConfirmBtn.classList.remove('bg-gray-700', 'text-gray-500', 'cursor-not-allowed');
+            elements.resetConfirmBtn.classList.add('bg-red-600', 'text-white', 'hover:bg-red-700');
+        } else {
+            elements.resetConfirmBtn.classList.add('bg-gray-700', 'text-gray-500', 'cursor-not-allowed');
+            elements.resetConfirmBtn.classList.remove('bg-red-600', 'text-white', 'hover:bg-red-700');
+        }
+    };
+}
+
+if (elements.resetCancelBtn) {
+    elements.resetCancelBtn.onclick = () => {
+        elements.resetConfirmModal.classList.add('hidden');
+        if (elements.resetConfirmInput) elements.resetConfirmInput.value = '';
+    };
+}
+
+if (elements.resetConfirmBtn) {
+    elements.resetConfirmBtn.onclick = () => {
+        // Double check input matches before proceeding
+        if (elements.resetConfirmInput && elements.resetConfirmInput.value.toUpperCase() !== 'DELETE') {
+            return;
+        }
+        // Clear all localStorage
+        localStorage.clear();
+        // Reload the page to reset everything
+        window.location.reload();
+    };
 }
 
 if (elements.homeStartBtn) {
@@ -682,7 +763,7 @@ if (elements.homeStartBtn) {
                 game.startRun();
                 render();
             } else if (game.gameState === 'GAME_OVER') {
-                window.location.reload();
+                softReset();
             }
         }, 40, true);
     };
@@ -714,8 +795,7 @@ if (elements.quitBtn) {
         ];
 
         Animations.runTerminalSequence(shutdownText, () => {
-            sessionStorage.setItem('skipBoot', 'true');
-            window.location.reload();
+            softReset();
         }, 30, false);
     };
 }
@@ -1025,7 +1105,87 @@ function updateTutorialTexts() {
     }
 }
 
-// Initial Render
+// Initialize Skill Tree UI
+initSkillTreeUI();
 
 // Initial Render
 render();
+
+// ═══════════════════════════════════════════════════════════════
+// TITLE TERMINAL TYPING ANIMATION
+// ═══════════════════════════════════════════════════════════════
+const TITLE_TEXT = 'Binary Hustle';
+const GLITCH_CHARS = '!@#$%^&*()_+-=[]{}|;:,.<>?0123456789';
+
+function initTitleAnimation() {
+    const titleEl = document.getElementById('game-title');
+    const cursorEl = document.getElementById('title-cursor');
+    if (!titleEl || !cursorEl) return;
+
+    let isAnimating = false;
+
+    async function animateCycle() {
+        if (isAnimating) return;
+        isAnimating = true;
+
+        // Delete phase
+        await deleteText(titleEl, cursorEl);
+        await sleep(300);
+
+        // Type phase with glitch
+        await typeText(titleEl, cursorEl, TITLE_TEXT);
+
+        isAnimating = false;
+    }
+
+    async function deleteText(el, cursor) {
+        const text = el.textContent.replace('_', '');
+        for (let i = text.length; i >= 0; i--) {
+            el.innerHTML = text.slice(0, i);
+            el.appendChild(cursor);
+            await sleep(40 + Math.random() * 30);
+        }
+    }
+
+    async function typeText(el, cursor, text) {
+        for (let i = 0; i <= text.length; i++) {
+            let displayed = text.slice(0, i);
+
+            // Random glitch on last 1-2 chars
+            if (i > 0 && Math.random() < 0.3) {
+                const glitchIdx = Math.max(0, i - 1 - Math.floor(Math.random() * 2));
+                const glitchChar = GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)];
+                displayed = displayed.slice(0, glitchIdx) +
+                    '<span class="text-red-500 animate-pulse">' + glitchChar + '</span>' +
+                    displayed.slice(glitchIdx + 1);
+            }
+
+            el.innerHTML = displayed;
+            el.appendChild(cursor);
+            await sleep(60 + Math.random() * 40);
+
+            // Fix glitch after typing next char
+            if (i < text.length) {
+                el.innerHTML = text.slice(0, i);
+                el.appendChild(cursor);
+            }
+        }
+
+        // Final clean display
+        el.innerHTML = text;
+        el.appendChild(cursor);
+    }
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Start animation loop (every 12 seconds)
+    setInterval(animateCycle, 12000);
+
+    // First animation after 3 seconds
+    setTimeout(animateCycle, 3000);
+}
+
+// Start title animation
+initTitleAnimation();

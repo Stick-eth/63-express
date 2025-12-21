@@ -7,23 +7,31 @@ export function updateGrid(game) {
     const end = game.absoluteMax !== undefined ? game.absoluteMax : 99;
     const totalRange = end - start + 1;
 
-    // Always 100 cells
-    const cellCount = 100;
+    // Always 100 cells (or less if range is smaller)
+    const cellCount = Math.min(100, totalRange);
     const step = totalRange / cellCount;
 
     const hasEvenFlow = game.jokers.some(j => j.id === 'even_flow');
     const hasOddFlow = game.jokers.some(j => j.id === 'odd_flow');
 
-    for (let i = 0; i < cellCount; i++) {
-        const el = document.createElement('div');
+    // Track displayed numbers to avoid duplicates
+    const displayedNumbers = new Set();
 
+    for (let i = 0; i < cellCount; i++) {
         // Calculate range for this cell
         const cellStart = Math.floor(start + (i * step));
         const cellEnd = Math.floor(start + ((i + 1) * step)) - 1;
 
+        // Skip if this number was already displayed
+        if (displayedNumbers.has(cellStart)) {
+            continue;
+        }
+        displayedNumbers.add(cellStart);
+
+        const el = document.createElement('div');
         el.textContent = cellStart;
         el.className = 'text-[0.7rem] flex items-center justify-center h-8 transition-colors cursor-help overflow-hidden select-none';
-        el.title = `${cellStart} - ${cellEnd}`;
+        el.title = cellStart === cellEnd ? `${cellStart}` : `${cellStart} - ${cellEnd}`;
 
         // Check validity
         // A cell is valid if its range overlaps with [game.min, game.max]

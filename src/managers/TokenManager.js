@@ -20,6 +20,16 @@ export class TokenManager {
         this.updateTokenDisplay();
     }
 
+    static spendTokens(amount) {
+        const current = this.getTokens();
+        if (current < amount) {
+            return false;
+        }
+        StorageUtils.setValue(TOKENS_KEY, current - amount);
+        this.updateTokenDisplay();
+        return true;
+    }
+
     static awardProgressiveTokens(level) {
         // Formula: Sum of integers from 1 to semesters, where semester = floor(level / 6)
         if (level < 6) return;
@@ -33,10 +43,13 @@ export class TokenManager {
 
     static updateTokenDisplay() {
         const tokenEl = document.getElementById('token-display');
+        const devTreeBtn = document.getElementById('skill-tree-btn');
+
         if (tokenEl) {
             // Only show if player has ever earned a token
             if (!this.hasEverEarnedToken()) {
                 tokenEl.classList.add('hidden');
+                if (devTreeBtn) devTreeBtn.classList.add('hidden');
                 return;
             }
 
@@ -44,6 +57,9 @@ export class TokenManager {
             const count = this.getTokens();
             tokenEl.textContent = `🪙 ${count}`;
             tokenEl.title = count === 1 ? '1 Token' : `${count} Tokens`;
+
+            // Show DEV_TREE button once tokens have been earned
+            if (devTreeBtn) devTreeBtn.classList.remove('hidden');
         }
     }
 }

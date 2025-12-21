@@ -3,6 +3,8 @@ import { ARCS, STANDARD_ARC } from './arcs.js';
 import { ShopSystem } from './systems/ShopSystem.js';
 import { TradingSystem } from './systems/TradingSystem.js';
 import { AntivirusSystem } from './systems/AntivirusSystem.js';
+import { SkillTreeManager } from './managers/SkillTreeManager.js';
+import { getActiveSkillJokers } from './items/SkillJokers.js';
 
 export class Game {
     constructor() {
@@ -106,12 +108,39 @@ export class Game {
         this.round = 1;
         this.jokers = [];
         this.scripts = [];
+        this.skillJokers = []; // Hidden jokers from skill tree
         this.monthBossPersistent = null;
         this.monthBossAnnounced = false;
         this.tradingUnlocked = false;
         this.tradingHoldings = 0;
         this.currentTradingPrice = 100;
         this.tradingCandles = [];
+        this.winStreak = 0;
+        this.safetyNetAvailable = true; // For Safety Net skill
+
+        // Populate skill jokers from unlocked skills
+        const unlockedSkills = SkillTreeManager.getUnlockedSkills();
+        this.skillJokers = getActiveSkillJokers(unlockedSkills);
+
+        // Trigger onRunStart for skill jokers AND regular jokers
+        this.triggerJokers('onRunStart');
+
+        // Apply Browser branch effects (non-joker based)
+        if (SkillTreeManager.hasEffect('unlock_trading')) {
+            this.tradingUnlocked = true;
+        }
+        if (SkillTreeManager.hasEffect('unlock_all_apps')) {
+            this.tradingUnlocked = true;
+            this.antivirusUnlocked = true;
+            this.systemMonitorUnlocked = true;
+        }
+
+        // Check for preserved joker from Perfect Memory
+        if (this.preservedJoker) {
+            this.jokers.push({ ...this.preservedJoker });
+            this.addLog(`Restored ${this.preservedJoker.name?.en || this.preservedJoker.id} from Perfect Memory`);
+            delete this.preservedJoker;
+        }
 
         // Initialize Arcs
         this.initArcs();
@@ -146,7 +175,10 @@ export class Game {
     triggerJokers(triggerName, initialValue = null) {
         let currentValue = initialValue;
 
-        this.jokers.forEach(joker => {
+        // Combine regular jokers and skill jokers (hidden)
+        const allJokers = [...this.jokers, ...(this.skillJokers || [])];
+
+        allJokers.forEach(joker => {
             const count = joker.quantity || 1;
             for (let i = 0; i < count; i++) {
                 // Check primary trigger
@@ -155,12 +187,15 @@ export class Game {
                     if (['calculateGain', 'rng_validation', 'getMaxRange', 'getMinRange', 'calculateRent', 'calculateShopPrice', 'getMaxJokerSlots'].includes(triggerName)) {
                         currentValue = result;
                     } else if (result && result.message) {
-                        if
-                            (!result.logOnly) {
+                        if (!result.logOnly) {
                             this.message = { key: 'script_effect', params: { text: result.message } };
                         }
                         if (this.roundLogs) this.roundLogs.push(result.message);
                         if (this.logs) this.logs.push(result.message);
+                    }
+                    // Handle special result flags
+                    if (result && result.preventLoss) {
+                        this.preventLoss = true;
                     }
                 }
 
@@ -268,20 +303,59 @@ export class Game {
         this.absoluteMin = minStart;
         this.absoluteMax = minStart + rangeSize - 1;
 
-        // Calculate burning threshold (5% of initial range)
-        this.burningThreshold = Math.max(1, Math.floor(rangeSize * 0.05));
+        // Apply Skill Tree: Range Reduction (flat)
+        const rangeReduceFlat = SkillTreeManager.getEffectValue('range_reduce_flat');
+        if (rangeReduceFlat && this.absoluteMax - this.absoluteMin > rangeReduceFlat) {
+            this.absoluteMax -= rangeReduceFlat;
+        }
+
+        // Apply Skill Tree: Range Reduction (percent)
+        const rangeReducePercent = SkillTreeManager.getEffectValue('range_reduce_percent');
+        if (rangeReducePercent) {
+            const currentSize = this.absoluteMax - this.absoluteMin;
+            const reduction = Math.floor(currentSize * rangeReducePercent);
+            this.absoluteMax -= reduction;
+        }
+
+        // Apply Skill Tree: Starting Range Reduce (Golden Zone)
+        const startingRangeReduce = SkillTreeManager.getEffectValue('starting_range_reduce');
+        if (startingRangeReduce) {
+            const currentSize = this.absoluteMax - this.absoluteMin;
+            const reduction = Math.floor(currentSize * startingRangeReduce);
+            // Apply symmetrically
+            const halfReduction = Math.floor(reduction / 2);
+            this.absoluteMin += halfReduction;
+            this.absoluteMax -= (reduction - halfReduction);
+        }
+
+        // Calculate burning threshold (default 5%, can be modified by skills)
+        let burningPercent = 0.05;
+        const burningThresholdBonus = SkillTreeManager.getEffectValue('burning_threshold');
+        if (burningThresholdBonus) burningPercent = burningThresholdBonus;
+        this.burningThreshold = Math.max(1, Math.floor(rangeSize * burningPercent));
 
         this.max = this.absoluteMax;
         this.min = this.absoluteMin;
 
         while (!valid) {
             candidate = minStart + Math.floor(Math.random() * rangeSize);
+            // Make sure candidate is within the reduced range
+            if (candidate < this.absoluteMin || candidate > this.absoluteMax) continue;
             valid = this.checkJokerConstraints('rng_validation', candidate);
         }
         this.mysteryNumber = candidate;
 
         this.attempts = 0;
         this.maxAttempts = 7; // Reset to base
+
+        // Apply Skill Tree: Extra Attempts
+        const extraAttempts = SkillTreeManager.getEffectValue('extra_attempts');
+        if (extraAttempts) this.maxAttempts += extraAttempts;
+
+        // Initialize Safety Net state (once per run)
+        if (this.round === 1 && SkillTreeManager.hasEffect('safety_net') && this.safetyNetAvailable === undefined) {
+            this.safetyNetAvailable = true;
+        }
 
         // this.min and this.max are set above
         this.history = [];
@@ -291,6 +365,7 @@ export class Game {
         this.reverseGuessed = false; // For Mirror Dimension
         this.quantumChanged = false; // For Quantum Tens
         this.firewallUsedThisRound = false; // For Firewall
+        this.firstMissProcessed = false; // For Auto-Bisect
 
         if (this.round === 1) {
             this.monthBossPersistent = null;
@@ -411,9 +486,31 @@ export class Game {
             return;
         }
 
-        this.attempts++;
+        // Apply Skill Tree: Recursion (50% chance to not consume attempt)
+        let consumeAttempt = true;
+        if (SkillTreeManager.hasEffect('recursion_chance')) {
+            const recursionChance = SkillTreeManager.getEffectValue('recursion_chance');
+            if (Math.random() < recursionChance) {
+                consumeAttempt = false;
+            }
+        }
+
+        if (consumeAttempt) {
+            this.attempts++;
+        }
+
+        // Reset win streak on miss
+        this.winStreak = 0;
 
         if (this.attempts >= this.maxAttempts) {
+            // Apply Skill Tree: Safety Net (survive one lost round per run)
+            if (this.safetyNetAvailable && SkillTreeManager.hasEffect('safety_net')) {
+                this.safetyNetAvailable = false;
+                this.attempts = this.maxAttempts - 1; // Give back one attempt
+                this.message = { key: 'script_effect', params: { text: 'SAFETY NET activated! One more chance.' } };
+                return;
+            }
+
             this.gameState = 'LOST_ROUND';
             this.message = { key: 'lost_round', params: { number: this.mysteryNumber } };
         } else {
@@ -424,15 +521,37 @@ export class Game {
             // Check for meltdown boss effect (no burning hints)
             const noBurningHint = this.bossEffect === 'meltdown';
 
+            // Apply Skill Tree: Auto-Bisect (first miss eliminates extra from wrong side)
+            let autoBisectApplied = false;
+            if (!this.firstMissProcessed && SkillTreeManager.hasEffect('auto_bisect')) {
+                const bisectValue = SkillTreeManager.getEffectValue('auto_bisect');
+                this.firstMissProcessed = true;
+                autoBisectApplied = true;
+
+                if (guess < this.mysteryNumber) {
+                    this.min = Math.max(this.min, guess + 1 + bisectValue);
+                    // Don't exceed the mystery number
+                    this.min = Math.min(this.min, this.mysteryNumber);
+                } else {
+                    this.max = Math.min(this.max, guess - 1 - bisectValue);
+                    // Don't go below the mystery number
+                    this.max = Math.max(this.max, this.mysteryNumber);
+                }
+            }
+
             if (guess < this.mysteryNumber) {
-                this.min = Math.max(this.min, guess + 1);
+                if (!autoBisectApplied) {
+                    this.min = Math.max(this.min, guess + 1);
+                }
                 if (isBurning && !noBurningHint) {
                     this.message = { key: 'higher_burning', params: { min: this.min, max: this.max } };
                 } else {
                     this.message = { key: 'higher', params: { min: this.min, max: this.max } };
                 }
             } else {
-                this.max = Math.min(this.max, guess - 1);
+                if (!autoBisectApplied) {
+                    this.max = Math.min(this.max, guess - 1);
+                }
                 if (isBurning && !noBurningHint) {
                     this.message = { key: 'lower_burning', params: { min: this.min, max: this.max } };
                 } else {
@@ -455,6 +574,40 @@ export class Game {
             this.nextGuessBonus = 0;
         }
 
+        // Apply Skill Tree: Gain Multiplier (total from all sources)
+        const gainMultiplier = SkillTreeManager.getEffectValue('gain_multiplier');
+        if (gainMultiplier) {
+            gain = Math.floor(gain * (1 + gainMultiplier));
+        }
+
+        // Apply Skill Tree: Precision Bonus (bonus if found in ≤3 attempts)
+        if (SkillTreeManager.hasEffect('precision_bonus') && this.attempts <= 3) {
+            const precisionBonus = SkillTreeManager.getEffectValue('precision_bonus');
+            gain += precisionBonus;
+        }
+
+        // Apply Skill Tree: Streak Multiplier
+        if (SkillTreeManager.hasEffect('streak_multiplier')) {
+            const streakValue = SkillTreeManager.getEffectValue('streak_multiplier');
+            const streak = this.winStreak || 0;
+            if (streak > 0) {
+                gain = Math.floor(gain * (1 + streakValue * streak));
+            }
+        }
+
+        // Apply Skill Tree: Pattern Recognition (+5% gain per unique guess)
+        if (SkillTreeManager.hasEffect('pattern_recognition')) {
+            const patternValue = SkillTreeManager.getEffectValue('pattern_recognition');
+            const uniqueGuesses = this.uniqueGuesses?.size || this.history?.length || 0;
+            gain = Math.floor(gain * (1 + patternValue * uniqueGuesses));
+        }
+
+        // Apply Skill Tree: Adaptive Learning (+10% per level)
+        if (SkillTreeManager.hasEffect('adaptive_learning')) {
+            const adaptiveValue = SkillTreeManager.getEffectValue('adaptive_learning');
+            gain = Math.floor(gain * (1 + adaptiveValue * this.level));
+        }
+
         // Apply Joker Hooks: calculateGain
         gain = this.triggerJokers('calculateGain', gain);
 
@@ -462,6 +615,17 @@ export class Game {
         this.triggerJokers('onWin');
 
         this.cash += gain;
+
+        // Apply Skill Tree: Compound Interest (+% of cash on win)
+        if (SkillTreeManager.hasEffect('compound_interest')) {
+            const interestRate = SkillTreeManager.getEffectValue('compound_interest');
+            const interest = Math.floor(this.cash * interestRate);
+            this.cash += interest;
+        }
+
+        // Track win streak for streak multiplier
+        this.winStreak = (this.winStreak || 0) + 1;
+
         this.message = { key: 'won_round', params: { gain: Math.floor(gain), cash: Math.floor(this.cash) } };
     }
 
